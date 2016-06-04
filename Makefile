@@ -1,4 +1,4 @@
-all: clean bootloader common userland kernel image
+all: bootloader common userland kernel image
 
 bootloader:
 	clear; clear; cd Bootloader; make all
