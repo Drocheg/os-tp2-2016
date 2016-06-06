@@ -1,3 +1,6 @@
+#Dropbox files
+*.dropbox.attr
+
 #Binary Files
 *.bin
 *.sys

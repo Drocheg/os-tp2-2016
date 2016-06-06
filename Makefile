@@ -1,4 +1,4 @@
-all: bootloader common userland kernel image
+all: bootloader common userland kernel song image
 
 bootloader:
 	clear; clear; cd Bootloader; make all
@@ -12,14 +12,18 @@ kernel:
 userland:
 	cd Userland; make all
 
+song:
+	cd Userland/Songmaker; make all
+
 image: kernel bootloader userland
 	cd Image; make all
 
 clean:
 	cd Bootloader; make clean
 	cd Common; make clean
-	cd Image; make clean
-	cd Kernel; make clean
 	cd Userland; make clean
+	cd Kernel; make clean
+	cd Userland/Songmaker; make clean
+	cd Image; make clean
 
-.PHONY: bootloader image collections kernel userland all clean
+.PHONY: all clean bootloader common userland kernel song image
