@@ -1,3 +1,8 @@
+trace-*
+Tools.inc
+Toolchain/ModulePacker/Makefile
+run.sh
+
 #Dropbox files
 *.dropbox.attr
 
