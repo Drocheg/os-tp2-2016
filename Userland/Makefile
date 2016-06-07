@@ -1,4 +1,5 @@
-include Makefile.inc
+#include Makefile.inc
+include ../Tools.inc
 
 MODULE=userland.bin
 ASMSOURCES= asm/interrupts.asm

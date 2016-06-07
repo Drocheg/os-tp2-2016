@@ -1,3 +1,5 @@
+include ../Tools.inc
+
 BOOTLOADER_PATH=../Bootloader
 BMFS=$(BOOTLOADER_PATH)/BMFS/bmfs.bin
 MBR=$(BOOTLOADER_PATH)/Pure64/bmfs_mbr.sys
@@ -26,10 +28,10 @@ $(IMG): $(BMFS) $(MBR) $(PURE64) $(PACKEDKERNEL)
 	$(BMFS) $(IMG) initialize $(IMGSIZE) $(MBR) $(PURE64) $(PACKEDKERNEL) 
 
 $(VMDK): $(IMG)
-	qemu-img convert -f raw -O vmdk $(IMG) $(VMDK) 
+	$(QEMU_IMG) convert -f raw -O vmdk $(IMG) $(VMDK) 
 
 $(QCOW2): $(IMG)
-	qemu-img convert -f raw -O qcow2 $(IMG) $(QCOW2)
+	$(QEMU_IMG) convert -f raw -O qcow2 $(IMG) $(QCOW2)
 
 clean:
 	rm -rf $(IMG) $(VMDK) $(QCOW2) *.bin

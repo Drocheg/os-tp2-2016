@@ -1,4 +1,5 @@
-include Makefile.inc
+#include Makefile.inc
+include ../Tools.inc
 
 COMMON = ../Common/c/scanCodes.c ../Common/c/stdlib.c
 KERNEL= kernel.bin
