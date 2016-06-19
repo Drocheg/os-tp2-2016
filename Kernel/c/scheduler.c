@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <stdlib.h>
+#include <interrupts.h>
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 32
@@ -81,8 +82,9 @@ void stopScheduler() {
 }
 
 
+
 /*
- * Updates the process queue, changing to the nexr process
+ * Updates the process queue, changing to the next process
  * Returns the next process' stack, 
  * or NULL if scheduler is not running or if no process is scheduled
  */
@@ -96,7 +98,8 @@ void *nextProcess(void *currentRSP) {
 
 	current = last->next;
 	current->(process.userStackTop) = currentRSP;
-	return switchContext(current->kernelStackTop); /* ASM function */
+	switchToKernelContext(current->kernelStackTop); /* ASM function */
+
 }
 
 

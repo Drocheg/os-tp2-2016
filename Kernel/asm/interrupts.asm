@@ -1,5 +1,6 @@
 EXTERN IRQHandler
 EXTERN int80Handler
+EXTERN getKernelStackTop
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
@@ -7,6 +8,7 @@ GLOBAL int80Receiver
 SECTION .text
 
 %macro irqMacro 1
+
 	;Stack frame
 	push rbp
 	push rsp
@@ -15,8 +17,19 @@ SECTION .text
 	push r13
 	push r15
 
+	;Gets kernel stack
+	call getInterruptsStackTop
+	mov rbx, rsp					; Saves current process stack into RBX
+	mov rsp, rax					; Switches context to kernel mode
+	push rbx						; Saves process stack in kernel's interrupts stack
+
+	;Executes interrupt handler
 	mov rdi, %1
 	call IRQHandler
+
+	;Restores process context
+	pop rbx
+	mov rsp, rbx						
 	
 	;Undo stack frame
 	pop r15
@@ -43,8 +56,28 @@ int80Receiver:
 	push r13
 	push r15
 
-	;Parameter registers shouldn't have been modified
-	call int80Handler
+
+	;Switch to kernel mode
+	push rdi 								; Saves first parameter
+	push rsi								; Saves second parameter
+	push rdx								; Saves third parameter
+	push rcx								; Saves fourth parameter
+	call getInterruptsStackTop				; Gets kernel stack
+	pop rcx									; Restores fourth parameter
+	pop rdx									; Restores third parameter
+	pop rsi 								; Restores second parameter
+	pop rdi									; Restores first parameter
+	mov rbx, rsp 							; Saves current process stack into RBX
+	mov rsp, rax							; Switch context to kernel mode
+	push rbx 								; Saves process stack in kernel's interrupts stack
+
+
+	;Executes interrupt handler
+	call int80Handler						; Parameter registers shouldn't have been modified
+
+	;Restores process context
+	pop rbx
+	mov rsp, rbx
 	
 	;Undo stack frame
 	pop r15
@@ -54,3 +87,6 @@ int80Receiver:
 	pop rsp
 	pop rbp
 	iretq
+
+
+	

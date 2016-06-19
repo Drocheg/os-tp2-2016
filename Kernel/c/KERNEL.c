@@ -16,22 +16,40 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 
-static const uint64_t PageSize = 0x1000;
+/* static const uint64_t PageSize = 0x1000; */
+static const uint64_t PageSize = PAGE_SIZE;
+static void *kernelStackPage = NULL;
 
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
+static uint64_t setUpKernelStack(void *stackPage);
 
-int kernel_main(int argc, char *argv[]) {	
+int kernel_main(int argc, char *argv[]) {
+
+	int32_t ret = 0;
 	ncClear();
 	ncPrint("Welcome to the kernel!\n");
 
+	/* Sets up IDT */
 	ncPrint("Setting up IDT...");
 	setInterrupt(0x20, (uint64_t)&int20Receiver);
 	setInterrupt(0x21, (uint64_t)&int21Receiver);
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
 	ncPrint("Done.\n");
 
+	/* Initializes memory management */
+	ncPrint("Initializing Memory Management...");
+	initializePageStack();
+	ncPrint("Done.\n");
+
+	/* Enables interrupts (i.e: PIC Mask, and Interrupts stack) */
 	ncPrint("Enabling interrupts...");
+	if (initializeInterruptsStack()) {
+		ncPrint("Couldn't start the kernel. Aborting\n");
+		_cli();
+		_halt();
+		return -1;
+	}
 	//masterPICmask(0x0);	//All interrupts
 	masterPICmask(0xFC);	//Keyboard and timer tick
 	//masterPICmask(0xFD);	//Keyboard only
@@ -40,13 +58,11 @@ int kernel_main(int argc, char *argv[]) {
 	_sti();
 	ncPrint("Done.\n");
 
-	ncPrint("Initializing Memory Management...");
-	initializePageStack();
-	ncPrint("Done.\n");
+	/* Initializes scheduler */
+
+
 
 	ncPrint("Jumping to user space...NOW!\n");
-
-	int32_t ret;
 	ret = runCodeModule();
 	
 	ncClear();
@@ -82,5 +98,9 @@ void * initializeKernelBinary() {
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
+
+
+
+
 
 
