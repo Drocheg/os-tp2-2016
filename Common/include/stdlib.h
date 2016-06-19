@@ -11,7 +11,7 @@ int32_t strcmp(const char *s1, const char *s2);
 
 uint8_t streql(const char *s1, const char *s2);
 
-uint32_t strlen(const char *s);
+uint64_t strlen(const char *s);
 
 void substr(const char *src, char *dest, uint32_t start, uint32_t end);
 

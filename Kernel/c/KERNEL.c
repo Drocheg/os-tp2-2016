@@ -21,8 +21,7 @@ static const uint64_t PageSize = 0x1000;
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
 
-int kernel_main(int argc, char *argv[])
-{	
+int kernel_main(int argc, char *argv[]) {	
 	ncClear();
 	ncPrint("Welcome to the kernel!\n");
 
@@ -44,39 +43,12 @@ int kernel_main(int argc, char *argv[])
 	ncPrint("Initializing Memory Management...");
 	initializePageStack();
 	ncPrint("Done.\n");
-	char *auxVar = NULL;
-	pageManager(POP_PAGE, (void **)&auxVar);
-	int i = 0;
-	while(i < 2000) {
-		auxVar[i] = 'a' + (char)(i % 26);
-		i++;
-	}
-	auxVar[i] = NULL;
-	ncPrint("aux var is at: 0x");
-	ncPrintHex(auxVar);
-	ncPrint("\n");
-	
-
-	void *anotherVar = NULL;
-	pageManager(POP_PAGE, &anotherVar);
-	
-	ncPrint("Another var is at: 0x");
-	ncPrintHex(anotherVar);
-	ncPrint("\n");
-	
-	pageManager(PUSH_PAGE, (void **)&auxVar);
-	
-	pageManager(POP_PAGE, &anotherVar);
-	ncPrint("Now another var is at: 0x");
-	ncPrintHex((uint64_t)anotherVar);
-	ncPrint("\n");
-	while(1);
-
 
 	ncPrint("Jumping to user space...NOW!\n");
 
 	int32_t ret;
 	ret = runCodeModule();
+	
 	ncClear();
 	ncPrint("User space returned with exit code ");
 	ncPrintDec(ret);
@@ -88,13 +60,11 @@ int kernel_main(int argc, char *argv[])
 	return 0;
 }
 
-void clearBSS(void * bssAddress, uint64_t bssSize)
-{
+void clearBSS(void * bssAddress, uint64_t bssSize) {
 	memset(bssAddress, 0, bssSize);
 }
 
-void * getStackBase()
-{
+void * getStackBase() {
 	return (void*)(
 		(uint64_t)&endOfKernel
 		+ PageSize * 8				//The size of the stack itself, 32KiB
@@ -102,8 +72,7 @@ void * getStackBase()
 	);
 }
 
-void * initializeKernelBinary()
-{
+void * initializeKernelBinary() {
 	void * moduleAddresses[] = {
 		CODE_MODULE_ADDR,
 		DATA_MODULE_ADDR
@@ -113,3 +82,5 @@ void * initializeKernelBinary()
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
+
+

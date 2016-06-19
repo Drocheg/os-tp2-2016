@@ -31,6 +31,24 @@ void initializePageStack() {
 	initialized = 1;
 }
 
+void pageManager(Action action, void **page) {
+
+	if (initialized) {
+		switch (action) {
+			case PUSH_PAGE: pushPage(*page); break;
+			case POP_PAGE: *page = popPage(); break;
+			/* No default because action is an enum and there aren't no more cases */
+		}
+	}
+	return;
+}
+
+
+
+
+
+
+
 
 static void pushPage(void *page) {
 
@@ -51,17 +69,7 @@ static void *popPage() {
 
 
 
-void pageManager(Action action, void **page) {
 
-	if (initialized) {
-		switch (action) {
-			case PUSH_PAGE: pushPage(*page); break;
-			case POP_PAGE: *page = popPage(); break;
-			/* No default because action is an enum and there aren't no more cases */
-		}
-	}
-	return;
-}
 
 
 

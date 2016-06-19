@@ -1,30 +1,26 @@
 #include <memory.h>
+#include <stdlib.h>
+
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 32
 #endif
 
+/* Typedefs*/
 typedef enum {RUNNING = 1, WAITING, FINISHED} State;
+typedef node_t * Node;
 
-static uint16_t nextPid;
 
-static uint8_t usedNodes[MAX_PROCESSES];
-static void Node current;
-static void Node last;
-static void *memoryPage;
-static uint32_t nodeSize;
-
+/*Structs */
 struct pcb_t {
 
 	uint16_t pid;
 	char name[32];
-	void *stackPage;
-	void *stackBase; /* TODO: Check if we must use it */
-	void *stackTop;
+	void *userStackPage;
+	void *userStackTop;
+	void *kernelStackPage;
+	void *kernelStackTop;
 	State state;
 }
-
-
-typedef node_t * Node;
 
 struct node_t {
 	pcb_t process;
@@ -32,14 +28,98 @@ struct node_t {
 	Node next;
 };
 
-int initializePCB(Node node, char[32] name, void *stack) {
+
+/* Static variables */
+static uint8_t running;							/* Says if the scheduler is running */
+static uint16_t nextPid;						/* Stores the value of the next PID that will be assigned */
+static uint8_t usedNodes[MAX_PROCESSES];		/* Holds a list of the nodes, marking those that are occupied*/
+static Node last;								/* Points to the last node in the cirular queue */
+static void *memoryPage;						/* Stores a memory page for the circular queue */
+
+
+/* Static functions prototypes */
+static int initializePCB(Node node, char[32] name, void *stack);
+static int getFreeNode();
+static int createStack(void **userStackPage, void **userStackTop);
+static int initializeStack(void **userStackTop, void *mainFunction, uint64_t argc, char *argv[], char name[32]);
+
+
+
+/*********************/
+/* Exposed Functions */
+/*********************/
+
+
+/*
+ * Sets up the scheduler 
+ * Must call initializePageStack!!
+ */
+void initializeScheduler() {
+
+	uint64_t i = 0;
+	pageManager(POP_PAGE, &memoryPage); /* Gets a page to store scheduler circular queue */
+	while (i < MAX_PROCESSES) {
+		usedNodes[i++] = 0;
+	}
+	running = 0;
+	nextPid = 0;
+	last = NULL;
+}
+
+/*
+ * Starts the scheduler
+ */
+void startScheduler() {
+	running = 1;
+}
+
+/*
+ * Stops the scheduler
+ */
+void stopScheduler() {
+	running = 0;
+}
+
+
+/*
+ * Updates the process queue, changing to the nexr process
+ * Returns the next process' stack, 
+ * or NULL if scheduler is not running or if no process is scheduled
+ */
+void *nextProcess(void *currentRSP) {
+
+	Node current = NULL;
+
+	if (!running || last == NULL) {
+		return NULL;
+	}
+
+	current = last->next;
+	current->(process.userStackTop) = currentRSP;
+	return switchContext(current->kernelStackTop); /* ASM function */
+}
+
+
+
+
+
+
+
+/*********************/
+/* Static Functions */
+/*********************/
+
+
+static int initializePCB(Node node, char[32] name, void *stack) {
 
 	node->(process.pid) = nextPid++;
 	node->(process.name) = name;
-	if ( createStack(&node->(process.stackPage)), &node->(process.stackTop) ) {
+	if ( createStack(&node->(process.userStackPage)), &node->(process.userStackTop) ) {
 		return -1;
 	}
-	node->(process.stackTop) = (void *)(node->(process.stackPage) + PAGE_SIZE - sizeof(uint64_t));
+	if ( createStack(&node->(process.kernelStackPage)), &node->(process.kernelStackTop) ) {
+		return -1;
+	}
 	node->(process.state) = RUNNING;
 	return 0;
 }
@@ -73,7 +153,7 @@ int enqueueProcess(char[32] name, uint64_t argc, char *argv[]) {
 	if (argc <= 0) {
 		return -3
 	}
-	initializeStack(&(newNode->(process.stackTop)), argc, argv, newNode->(process.name));
+	initializeStack(&(newNode->(process.userStackTop)), argc, argv, newNode->(process.name));
 
 	aux = (last == NULL) ? newNode : last;
 	last = newNode;
@@ -98,7 +178,7 @@ int dequeueProcess() {
 
 	current = last->next;
 	usedNodes[current->index] = 0;
-	pageManager(PUSH_PAGE, &(current->(process.stackBase)) ); //TODO: Check if is well written
+	pageManager(PUSH_PAGE, &(current->(process.userStackPage)) ); //TODO: Check if is well written
 	if (last == last->next) {
 		last = NULL;
 	} else {
@@ -142,9 +222,18 @@ static int createStack(void **stackPage, void **stackTop) {
 
 
 
-static int initializeStack(void **stackTop, void *mainFunction, uint64_t argc, char *argv[], char name[32]) {
+/* 
+ * Loads stack in order to start running 
+ * Returns 0 on success, or -1 otherwise
+ */
+static int initializeStack(void **userStackTop, void *mainFunction, uint64_t argc, char *argv[], char name[32]) {
 
-	int count = 0;
+	uint64_t count = 0;
+	uint64_t processSS = 0;
+	uint64_t processRSP = 0;
+	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
+	uint64_t processCS = 0x008; /* WYRM value (TODO: Ask Rodrigo) */
+
 
 	if (argc <= 0) {
 		return -1; /* At least, one parameter with the process name must be passed */
@@ -152,8 +241,8 @@ static int initializeStack(void **stackTop, void *mainFunction, uint64_t argc, c
 
 	
 	/* Pushes stack base null */
-	*stackTop -= sizeof(uint64_t);
-	memset(*stackTop, 0, sizeof(uint64_t));
+	*userStackTop -= sizeof(uint64_t);
+	memset(*userStackTop, 0, sizeof(uint64_t));
 	
 	/* Pushes argv strings */
 	count = argc - 1;
@@ -166,87 +255,82 @@ static int initializeStack(void **stackTop, void *mainFunction, uint64_t argc, c
 			length += (sizeof(uint64_t) - aux);
 		}
 
-		*stackTop -= (length / sizeof(uint64_t)) * sizeof(uint64_t);
-		memcpy(*stackTop, (void*) argv[count], length); /* copies the NULL termination */
-		argv[count] = (char*) *stackTop;
+		*userStackTop -= (length / sizeof(uint64_t)) * sizeof(uint64_t);
+		memcpy(*userStackTop, (void*) argv[count], length); /* copies the NULL termination */
+		argv[count] = (char*) *userStackTop;
 		count--;
 	}
 
 	/* Pushes end of argv null */
-	*stackTop -= sizeof(uint64_t);
-	memset(*stackTop, 0, sizeof(uint64_t));
+	*userStackTop -= sizeof(uint64_t);
+	memset(*userStackTop, 0, sizeof(uint64_t));
 	 /*Pushes argv pointers */
 	count = argc - 1;
 	while (count >= 0) {
-		*stackTop -= sizeof(char *);
+		*userStackTop -= sizeof(char *);
 		void *argvArrayInStack = ;
-		memcpy(*stackTop, &(argv[count]), sizeof(char *));
+		memcpy(*userStackTop, &(argv[count]), sizeof(char *));
 		count--;
 	}
 
 	/* Pushes argv */
-	argv = (char *) *stackTop;
-	*stackTop -= sizeof(argv);
-	memcpy(*stackTop, argv, sizeof(argv));
+	argv = (char *) *userStackTop;
+	*userStackTop -= sizeof(argv);
+	memcpy(*userStackTop, argv, sizeof(argv));
 	/* Pushes argc */
-	*stackTop -= sizeof(argc);
-	memcpy(*stackTop, &argc, sizeof(argc));
+	*userStackTop -= sizeof(argc);
+	memcpy(*userStackTop, &argc, sizeof(argc));
 
 	/* Pushes return address of main */
 	// TODO: Lo mandamos a una funcion que sea la que lo pone en estado FINISHED ?
 
 	/* Pushes fake RBP (i.e the stack base of main caller) */
-	*stackTop -= sizeof(void *);
-	memset(*stackTop, 0, sizeof(void *));
+	*userStackTop -= sizeof(uint64_t);
+	memset(*userStackTop, 0, sizeof(void *));
 
-	/* Must push in this order: DS, SS, RSP (new process'), RFLAGS (with a mask), CS, RIP (process main function) */
-	/* See: http://stackoverflow.com/questions/6892421/switching-to-user-mode-using-iret */
-	/* This must be done in order to start running after iretq */
+	/* Up to here we have the process stack*/
+	processRSP = (uint64_t) *userStackTop;
+
+	/* Now we have to push registers values in order to start running after iretq */
+	/* Must push in this order: SS, RSP (new process'), RFLAGS (with a mask), CS, RIP */
+	/* For more info., see Intel® 64 and IA-32 Architectures Software Developers Manual, Vol. 3-A, Fig. 6-8 */
+	
+
 	/* Values got in https://bitbucket.org/RowDaBoat/wyrm/src */
 	/* /d4f3cfcc64325efb1f7d7039fc7bc7c7e85777b0/Kernel/Scheduler/Process.cpp?at=master&fileviewer=file-view-default */
 	
-	/* Pushes process main function direction */
-	*stackTop -= sizeof(void *);
-	memcpy(*stackTop, mainFunction, sizeof(void *));
+	/* Pushes SS register */
+	*userStackTop -= sizeof(processSS);
+	memcpy(*userStackTop, &processSS, sizeof(processSS));
+
+	/* Pushes RSP */
+	userStackTop -= sizeof(processRSP);
+	memcpy(*userStackTop, &processRSP, sizeof(processRSP));
+
+	/* Pushes RFLAGS */
+	userStackTop -= sizeof(processRFLAGS);
+	memcpy(*userStackTop, &processRFLAGS, sizeof(processRFLAGS));
+
+	/* Pushes CS */
+	userStackTop -= sizeof(processCS);
+	memcpy(*userStackTop, &processCS, sizeof(processCS));		
+
+	/* Pushes RIP (i.e: process main function direction or entry point) */
+	*userStackTop -= sizeof(uint64_t);
+	memcpy(*userStackTop, mainFunction, sizeof(uint64_t));
 
 	/* Pushes fake registers */
-	*stackTop -= 16 * sizeof(uint64_t);
-	memset(*stackTop, 0, 16 * sizeof(uint64_t));
+	*userStackTop -= 17 * sizeof(uint64_t);
+	memset(*userStackTop, 0, 17 * sizeof(uint64_t));
 
 	/* NOW IT CAN RUN */
-
-}
-
-static int strlen(char *string) {
-
-	int count = 0;
-	if (string == NULL) {
-		return -1;
-	}
-	while (string[count] == 0) {
-		count++;
-	}
-	return count;
+	return 0;
 }
 
 
 
 
-/* Must call initializePageStack before!! */
-void initializeScheduler() {
 
-	int i = 0;
-	pageManager(POP_PAGE, &memoryPage); /* Gets a page to store scheduler circular queue */
-	nodeSize = sizeof(struct node_t);
-	while (i < MAX_PROCESSES) {
-		usedNodes[i++] = 0;
-	}
-	nextPid = 0;
-	current = NULL;
-	last = NULL;
-
-
-}
 
 
 /*
@@ -255,6 +339,7 @@ void initializeScheduler() {
  * If next process is waiting, it skips it.
  * If next process is finished, it dequeus it and get the following
  */
+ /*
 void *nextProcess() {
 
 	Node current = NULL;
@@ -282,7 +367,7 @@ void *nextProcess() {
 
 }
 
-
+*/
 
 
 

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stddef.h>
 
 //Parses the specified value to string, returning the number of digits converted.
 uint32_t intToStr(uint64_t value, char * buffer) {
@@ -58,13 +59,17 @@ int32_t strcmp(const char *s1, const char *s2) {
 }
 
 //Calculates length of a (null-terminated) string
-uint32_t strlen(const char *s) {
-	uint32_t result = 0;
-	while(*s != 0) {
-		result++;
-		s++;
+uint64_t strlen(const char *s) {
+	
+	uint64_t count = 0;
+	if (s == NULL) {
+		return -1;
 	}
-	return result;
+	while (s[count] != 0) {
+		count++;
+	}
+	return count;
+
 }
 
 //Returns the index of the first occurrence of the specified "needle" string

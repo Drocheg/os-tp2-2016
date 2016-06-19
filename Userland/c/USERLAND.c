@@ -34,6 +34,7 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 
+
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
 	{"clear", clearScreen, "Clears the screen"},
@@ -54,7 +55,6 @@ int32_t userland_main(int argc, char *argv[]) {
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
-
 	clearScreen();
 	char buffer[100];
 	printVer();
