@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	
 	struct arguments arguments;
 
-	arguments.output_file = OUTPUT_FILE;
+	arguments.output_file = (char *)OUTPUT_FILE;
 	arguments.count = 0;
 
 	argp_parse (&argp, argc, argv, 0, 0, &arguments);
@@ -125,7 +125,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 {
   /* Get the input argument from argp_parse, which we
      know is a pointer to our arguments structure. */
-  struct arguments *arguments = state->input;
+  struct arguments *arguments = (struct arguments *)state->input;
 
   switch (key)
     {

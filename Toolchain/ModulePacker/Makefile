@@ -4,7 +4,8 @@ SOURCES=$(wildcard *.c)
 all: $(MP)
 
 $(MP): $(SOURCES)
-	echo "If this fails on cygwin, try uncommenting the -largp flag"; gcc $(SOURCES) -o $(MP) #-largp
+	echo "If this fails on cygwin, try uncommenting the -largp flag"; 
+	gcc $(SOURCES) -o $(MP) -largp
 
 clean:
 	rm -rf $(MP)

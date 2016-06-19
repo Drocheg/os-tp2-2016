@@ -1,7 +1,7 @@
 #Where your cross C compiler is (target = x86_64-elf)
-GCC=gcc
+GCC=x86_64-elf-gcc
 #Where your cross linker is
-LD=ld
+LD=x86_64-elf-ld
 #Where your cross AR thingy is
 AR=ar
 #Where your NASM is (the cross AS assembler doesn't seem to work)

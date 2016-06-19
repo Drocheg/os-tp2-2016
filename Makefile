@@ -1,7 +1,7 @@
 all: bootloader common userland kernel song image
 
 bootloader:
-	clear; clear; cd Bootloader; make all
+	cd Bootloader; make all
 
 common:
 	cd Common; make all

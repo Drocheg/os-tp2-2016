@@ -6,6 +6,8 @@
 #include <idt.h>
 #include <libasm.h>
 #include <modules.h>
+#include <memory.h>
+#include <stddef.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -38,6 +40,38 @@ int kernel_main(int argc, char *argv[])
 	//masterPICmask(0xFF);	//No interrupts
 	_sti();
 	ncPrint("Done.\n");
+
+	ncPrint("Initializing Memory Management...");
+	initializePageStack();
+	ncPrint("Done.\n");
+	char *auxVar = NULL;
+	pageManager(POP_PAGE, (void **)&auxVar);
+	int i = 0;
+	while(i < 2000) {
+		auxVar[i] = 'a' + (char)(i % 26);
+		i++;
+	}
+	auxVar[i] = NULL;
+	ncPrint("aux var is at: 0x");
+	ncPrintHex(auxVar);
+	ncPrint("\n");
+	
+
+	void *anotherVar = NULL;
+	pageManager(POP_PAGE, &anotherVar);
+	
+	ncPrint("Another var is at: 0x");
+	ncPrintHex(anotherVar);
+	ncPrint("\n");
+	
+	pageManager(PUSH_PAGE, (void **)&auxVar);
+	
+	pageManager(POP_PAGE, &anotherVar);
+	ncPrint("Now another var is at: 0x");
+	ncPrintHex((uint64_t)anotherVar);
+	ncPrint("\n");
+	while(1);
+
 
 	ncPrint("Jumping to user space...NOW!\n");
 

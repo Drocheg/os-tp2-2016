@@ -11,4 +11,8 @@
 #define RAINBOW 8
 #define REBOOT 9
 
+/* New Syscalls */
+#define MEMORY 10
+
+
 #endif
