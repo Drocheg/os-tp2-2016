@@ -1,9 +1,12 @@
 EXTERN IRQHandler
 EXTERN int80Handler
-EXTERN getInterruptsStackTop
-EXTERN switchToUser
-EXTERN setHardwareInterrupt
-EXTERN clearHardwareInterrupt
+
+EXTERN getSoftwareIntStack
+EXTERN getTimerIntStack
+EXTERN getKbdIntStack
+
+EXTERN getStack
+
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
@@ -22,8 +25,10 @@ SECTION .text
 	push r15
 
 	;Gets kernel stack
-	call setHardwareInterrupt
-	call getInterruptsStackTop
+	; call setHardwareInterrupt
+	; call getInterruptsStackTop
+	mov rdi, %1
+	call getStack
 	mov r15, rax
 	mov rbx, rsp					; Saves current process stack into RBX
 	mov rsp, rax					; Switches context to kernel mode
@@ -41,9 +46,6 @@ SECTION .text
 	mov al, 20h
 	out 20h, al						
 	
-
-	call switchToUser
-	call clearHardwareInterrupt
 	;Undo stack frame
 	pop r15
 	pop r13
@@ -75,7 +77,8 @@ int80Receiver:
 	push rsi								; Saves second parameter
 	push rdx								; Saves third parameter
 	push rcx								; Saves fourth parameter
-	call getInterruptsStackTop				; Gets kernel stack
+	mov rdi, 0x80
+	call getStack							; Gets kernel stack
 	pop rcx									; Restores fourth parameter
 	pop rdx									; Restores third parameter
 	pop rsi 								; Restores second parameter
@@ -88,7 +91,6 @@ int80Receiver:
 	call int80Handler						; Parameter registers shouldn't have been modified
 
 	;Restores process context
-	call switchToUser
 	pop rbx
 	mov rsp, rbx
 	

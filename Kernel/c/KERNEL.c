@@ -42,7 +42,7 @@ int kernel_main(int argc, char *argv[]) {
 
 	/* Enables interrupts (i.e: PIC Mask, and Interrupts stack) */
 	ncPrint("Enabling interrupts...");
-	if (initializeInterruptsStack()) {
+	if (initializeInterruptStacks()) {
 		ncPrint("Couldn't start the kernel. Aborting\n");
 		_cli();
 		_halt();
@@ -61,7 +61,6 @@ int kernel_main(int argc, char *argv[]) {
 
 
 	ncPrint("Jumping to user space...NOW!\n");
-	switchToUser();
 	ret = runCodeModule();
 	
 	ncClear();

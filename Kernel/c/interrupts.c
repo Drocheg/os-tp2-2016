@@ -5,24 +5,68 @@
 #include <video.h>
 
 
-static void *interruptsStackTop = NULL;
-static void *interruptsStackPage = NULL;
-static uint64_t kernelMode;
-static uint64_t hardwareInterrupt;
+static void *softwareIntStack = NULL;
+static void *softwareIntStackPage = NULL;
 
-uint64_t initializeInterruptsStack() {
+static void *timerIntStack = NULL;
+static void *timerIntStackPage = NULL;
+
+static void *kbdIntStack = NULL;
+static void *kbdIntStackPage = NULL;
+
+
+// static uint64_t kernelMode;
+// static uint64_t hardwareInterrupt;
+
+uint64_t initializeInterruptStacks() {
 	
-	pageManager(POP_PAGE, &interruptsStackPage);
-	if (interruptsStackPage == NULL) {
+	pageManager(POP_PAGE, &softwareIntStackPage);
+	pageManager(POP_PAGE, &timerIntStackPage);
+	pageManager(POP_PAGE, &kbdIntStackPage);
+	if (softwareIntStackPage == NULL 
+		|| timerIntStackPage == NULL
+		|| kbdIntStackPage == NULL) {
 		return -1;
 	}
-	interruptsStackTop = interruptsStackPage + PAGE_SIZE - sizeof(uint64_t);
-	memset(interruptsStackTop, 0, sizeof(uint64_t)); /* NULL terminates the interrupts stack */
-	kernelMode = 1;
-	hardwareInterrupt = 0;
+	softwareIntStack = softwareIntStackPage + PAGE_SIZE - sizeof(uint64_t);
+	timerIntStack = timerIntStackPage + PAGE_SIZE - sizeof(uint64_t);
+	kbdIntStack = kbdIntStackPage + PAGE_SIZE - sizeof(uint64_t);
+	memset(softwareIntStack, 0, sizeof(uint64_t)); /* NULL terminates the stack */
+	memset(timerIntStack, 0, sizeof(uint64_t)); /* NULL terminates the stack */
+	memset(kbdIntStackPage, 0, sizeof(uint64_t)); /* NULL terminates the stack */
 	return 0;
 }
 
+
+/* TODO: Make just one function */
+
+void *getStack(uint64_t stack) {
+
+	switch (stack) {
+		case 0x0: return timerIntStack;
+		case 0x1: return kbdIntStack;
+		case 0x80: return softwareIntStack;
+	}
+	return NULL;
+}
+
+void *getSoftwareIntStack() {
+	return softwareIntStack;
+}
+
+void *getTimerIntStack() {
+	return timerIntStack;
+}
+
+void *getKbdIntStack() {
+	return kbdIntStack;
+}
+
+
+
+
+
+/*
 void setHardwareInterrupt() {
 	hardwareInterrupt = 1;
 }
@@ -41,11 +85,12 @@ void switchToUser() {
 	}
 	kernelMode = 0;
 }
-
-void *getInterruptsStackTop() {
+*/
+/*
+void *getsoftwareIntStack() {
 	if (kernelMode) {
 		return getActualStackTop();
 	}
 	switchToKernel();
-	return interruptsStackTop;
-}
+	return softwareIntStack;
+}*/
