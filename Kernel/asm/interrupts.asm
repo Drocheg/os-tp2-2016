@@ -1,9 +1,13 @@
 EXTERN IRQHandler
 EXTERN int80Handler
-EXTERN getKernelStackTop
+EXTERN getInterruptsStackTop
+EXTERN switchToUser
+EXTERN setHardwareInterrupt
+EXTERN clearHardwareInterrupt
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
+GLOBAL getActualStackTop
 
 SECTION .text
 
@@ -18,7 +22,9 @@ SECTION .text
 	push r15
 
 	;Gets kernel stack
+	call setHardwareInterrupt
 	call getInterruptsStackTop
+	mov r15, rax
 	mov rbx, rsp					; Saves current process stack into RBX
 	mov rsp, rax					; Switches context to kernel mode
 	push rbx						; Saves process stack in kernel's interrupts stack
@@ -29,8 +35,15 @@ SECTION .text
 
 	;Restores process context
 	pop rbx
-	mov rsp, rbx						
+	mov rsp, rbx
+
+	;signal pic
+	mov al, 20h
+	out 20h, al						
 	
+
+	call switchToUser
+	call clearHardwareInterrupt
 	;Undo stack frame
 	pop r15
 	pop r13
@@ -70,12 +83,12 @@ int80Receiver:
 	mov rbx, rsp 							; Saves current process stack into RBX
 	mov rsp, rax							; Switch context to kernel mode
 	push rbx 								; Saves process stack in kernel's interrupts stack
-
-
+	
 	;Executes interrupt handler
 	call int80Handler						; Parameter registers shouldn't have been modified
 
 	;Restores process context
+	call switchToUser
 	pop rbx
 	mov rsp, rbx
 	
@@ -86,7 +99,14 @@ int80Receiver:
 	pop rbx
 	pop rsp
 	pop rbp
+
+
+
 	iretq
+
+getActualStackTop:
+	mov rax, rsp
+	ret
 
 
 	

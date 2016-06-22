@@ -8,6 +8,7 @@
 #include <speaker.h>
 #include <keyboard.h>
 #include <memory.h>
+#include <video.h>
 
 
 
@@ -16,7 +17,7 @@ static void timerTick();
 
 
 int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) {
-	int64_t result;
+	int64_t result = 0;
 	_sti();
 	//No use of function pointer array because different syscalls take different parameters and have
 	//different return values.

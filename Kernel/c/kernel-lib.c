@@ -12,6 +12,7 @@ int64_t sys_read(uint8_t fd, char *buff, uint32_t maxBytes) {
 	int64_t result;
 	if(fd < MIN_FD || fd > MAX_FD) return -1;
 	int i, done;
+
 	switch(fd) {
 		case STDIN:
 			result = 0;

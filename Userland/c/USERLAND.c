@@ -52,6 +52,7 @@ static command commands[] = {
 
 int32_t userland_main(int argc, char *argv[]) {
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+	
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
@@ -64,6 +65,7 @@ int32_t userland_main(int argc, char *argv[]) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
+
 		while((c = getchar()) != '\n') {
 			if(c != 0) {					//Recognized key, print it and save it
 				if(c == '\b') {				//Entered backspace
@@ -82,6 +84,7 @@ int32_t userland_main(int argc, char *argv[]) {
 				putchar('_');
 			}
 		}
+
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");

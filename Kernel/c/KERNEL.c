@@ -18,11 +18,9 @@ extern uint8_t endOfKernel;
 
 /* static const uint64_t PageSize = 0x1000; */
 static const uint64_t PageSize = PAGE_SIZE;
-static void *kernelStackPage = NULL;
 
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
-static uint64_t setUpKernelStack(void *stackPage);
 
 int kernel_main(int argc, char *argv[]) {
 
@@ -63,6 +61,7 @@ int kernel_main(int argc, char *argv[]) {
 
 
 	ncPrint("Jumping to user space...NOW!\n");
+	switchToUser();
 	ret = runCodeModule();
 	
 	ncClear();
