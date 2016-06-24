@@ -26,4 +26,4 @@ clean:
 	cd Userland/Songmaker; make clean
 	cd Image; make clean
 
-.PHONY: all clean bootloader common userland kernel song image 
+.PHONY: all clean bootloader common userland kernel song image
