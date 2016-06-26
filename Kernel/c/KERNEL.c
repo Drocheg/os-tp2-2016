@@ -7,6 +7,7 @@
 #include <libasm.h>
 #include <modules.h>
 #include <memory.h>
+#include <pit.h>
 #include <stddef.h>
 
 extern uint8_t text;
@@ -38,6 +39,10 @@ int kernel_main(int argc, char *argv[]) {
 	//masterPICmask(0xFE);	//Timer tick only
 	//masterPICmask(0xFF);	//No interrupts
 	_sti();
+	ncPrint("Done.\n");
+
+	ncPrint("Increasing PIT frequency...");
+	setPITfrequency(100);	//Any higher and PC speaker stops responding
 	ncPrint("Done.\n");
 
 	ncPrint("Initializing Memory Management...");
