@@ -29,4 +29,6 @@ void printf(const char *format, vargs *args);
 
 uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 
+uint64_t time();
+
 #endif

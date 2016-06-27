@@ -8,6 +8,7 @@
 #include <modules.h>
 #include <memory.h>
 #include <stddef.h>
+#include <time.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -33,6 +34,10 @@ int kernel_main(int argc, char *argv[]) {
 	setInterrupt(0x20, (uint64_t)&int20Receiver);
 	setInterrupt(0x21, (uint64_t)&int21Receiver);
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
+	ncPrint("Done.\n");
+
+	ncPrint("Increasing PIT frequency...");
+	setPITfrequency(500);	//Any higher and PC speaker stops responding
 	ncPrint("Done.\n");
 
 	/* Initializes memory management */
@@ -99,9 +104,5 @@ void * initializeKernelBinary() {
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
-
-
-
-
 
 

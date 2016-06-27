@@ -7,6 +7,7 @@
 #include <modules.h>
 #include <speaker.h>
 #include <keyboard.h>
+#include <time.h>
 #include <memory.h>
 #include <video.h>
 #include <process.h>
@@ -61,6 +62,9 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = createProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
 			*((uint64_t *) p2) = (uint64_t) result;
 		}
+		case TIME:
+			result = time();
+			break;
 		default:
 			result = -1;
 			break;
@@ -83,6 +87,7 @@ void IRQHandler(uint8_t irq) {
 	uint64_t key;
 	switch(irq) {
 		case 0:					//Timer tick
+			tick();
 			timerTick();
 			break;
 		case 1:					//Keyboard

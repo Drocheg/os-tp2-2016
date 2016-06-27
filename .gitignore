@@ -2,6 +2,7 @@ trace-*
 Tools.inc
 Toolchain/ModulePacker/Makefile
 run.sh
+nbproject/
 
 #Dropbox files
 *.dropbox.attr
