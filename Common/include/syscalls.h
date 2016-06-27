@@ -13,6 +13,7 @@
 
 /* New Syscalls */
 #define MEMORY 10
+#define TIME 11
 
 
 #endif

@@ -7,7 +7,7 @@
 #include <libasm.h>
 #include <modules.h>
 #include <memory.h>
-#include <pit.h>
+#include <time.h>
 #include <stddef.h>
 
 extern uint8_t text;

@@ -51,6 +51,12 @@ void printNum(uint64_t num) {
 	print(buff);
 }
 
+uint64_t time() {
+	// uint64_t result;
+	return _int80(TIME, 0, 0, 0);
+	// return result;
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;
