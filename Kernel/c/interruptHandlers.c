@@ -9,6 +9,7 @@
 #include <keyboard.h>
 #include <memory.h>
 #include <video.h>
+#include <process.h>
 
 
 
@@ -54,6 +55,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MEMORY:
 			pageManager((Action)p1, (void **)p2);
 			break;
+		case CREATE_PROCESS: {
+
+			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+			result = createProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+			*((uint64_t *) p2) = (uint64_t) result;
+		}
 		default:
 			result = -1;
 			break;
@@ -65,7 +72,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 
 uint64_t timerTickHandler(void *stack) {
 
-	timerTick();
+	tick();
 	return nextProcess(stack);
 }
 
@@ -88,13 +95,13 @@ void IRQHandler(uint8_t irq) {
 	outb(0x20, 0x20);			//EOI signal
 }
 
-static void timerTick() {  	
-  	if(!noSound())				//NOT an else, both cases might need to be run
-  	{
-		decreaseTimer();
-	}
-	if(noSound())
-	{
-		soundOff();
-	}
-}
+// static void timerTick() {  	
+//   	if(!noSound())				//NOT an else, both cases might need to be run
+//   	{
+// 		decreaseTimer();
+// 	}
+// 	if(noSound())
+// 	{
+// 		soundOff();
+// 	}
+// }

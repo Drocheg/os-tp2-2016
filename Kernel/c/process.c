@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <kernel-lib.h>
 #include <scheduler.h>
+#include <process.h>
 
 
 
@@ -42,6 +43,9 @@ struct pcbEntry_s {
 	/* Other data */
 	void *stackPage;
 
+	/* Heap */
+	void *heapPage;
+
 	/* Free Space to reach 512 Bytes (when adding a field, bytes should be taken from here)  */
 	uint64_t freeSpace[22];
 
@@ -59,7 +63,7 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 /* Static functions prototypes */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
-static void terminateProcess();
+static uint64_t terminateProcess();
 
 
 
@@ -307,7 +311,7 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 
 /*
- * Function that change the process state to finished in the scheduler.
+ * Function that changes the process state to finished in the scheduler.
  * Returns -1 if there was a problem (i.e. scheduler wasn't on), or does not return otherwise.
  * Brief explanation:
  * This function calls finishProcess() from scheduler, which changes the process' state to FINISHED.
@@ -320,7 +324,6 @@ static uint64_t terminateProcess() {
 	if (finishProcess()) {
 		return -1;
 	}
-	while(1); /* Loops until next process' turn. Scheduler will destroy the process, so this loop will finish then */
 	return 0;
 }
 
@@ -401,7 +404,7 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 
 	/* Pushes return address of main */
 	*userStackTop -= sizeof(void *);
-	memcpy(*userStackTop, terminateProcess, sizeof(void *));
+	memset(*userStackTop, 0, sizeof(void *));
 
 	/* Pushes fake RBP (i.e the stack base of main caller) */
 	*userStackTop -= sizeof(uint64_t);

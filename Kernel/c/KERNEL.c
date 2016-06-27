@@ -57,11 +57,14 @@ int kernel_main(int argc, char *argv[]) {
 	ncPrint("Done.\n");
 
 	/* Initializes scheduler */
+	char *args[] = {"init.d"};
+	createProcess(0, "init.d", runCodeModule, 1, args);
 
 
 
-	ncPrint("Jumping to user space...NOW!\n");
-	ret = runCodeModule();
+
+	// ncPrint("Jumping to user space...NOW!\n");
+	// ret = runCodeModule();
 	
 	ncClear();
 	ncPrint("User space returned with exit code ");

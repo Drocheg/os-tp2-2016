@@ -50,12 +50,59 @@ static command commands[] = {
 };
 
 
+int32_t init_d() {
+
+
+
+	while(1);
+	return 0;
+
+}
+
+uint64_t printProcessA() {
+
+	uint64_t aux = 0;
+	while (aux < 100000) {
+		if ( (aux % 1000) == 0) {
+			print("Hi, from process A");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+uint64_t printProcessB() {
+
+	uint64_t aux = 0;
+	while (aux < 100000) {
+		if ( (aux % 1000) == 500) {
+			print("Hi, from process B");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+uint64_t beepProcess() {
+
+	uint64_t aux = 0;
+	while (aux < 100000) {
+		if ( (aux % 500) == 500) {
+			beep();
+		}
+		aux++;
+	}
+	return 0;
+}
+
 int32_t userland_main(int argc, char *argv[]) {
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
 	
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
+
+
 	clearScreen();
 	char buffer[100];
 	printVer();

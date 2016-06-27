@@ -26,6 +26,12 @@ void stopScheduler();
  */
 void *nextProcess();
 
+/*
+ * Finishes the current process
+ * Returns 0 on suceess, or -1 otherwise
+ */
+uint64_t finishProcess();
+
 
 
 

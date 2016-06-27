@@ -51,6 +51,29 @@ void printNum(uint64_t num) {
 	print(buff);
 }
 
+uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+
+	int i = 0;
+	struct createProcessParams_s params;
+	
+	params.parentPid = parentPid;
+	while (name[i] != 0) {
+		params.name[i] = name[i];
+		i++;
+	}
+	params.entryPoint = entryPoint;
+	params.argc = argc;
+	//params.argv = argv;
+	i = 0;
+	while ( i < argc) {
+		(params.argv)[i] = argv[i];
+		i++;
+	}
+	uint64_t result;
+	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
+	return result;
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;
