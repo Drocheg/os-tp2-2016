@@ -49,7 +49,9 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
-	ncPrint("Jumping to user space...NOW!\n");
+
+	ncPrint("Setting video mode and jumping to user space...NOW!\n");
+	setGraphicMode();
 
 	int32_t ret;
 	ret = runCodeModule();
@@ -87,5 +89,3 @@ void * initializeKernelBinary() {
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
-
-

@@ -5,7 +5,7 @@ all: $(MP)
 
 $(MP): $(SOURCES)
 	echo "If this fails on cygwin, try uncommenting the -largp flag"; 
-	gcc $(SOURCES) -o $(MP) -largp
+	gcc $(SOURCES) -o $(MP)
 
 clean:
 	rm -rf $(MP)
