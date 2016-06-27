@@ -81,7 +81,7 @@ int64_t sys_write(uint8_t fd, char *buff, uint32_t maxBytes) {
 
 //Writes notes and frequencies to the pc speaker
 void sys_sound(uint32_t freq, uint32_t time) {
-	playSound(freq);
+	offerSound(freq, time);
 }
 
 void * memset(void * destination, int32_t c, uint64_t length)

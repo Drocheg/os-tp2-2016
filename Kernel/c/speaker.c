@@ -7,20 +7,16 @@ static uint32_t soundQueue[SOUND_BUFF_SIZE] = {0};
 static uint32_t soundTimeQueue[SOUND_BUFF_SIZE] = {0};
 static int soundRIndex = 0, soundWIndex = 0;
 
-//@Deprecated
 uint8_t noSound() {
 
 	return soundRIndex == soundWIndex ;
 }
 
-//@Deprecated
 uint8_t soundBufferIsFull() {
-
 	return soundRIndex == soundWIndex+1 || (soundRIndex == 0 && soundWIndex == SOUND_BUFF_SIZE-1);
 }
 
 /**
-@Deprecated
 Encola en el buffer de sonido, en caso de haber espacio, el sonido con su tiempo correspondiente. 
 */
 uint8_t offerSound(uint32_t sound, uint32_t time) {
@@ -37,11 +33,9 @@ uint8_t offerSound(uint32_t sound, uint32_t time) {
 }
 
 /**
-@Deprecated
 Reproduce la cancion si el buffer no esta vacio y le baja en 1 al de tiempo correspondiente.
 Avanza en el buffer en caso de llegar el tiempo a 0. 
 */
-
 void decreaseTimer() {
 	if(noSound()) return;
 	playSound(soundQueue[soundRIndex]);
