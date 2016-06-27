@@ -7,6 +7,7 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <game.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -33,6 +34,7 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
+void game();
 
 
 static command commands[] = {
@@ -47,7 +49,8 @@ static command commands[] = {
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
-	{"time", getTime, "Get ms since system boot"}
+	{"time", getTime, "Get ms since system boot"},
+	{"game", game, "Play Game"}
 };
 
 
@@ -175,4 +178,8 @@ void getTime() {
 	print("Current time: ");
 	printNum(time());
 	print("ms\n");
+}
+
+void game(){
+	initGame();
 }
