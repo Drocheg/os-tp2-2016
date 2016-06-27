@@ -10,6 +10,8 @@ static sound_node_t * prev, current=NULL;
 
 void playSound();
 void addSound(uint64_t timems, uint64_t freq);
+void initSoundPlayer();
+void listenNewSound();
 
 uint64_t addSound(uint64_t timems, uint64_t freq){
 	if(numSounds>=MAX_LIST_SIZE) return -1; 
@@ -57,7 +59,14 @@ void playSound(){
 
 void initSoundPlayer(){
 	while(1){
+		listenNewSound();
 		playSound();
 		yield();
 	}
 }
+
+void listenNewSound(){
+	//TODO check msgq to see if new msgs
+	return;
+}
+
