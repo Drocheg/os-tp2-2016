@@ -12,10 +12,11 @@ struct file_s {
 	char name[MAX_NAME];			/* Stores the file name */
 	uint64_t maxSize;				/* Stores the max amount of bytes the file can hold */
 	void *stream;					/* Stores a pointer to the stream of the file */
-	uint64_t place;					/* Stores if stream is a memory page, or a kernel buffer (for example, video buffer) */
+	uint32_t place;					/* Stores if stream is a memory page, or a kernel buffer (for example, video buffer) */
 	IndexManager indexManager;		/* Stores the function that update indexes  */
 	uint64_t enqueueIndex;			/* Stores the next position to put an element into the file */
 	uint64_t dequeueIndex;			/* Stores the position to get an element from the file */
+	uint32_t unreadData;			/* Stores if there is data available for read */
 };
 
 
@@ -93,10 +94,11 @@ File createFile(char name[MAX_NAME], void *stream, uint64_t maxSize, Place place
 	memcpy((void *) newFile->name, name, MAX_NAME);
 	newFile->maxSize = maxSize;
 	newFile->stream = stream;
-	newFile->place = (uint64_t) place;
+	newFile->place = (uint32_t) place;
 	newFile->indexManager = indexManager;
 	newFile->enqueueIndex = 0;
 	newFile->dequeueIndex = 0;
+	newFile->unreadData = 0;
 	
 	return newFile;
 }
@@ -132,6 +134,7 @@ uint64_t readChar(File file) {
 	stream = (char *)file->stream;
 	c = stream[file->dequeueIndex];
 	(file->indexManager)(&(file->dequeueIndex), file->maxSize);
+	file->unreadData = (file->enqueueIndex == file-->dequeueIndex) ? 0 : 1;
 	return (uint64_t) c;
 }
 
@@ -143,17 +146,31 @@ uint64_t writeChar(char c, File file) {
 		return EOF;
 	}
 
-	if (file->enqueueIndex == file->dequeueIndex ) {
+	if ( !hasFreeSpace(file) ) {
 		return EOF;
 	}
 	stream = (char *)file->stream;
 	stream[file->enqueueIndex] = c;
 	(file->indexManager)(&(file->enqueueIndex), file->maxSize);
+	file->unreadData = 1;
 	return (uint64_t) c;
 }
 
+/*
+ * Returns 1 if there is data available, or 0 otherwise
+ */
+uint64_t dataAvailable(File file) {
 
+	return file->unreadData; 
+}
 
+/*
+ * Returns 1 if there is free space, or 0 otherwise
+ */
+uint64_t hasFreeSpace(File file) {
+
+	return !(file->unreadData) && (file->enqueueIndex == file-->dequeueIndex)
+}
 
 
 uint64_t destroyFile(File file) {

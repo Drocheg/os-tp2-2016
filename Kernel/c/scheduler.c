@@ -11,10 +11,13 @@
 
 
 /* Typedefs*/
-typedef enum {RUNNING = 1, WAITING, SLEPT, FINISHED} State;
-typedef enum {SLEPT_IO = 1, SLEPT_TIME} SleptState;
-typedef uint64_t (*IOActions)(uint64_t, uint64_t);
 typedef struct node_t * Node;
+typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
+typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
+typedef uint64_t (*IOActions)(uint64_t, uint64_t);
+typedef uint64_t (*CheckWakeActions)(Node);
+typedef uint64_t (*CheckWakeIOActions)();
+
 
 
 /* Structs */
@@ -31,10 +34,12 @@ struct node_t {
 
 /* Static variables */
 static uint8_t running = 0;						/* Says if the scheduler is on */
-static uint8_t usedNodes[MAX_PROCESSES];		/* Holds a list of the nodes, marking those that are occupied*/
+static uint8_t usedNodes[MAX_PROCESSES];		/* Holds a list of the nodes, marking those that are occupied */
 static Node last = NULL;						/* Points to the last node in the cirular queue */
 static void *memoryPage = NULL;					/* Stores a memory page for the circular queue */
-static IOActions ioActions[2];					/* Stores a pointer to actions to be taken on IO request */
+static IOActions ioActions[2];	 				/* Stores a pointer to actions to be taken on IO request */
+static CheckWakeActions wakeActions[2];			/* Stores a pointer to actions to be taken to check if a process must be waken */
+static CheckWakeIOActions wakeIOActions[2];		/* Stores a pointer to checkers of IO wakening */
 
 
 /* Static functions prototypes */
@@ -63,6 +68,9 @@ uint64_t initializeScheduler() {
 	while (i < MAX_PROCESSES) {
 		usedNodes[i++] = 0;
 	}
+	ioActions = {waitForInput, waitForOutput};
+	wakeActions = {checkWakeIO, checkWakeTime};
+	wakeIOActions = {checkAvailableData, checkFreeSpace ;
 	return 0;
 }
 
@@ -87,26 +95,61 @@ void stopScheduler() {
  * Returns the next process' stack, 
  * or NULL if scheduler is not running or if no process is scheduled
  */
-// void *nextProcess(void *currentRSP) {
-
-// 	Node current = NULL;
-
-// 	if (!running || last == NULL) {
-// 		return NULL;
-// 	}
-
-// 	current = last->next;
-// 	current->(process.userStackTop) = currentRSP;
-// 	switchToKernelContext(current->kernelStackTop); /* ASM function */
-
-// }
-
-
-uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
-	SleptState state;
+	if (checkScheduler()) {
+		return NULL;
+	}
+	current = last->next;
+	
+	setProcessStack(current->PCBIndex, currentRSP);
+	
+	last = current;		 				/* Change to next process */
+	return nextProcessRecursive();
+
+}
+
+void *nextProcessRecursive() {
+
+	Node current = last->next;
+
+	if (current->state == RUNNING) {
+		return getProcessStack(current->PCBIndex);
+	}
+	if (current->state == FINISHED) {
+		dequeueProcess();
+		return nextProcessRecursive();
+	}
+	if (current->state == SLEPT) {
+		if (checkWake(current)) {				/* TODO: Check that everything is done here */
+			last = last->next;
+			return nextProcessRecursive();		/* if checkWake returns -1, the process must remain slept */
+		}
+		current->state = RUNNING;
+		return getProcessStack(current->PCBIndex);
+	}
+		
+}
+
+
+/*
+ * Checks if the scheduler is running and has processes in its queue
+ */
+static uint64_t checkScheduler() {
+
 	if (!running || last == NULL) {
+		return -1;
+	}
+	return 0;
+} 
+
+
+static uint64_t waitForIO(Node current, uint64_t fileDescriptor, IOOperation ioOperation) {
+
+	
+	Node current = NULL;
+	if (checkScheduler()) {
 		return -1;
 	}
 	current = last->next;
@@ -117,27 +160,131 @@ uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
 	if (ioActions[(uint64_t) ioOperation]) {
 		return -1;
 	}
-	state = SLEPT_IO;
 	current->state = SLEPT;
-	current->generalPurpose1 = (uint64_t) SLEPT_IO;
+	current->generalPurpose1 = (uint64_t) SLEPT_IO; 									/* Stores reason of sleep */
+	current->generalPurpose2 = (uint64_t) ioOperation; 									/* Stores action to take place */
+	current->generalPurpose3 = (uint64_t) getFile(current-> PCBIndex, fileDescriptor); 	/* Stores file to check */
 
+	return 0;
 }
 
 
 
-uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+
+	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_READ;
+
+	if (flag != F_READ) {
+		return -1; /* Permission denied */
+	}
+	return 0;
+}
 
 
+static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+
+	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_WRITE;
+
+	if (flag != F_READ) {
+		return -1; /* Permission denied */
+	}
+	return 0;
+}
+
+
+
+static uint64_t waitForTime(Node current, uint64_t miliseconds){
+
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	current->state = SLEPT;
+	current->generalPurpose1 = (uint64_t) SLEPT_TIME; 							/* Stores reason of sleep */
+	current->generalPurpose2 = (uint64_t)  miliseconds * getFrequency(); 		/* Stores how many ticks must occur to wake up */
+	current->generalPurpose3 = currentTicks();									/* Stores actual amount of ticks */
+}
+
+
+
+static uint64_t checkWake(Node current) {
+
+	return wakeActions[current->generalPurpose1];
 
 }
 
 
-uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+static uint64_t checkWakeIO(Node current) {
 
+	return wakeIOActions[current->generalPurpose2];
 
 }
 
+/*
+ * Checks if the file has data available to be read
+ * Returns 0 ig the process must be waken, or -1 otherwise
+ */
+static uint64_t checkAvailableData(Node current) {
 
+	File file = (File) current->generalPurpose3;
+
+	if (!dataAvailable(file)) {
+		return -1;
+	}
+
+	/* TODO: What do we do here? */
+	
+	return 0;
+}
+
+
+/*
+ * Checks if the file has data available to be read
+ * Returns 0 ig the process must be waken, or -1 otherwise
+ */
+static uint64_t checkFreeSpace(Node current) {
+
+	File file = (File) current->generalPurpose3;
+
+	if (!hasFreeSpace(file)) {
+		return -1;
+	}
+
+	/* TODO: What do we do here? */
+	
+	return 0;
+
+}
+
+/* 
+ * Checks if a process must be waken when was sleeping due to time
+ * Returns 0 if the process must be waken, or -1 otherwise
+ */
+static uint64_t checkWakeTime(Node current) {
+
+	uint64_t elapsed = currentTicks() - current->generalPurpose3;
+	uint64_t amount = current->generalPurpose2;
+	
+	if (elapsed < amount) {
+		return -1;
+	}
+	return 0;
+
+}
+
+static uint64_t finishProcess() {
+
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	current->state = FINISHED;
+	return 0;
+}
 
 
 /*********************/
@@ -151,7 +298,7 @@ uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
  * Returns -1 if no space for the process in the processes list
  * Returns -2 if process couldn't be created
  */
-int enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
+static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
 	void *entryPoint, uint64_t argc, char *argv[]) {
 
 	int index = -1;
@@ -192,7 +339,7 @@ int enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
  * Takes off the queue the current process (i.e the next one to last).
  * Returns 0 if current process was dequeued, -1 otherwise.
  */
-int dequeueProcess() {
+static uint64_t dequeueProcess() {
 
 	Node current = NULL;
 

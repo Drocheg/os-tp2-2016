@@ -3,6 +3,7 @@
 #include <process.h>
 #include <stddef.h>
 #include <kernel-lib.h>
+#include <scheduler.h>
 
 
 
@@ -58,7 +59,7 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 /* Static functions prototypes */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
-
+static void terminateProcess();
 
 
 
@@ -206,6 +207,29 @@ File getFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	return (((process->fileDescriptors).entries)[fileDescriptor]).file;
 }
 
+/* Setters */
+uint64_t setProcessStack(uint64_t PCBIndex, void *stack) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+	process->stack = stack;
+	return 0;
+}
+uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+	(((process->fileDescriptors).entries)[fileDescriptor]).flags = flags;
+	return 0;
+}
+
+
 
 /* File management */
 
@@ -283,6 +307,25 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 
 /*
+ * Function that change the process state to finished in the scheduler.
+ * Returns -1 if there was a problem (i.e. scheduler wasn't on), or does not return otherwise.
+ * Brief explanation:
+ * This function calls finishProcess() from scheduler, which changes the process' state to FINISHED.
+ * When finishProcess() returns, the next instruction is an infinite loop. After that, the scheduler
+ * will continue running until the terminated process' turn. When that happens, it will destroy the process.
+ * TODO: Check kernel-userland issue
+ */
+static uint64_t terminateProcess() {
+
+	if (finishProcess()) {
+		return -1;
+	}
+	while(1); /* Loops until next process' turn. Scheduler will destroy the process, so this loop will finish then */
+	return 0;
+}
+
+
+/*
  * Creates a stack by allocating one memory page and pointing the stack pointer to the end of it.
  * Returns 0 on success, or -1 otherwise.
  */
@@ -357,7 +400,8 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	memcpy(*userStackTop, &argc, sizeof(argc));
 
 	/* Pushes return address of main */
-	// TODO: Lo mandamos a una funcion que sea la que lo pone en estado FINISHED ?
+	*userStackTop -= sizeof(void *);
+	memcpy(*userStackTop, terminateProcess, sizeof(void *));
 
 	/* Pushes fake RBP (i.e the stack base of main caller) */
 	*userStackTop -= sizeof(uint64_t);

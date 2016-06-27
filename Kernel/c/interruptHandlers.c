@@ -61,15 +61,26 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 	return result;
 }
 
+
+
+uint64_t timerTickHandler(void *stack) {
+
+	timerTick();
+	return nextProcess(stack);
+}
+
+
+
+
 void IRQHandler(uint8_t irq) {
-	uint8_t key;
+	uint64_t key;
 	switch(irq) {
 		case 0:					//Timer tick
 			timerTick();
 			break;
 		case 1:					//Keyboard
-			key = inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
-			offerKey(key);
+			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
+			offerKey((uint8_t) key);
 			break;
 		default:
 			break;
