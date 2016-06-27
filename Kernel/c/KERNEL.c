@@ -51,7 +51,7 @@ int kernel_main(int argc, char *argv[]) {
 
 
 	ncPrint("Setting video mode and jumping to user space...NOW!\n");
-	SetVideoMode();
+	setGraphicMode();
 
 	int32_t ret;
 	ret = runCodeModule();

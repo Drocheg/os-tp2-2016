@@ -13,11 +13,10 @@ extern char endOfBinary;
 static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
-static const int MINOR_VER = 0;
+static const int MINOR_VER = 1;
 static int EXIT = 0;
 
-typedef struct
-{
+typedef struct {
 	char *name; 
 	void (*function)(void);
 	char *help;
