@@ -1,12 +1,26 @@
 #include <video.h>
 #include <stdlib.h>
 
+//Pure64 sets VESA mode to 1024x768, 24bit
+
 static char buffer[64] = { '0' };
-static uint8_t * const video = (uint8_t*)0xB8000;
-static uint8_t * const endVideo = (uint8_t*)0xB8FA0;
-static uint8_t * currentVideo = (uint8_t*)0xB8000;
-static const uint32_t width = 80;
-static const uint32_t height = 25 ;
+static const uint32_t width = 1024;
+static const uint32_t height = 768;
+static uint8_t * const video = (uint8_t*)0xFD000000;
+static uint8_t * const endVideo = (uint8_t*)42/*(video  + width*height)*/;
+static uint8_t * currentVideo = (uint8_t*)0xFD000000;
+
+
+void paintPixel(uint64_t x, uint64_t y, uint8_t red, uint8_t green, uint8_t blue) {
+	char *videoPointer = (char*) video;
+    uint64_t offset = ((y*width + x))*3;
+    videoPointer = videoPointer + offset;
+    *videoPointer = blue;
+    videoPointer++;
+    *videoPointer = green;
+    videoPointer++;
+    *videoPointer = red;
+}
 
 //Prints the specified message to screen.
 void ncPrint(const char * string)

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+void paintPixel(uint64_t x, uint64_t y, uint8_t red, uint8_t green, uint8_t blue);
 void ncPrintChar(char character);
 void ncPrintColorChar(char character, char color);
 void ncPrint(const char * string);
