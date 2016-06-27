@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* 
-NOTE: The first 32 interrupts are Intel-reserver for exceptions, so all other
+NOTE: The first 32 interrupts are Intel-reserved for exceptions, so all other
 interrupts have an offset of 32.  Thus:
 
 timer tick int 0 => int 0x20 (32)

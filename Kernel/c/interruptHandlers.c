@@ -7,6 +7,7 @@
 #include <modules.h>
 #include <speaker.h>
 #include <keyboard.h>
+#include <time.h>
 #include <memory.h>
 
 static void timerTick();
@@ -49,6 +50,9 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MEMORY:
 			pageManager((Action)p1, (void **)p2);
 			break;
+		case TIME:
+			result = time();
+			break;
 		default:
 			result = -1;
 			break;
@@ -60,6 +64,7 @@ void IRQHandler(uint8_t irq) {
 	uint8_t key;
 	switch(irq) {
 		case 0:					//Timer tick
+			tick();
 			timerTick();
 			break;
 		case 1:					//Keyboard

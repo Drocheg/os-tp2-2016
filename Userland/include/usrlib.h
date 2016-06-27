@@ -26,4 +26,6 @@ void printNum(uint64_t num);
 
 void printf(const char *format, vargs *args);
 
+uint64_t time();
+
 #endif

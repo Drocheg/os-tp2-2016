@@ -33,6 +33,7 @@ void dumpDataModule();
 void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
+void getTime();
 
 
 static command commands[] = {
@@ -46,7 +47,8 @@ static command commands[] = {
 	{"piano", piano, "Turns your keyboard into a piano!"},
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
-	{"surpriseme", rainbow, "Surprise surprise..."}
+	{"surpriseme", rainbow, "Surprise surprise..."},
+	{"time", getTime, "Get ms since system boot"}
 };
 
 
@@ -168,4 +170,10 @@ void help() {
 
 void rainbow() {
 	_int80(RAINBOW, 0, 0, 0);
+}
+
+void getTime() {
+	print("Current time: ");
+	printNum(time());
+	print("ms\n");
 }

@@ -40,6 +40,10 @@ int kernel_main(int argc, char *argv[]) {
 	_sti();
 	ncPrint("Done.\n");
 
+	ncPrint("Increasing PIT frequency...");
+	setPITfrequency(100);	//Any higher and PC speaker stops responding
+	ncPrint("Done.\n");
+
 	ncPrint("Initializing Memory Management...");
 	initializePageStack();
 	ncPrint("Done.\n");
@@ -99,5 +103,3 @@ void * initializeKernelBinary() {
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
-
-
