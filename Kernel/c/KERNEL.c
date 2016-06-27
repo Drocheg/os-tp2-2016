@@ -7,6 +7,7 @@
 #include <libasm.h>
 #include <modules.h>
 #include <memory.h>
+#include <time.h>
 #include <stddef.h>
 
 extern uint8_t text;
@@ -49,23 +50,8 @@ int kernel_main(int argc, char *argv[]) {
 	ncPrint("Done.\n");
 
 
+	ncPrint("Setting video mode and jumping to user space...NOW!\n");
 	SetVideoMode();
-	for(uint64_t x = 0; x < 1024; x++) {
-		for(uint64_t y = 0; y < 768; y++) {
-			paintPixel2(x, y, 7, 242, 255);
-		}
-	}
-
-	// uint64_t height = 1024, width = 768;
-	// for(uint8_t y = 0; y <= height; y++) {
-	// 	for(uint8_t x = 0; x <= width; x++) {
-	// 		paintPixel2(x, y, 7, 242, 255);
-	// 		// for(uint64_t i = 0; i < 10000000; i++);
-	// 	}
-	// }
-	return 0;
-
-	ncPrint("Jumping to user space...NOW!\n");
 
 	int32_t ret;
 	ret = runCodeModule();
