@@ -66,16 +66,21 @@ void ncNewline() {
 	while(y == startY);
 }
 
-void ncBackspace() {
+//Scrolls back 1 character, wrapping up to the previous line if necessary.
+void goBack() {
 	if(x > 8) {
 		x -= 8;
-		ncPrintColorChar(0, 0, 0, 0);
 	}
 	else if(y > 0) {
 		x = width - 8;
-		y--;
-		ncPrintColorChar(0, 0, 0, 0);
+		y -= 8;
 	}
+}
+
+void ncBackspace() {
+	goBack();
+	ncPrintChar(0);
+	goBack();
 }
 
 void ncPrintDec(uint64_t value) {

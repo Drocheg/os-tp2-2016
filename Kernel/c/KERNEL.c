@@ -23,6 +23,9 @@ void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
 
 int kernel_main(int argc, char *argv[]) {	
+	setGraphicMode();
+	ncPrint("Set graphic video mode\n");
+
 	ncClear();
 	ncPrint("Welcome to the kernel!\n");
 
@@ -42,17 +45,31 @@ int kernel_main(int argc, char *argv[]) {
 	ncPrint("Done.\n");
 
 	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(100);	//Any higher and PC speaker stops responding
+	setPITfrequency(500);	//Any higher and PC speaker stops responding
 	ncPrint("Done.\n");
 
 	ncPrint("Initializing Memory Management...");
 	initializePageStack();
 	ncPrint("Done.\n");
 
+	// ncClear();
+	// uint8_t *imgData = (uint8_t *)0x500000;
+	// uint64_t *imgData2 = (uint64_t *)0x500000;
+	// uint64_t width = imgData2[0],
+	// 			height = imgData2[1];
+	// imgData += 5670;
+	// for(int y = 0; y < height; y++) {
+	// 	for(int x = 0; x < width; x++) {
+	// 		uint8_t red = *(imgData++);
+	// 		uint8_t green = *(imgData++);
+	// 		uint8_t blue = *(imgData++);
+	// 		paintPixelRGB(x, y, red, green, blue);
+	// 	}
+	// }
+	// return 0;
 
-	ncPrint("Setting video mode and jumping to user space...NOW!\n");
-	setGraphicMode();
 
+	ncPrint("Jumping to user space...NOW!\n");
 	int32_t ret;
 	ret = runCodeModule();
 	

@@ -1,8 +1,8 @@
 all: build
 
 build:
-	gcc songmaker.c -o songmaker.o
-	./songmaker.o
+	gcc imageWriter.c -o imageWriter.o
+	./imageWriter.o
 
 clean:
 	rm -rf *.o *.bin

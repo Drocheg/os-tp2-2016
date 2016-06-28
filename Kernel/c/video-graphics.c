@@ -46,35 +46,41 @@
 #define BPL ((WIDTH)*(BPP))
 
 
-void BgaWriteRegister(unsigned short, unsigned short);
-unsigned short BgaReadRegister(unsigned short);
-int BgaIsAvailable(void);
-void BgaSetVideoMode(unsigned int, unsigned int ,unsigned int ,int ,int);
-void BgaSetBank(unsigned short);
+    void BgaWriteRegister(unsigned short, unsigned short);
+    unsigned short BgaReadRegister(unsigned short);
+    int BgaIsAvailable(void);
+    void BgaSetVideoMode(unsigned int, unsigned int ,unsigned int ,int ,int);
+    void BgaSetBank(unsigned short);
 
 
 #define WHITE 255, 255, 255
 #define BLACK 0, 0, 0
-const uint32_t width = WIDTH;
-const uint32_t height = HEIGHT;
+    const uint32_t width = WIDTH;
+    const uint32_t height = HEIGHT;
 
-void paintPixelRGB(uint64_t x, uint64_t y, uint8_t red, uint8_t green, uint8_t blue) {
-    if(x < 0 || x >= width || y < 0 || y >= height) {
-    	return;
+    uint8_t * findPixel(uint64_t x, uint64_t y) {
+        if(x < 0 || x >= width || y < 0 || y >= height) {
+            return 0;
+        }
+        return (uint8_t*) VIDEO_ADDRESS_START + (y*width + x)*BPP;
     }
-    uint8_t *pixelPtr = (uint8_t*) VIDEO_ADDRESS_START;
-    pixelPtr += (y*width + x)*BPP;
-    pixelPtr[0] = blue;
-    pixelPtr[1] = green;
-    pixelPtr[2] = red;
-}
 
-void paintPixel(uint64_t x, uint64_t y) {
-	paintPixelRGB(x, y, WHITE);
-}
+    void paintPixelRGB(uint64_t x, uint64_t y, uint8_t red, uint8_t green, uint8_t blue) {
+        uint8_t *pixelPtr = findPixel(x, y);
+        if(pixelPtr  == 0) {
+            return;
+        }
+        pixelPtr[0] = blue;
+        pixelPtr[1] = green;
+        pixelPtr[2] = red;
+    }
+
+    void paintPixel(uint64_t x, uint64_t y) {
+       paintPixelRGB(x, y, WHITE);
+   }
 
 //Paints the specified character at the specified position (if valid), in the specified RGB color.
-void paintCharRGB(uint64_t x, uint64_t y, char c, uint8_t r, uint8_t g, uint8_t b) {
+   void paintCharRGB(uint64_t x, uint64_t y, char c, uint8_t r, uint8_t g, uint8_t b) {
     static const int mask[8]={1,2,4,8,16,32,64,128};
     uint8_t *bitmap = bitmaps[(uint8_t)c];
 
@@ -109,12 +115,42 @@ void paintStr(uint64_t x, uint64_t y, const char* str) {
     paintStrRGB(x, y, str, WHITE);
 }
 
+void fillrectRGB(uint64_t x, uint64_t y, uint64_t width, uint64_t height, uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t *pixel = findPixel(x, y);
+    if(pixel == 0) {
+        return;
+    }
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            pixel[col*BPP] = b;
+            pixel[col*BPP + 1] = g;
+            pixel[col*BPP + 2] = r;
+        }
+        pixel += BPL;
+    }
+}
+
+void fillrect(uint64_t x, uint64_t y, uint64_t width, uint64_t height) {
+    fillrectRGB(x, y, width, height, WHITE);
+}
+
+void drawRectRGB(uint64_t x, uint64_t y, uint64_t width, uint64_t height, uint8_t r, uint8_t g, uint8_t b) {
+    fillrectRGB(x, y, width, 1, r, g, b);   //Top
+    fillrectRGB(x, y, 1, height, r, g, b);   //Left
+    fillrectRGB(x, y+height, width, 1, r, g, b);   //Bottom
+    fillrectRGB(x+width, y, 1, height, r, g, b);   //Right
+}
+
+void drawRect(uint64_t x, uint64_t y, uint64_t width, uint64_t height) {
+    drawRectRGB(x, y, width, height, WHITE);
+}
+
 void clear() {
     memset(VIDEO_ADDRESS_START, 0, WIDTH*HEIGHT*BPP);
 }
 
 void setGraphicMode() {
-   	BgaSetVideoMode(WIDTH, HEIGHT, VBE_DISPI_BPP_32, 1,1);
+    BgaSetVideoMode(WIDTH, HEIGHT, VBE_DISPI_BPP_32, 1,1);
 }
 
 
