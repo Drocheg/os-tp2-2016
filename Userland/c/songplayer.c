@@ -21,7 +21,9 @@ ejemplo:     cant=2             |			  cant=2             |f1              |t1   
 Encola en el buffer de sonido, mediante int80, los sonidos con sus tiempos de la cancion
 cargada en el modulo de datos. 
 */
+<<<<<<< HEAD
 void playSong(uint32_t songNum) {
+
 	char *songData;
 	songData = (char *) _int80(OPENDATAMODULE, 0, 0, 0);
 	
@@ -43,9 +45,10 @@ void playSong(uint32_t songNum) {
 	while(n > 0) {
 		freq = *((uint32_t *)songData);
 		songData = songData+4;
-		time = *((uint8_t *)songData);
+		time = (*((uint8_t *)songData));  
 		songData = songData+1;
 	  	_int80(SPEAKER, freq, time, 0);
-		n--;
+	  	n--;
+	  	sleep(time);
 	}
 }
