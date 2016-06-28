@@ -25,6 +25,8 @@ static const uint64_t PageSize = PAGE_SIZE;
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
 
+static void finishKernel();
+
 int kernel_main(int argc, char *argv[]) {
 
 	int32_t ret = 0;
@@ -38,8 +40,9 @@ int kernel_main(int argc, char *argv[]) {
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
 	ncPrint("Done.\n");
 
+	/* Sets PIT frequency to 500 Hz (one interruption every 2 ms) */
 	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(500);	//Any higher and PC speaker stops responding
+	setPITfrequency(500);	/* Any higher and PC speaker stops responding */
 	ncPrint("Done.\n");
 
 	/* Initializes memory management */
@@ -47,27 +50,33 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
-	ncPrint("Initializing PCB...");
-	initializePCB();
-	ncPrint("Done\n");
-
+	/* Initializes File System */
 	ncPrint("Initilzing File System...");
 	initializeFileSystem();
 	ncPrint("Done\n");
 
-	ncPrint("Initializing Scheduler...");
-	initializeScheduler();
-	startScheduler();
-	ncPrint("Done.\n");
+	/* Initializes PCB */
+	ncPrint("Initializing PCB...");
+	initializePCB();
+	ncPrint("Done\n");
 
 	/* Enables interrupts (i.e: PIC Mask, and Interrupts stack) */
-	ncPrint("Enabling interrupts...");
-	if (initializeInterruptStacks()) {
+	ncPrint("Initializing  context switching interrupts stack...");
+	if (initializeInterruptStacks(finishKernel)) {
 		ncPrint("Couldn't start the kernel. Aborting\n");
 		_cli();
 		_halt();
 		return -1;
 	}
+	ncPrint("Done.\n");
+
+	/* Initializes the scheduler */
+	ncPrint("Initializing Scheduler...");
+	initializeScheduler();
+	startScheduler();
+	ncPrint("Done.\n");
+
+	ncPrint("Enabling interrupts...");
 	//masterPICmask(0x0);	//All interrupts
 	masterPICmask(0xFC);	//Keyboard and timer tick
 	//masterPICmask(0xFD);	//Keyboard only
@@ -76,27 +85,42 @@ int kernel_main(int argc, char *argv[]) {
 	ncPrint("Done.\n");
 
 
-	/* Initializes scheduler */
+	/* Add init.d process to the scheduler */
 	char *args[] = {"init.d"};
 	addProcess(0, "init.d", runCodeModule, 1, args);
 
 	ncPrint("Starting init.d\n");
-	_sti();
-
-
+	_sti();		/* Turns on interruptions (will call scheduler' next process function, to start running processes) */
+	_halt();	/* Waits till the timer tick interruption comes */
+	
+	/* Shouldn't reach this point */
+	_cli();
+	_halt();
+	return 0;
 
 	// ncPrint("Jumping to user space...NOW!\n");
 	// ret = runCodeModule();
 	
-	ncClear();
-	ncPrint("User space returned with exit code ");
-	ncPrintDec(ret);
-	ncPrint(".\nPreparing to shut down...");
+	// ncClear();
+	// ncPrint("User space returned with exit code ");
+	// ncPrintDec(ret);
+	// ncPrint(".\nPreparing to shut down...");
 
+	// ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
+	// _cli();
+	// _halt();
+	// return 0;
+}
+
+static void finishKernel() {
+
+	ncClear();
+	ncPrint("Preparing to shut down...");
 	ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
 	_cli();
 	_halt();
 	return 0;
+
 }
 
 void clearBSS(void * bssAddress, uint64_t bssSize) {
