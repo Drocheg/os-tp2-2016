@@ -51,10 +51,18 @@ static command commands[] = {
 	{"time", getTime, "Get ms since system boot"}
 };
 
+uint64_t printProcessA();
+uint64_t printProcessB();
+int32_t userland_main(int argc, char *argv[]);
 
 int32_t init_d() {
 
-
+	char *argvA[] = {"process A"};
+	char *argvB[] = {"process B"};
+	char *argvTerminal[] = {"terminal"};
+	createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
 	while(1);
 	return 0;
@@ -64,36 +72,26 @@ int32_t init_d() {
 uint64_t printProcessA() {
 
 	uint64_t aux = 0;
-	while (aux < 100000) {
-		if ( (aux % 1000) == 0) {
-			print("Hi, from process A");
+	while (1) {
+		if ( (aux % 50000000) == 0) {
+			print("Hi, from process A ");
 		}
 		aux++;
 	}
+	while(1);
 	return 0;
 }
 
 uint64_t printProcessB() {
 
 	uint64_t aux = 0;
-	while (aux < 100000) {
-		if ( (aux % 1000) == 500) {
-			print("Hi, from process B");
+	while (1) {
+		if ( (aux % 50000000) == 0) {
+			print("Hi, from process B ");
 		}
 		aux++;
 	}
-	return 0;
-}
-
-uint64_t beepProcess() {
-
-	uint64_t aux = 0;
-	while (aux < 100000) {
-		if ( (aux % 500) == 500) {
-			beep();
-		}
-		aux++;
-	}
+	while(1);
 	return 0;
 }
 

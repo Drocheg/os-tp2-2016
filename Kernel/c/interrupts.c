@@ -34,7 +34,7 @@ uint64_t initializeInterruptStacks() {
 	// 	return -1;
 	// }
 
-	if (kernelStack == NULL) {
+	if (kernelStackPage == NULL) {
 		return -1;
 	}
 	// softwareIntStack = softwareIntStackPage + PAGE_SIZE - sizeof(uint64_t);

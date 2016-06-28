@@ -93,7 +93,7 @@ uint64_t initializePCB() {
 
 /*
  * Creates a process and loads it into the PCB
- * Returns 0 on success.
+ * Returns process PCB index on success.
  * Returns -1 if PCB wasn't initialized
  * Returns -2 if no space in PCB.
  * Returns -3 if no memory for the stack.
@@ -349,38 +349,46 @@ static uint64_t createStack(void **stackPage, void **stackTop) {
  */
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]) {
 
-	uint64_t count = 0;
+	int64_t count = 0;
 	uint64_t processSS = 0;
 	uint64_t processRSP = 0;
 	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
 	uint64_t processCS = 0x008; /* WYRM value (TODO: Ask Rodrigo) */
-
+	uint64_t processRIP = (uint64_t) mainFunction;
 
 	if (argc <= 0) {
 		return -1; /* At least, one parameter with the process name must be passed */
 	}
 
+
 	
 	/* Pushes stack base null */
 	*userStackTop -= sizeof(uint64_t);
 	memset(*userStackTop, 0, sizeof(uint64_t));
+
 	
 	/* Pushes argv strings */
 	count = argc - 1;
+
 	while (count >= 0) {
-		int length = strlen(argv[count]) + 1; /* Adds NULL termination to length */
 		
+		int length = strlen(argv[count]) + 1; /* Adds NULL termination to length */
+	
 		/* Word alignment */
 		int aux = length % sizeof(uint64_t);
 		if (aux != 0) {
 			length += (sizeof(uint64_t) - aux);
 		}
 
+
+
 		*userStackTop -= (length / sizeof(uint64_t)) * sizeof(uint64_t);
 		memcpy(*userStackTop, (void*) argv[count], length); /* copies the NULL termination */
 		argv[count] = (char*) *userStackTop;
 		count--;
+
 	}
+
 
 	/* Pushes end of argv null */
 	*userStackTop -= sizeof(uint64_t);
@@ -421,29 +429,31 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	/* Values got in https://bitbucket.org/RowDaBoat/wyrm/src */
 	/* /d4f3cfcc64325efb1f7d7039fc7bc7c7e85777b0/Kernel/Scheduler/Process.cpp?at=master&fileviewer=file-view-default */
 	
+
 	/* Pushes SS register */
 	*userStackTop -= sizeof(processSS);
 	memcpy(*userStackTop, &processSS, sizeof(processSS));
 
 	/* Pushes RSP */
-	userStackTop -= sizeof(processRSP);
+	*userStackTop -= sizeof(processRSP);
 	memcpy(*userStackTop, &processRSP, sizeof(processRSP));
 
 	/* Pushes RFLAGS */
-	userStackTop -= sizeof(processRFLAGS);
+	*userStackTop -= sizeof(processRFLAGS);
 	memcpy(*userStackTop, &processRFLAGS, sizeof(processRFLAGS));
 
 	/* Pushes CS */
-	userStackTop -= sizeof(processCS);
-	memcpy(*userStackTop, &processCS, sizeof(processCS));		
+	*userStackTop -= sizeof(processCS);
+	memcpy(*userStackTop, &processCS, sizeof(processCS));
 
 	/* Pushes RIP (i.e: process main function direction or entry point) */
-	*userStackTop -= sizeof(uint64_t);
-	memcpy(*userStackTop, mainFunction, sizeof(uint64_t));
+	*userStackTop -= sizeof(processRIP);
+	memcpy(*userStackTop, &processRIP, sizeof(processRIP));
 
 	/* Pushes fake registers */
-	*userStackTop -= 16 * sizeof(uint64_t);
+	*userStackTop -= 17 * sizeof(uint64_t);
 	memset(*userStackTop, 0, 16 * sizeof(uint64_t));
+
 
 	/* NOW IT CAN RUN */
 	return 0;

@@ -59,7 +59,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case CREATE_PROCESS: {
 
 			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-			result = createProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+			result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
 			*((uint64_t *) p2) = (uint64_t) result;
 		}
 		case TIME:
@@ -88,7 +88,7 @@ void IRQHandler(uint8_t irq) {
 	switch(irq) {
 		case 0:					//Timer tick
 			tick();
-			timerTick();
+			
 			break;
 		case 1:					//Keyboard
 			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!

@@ -4,6 +4,8 @@
 #include <process.h>
 #include <file.h>
 #include <stddef.h>
+#include <time.h>
+#include <video.h>
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 0x10 /* See Process.c */
@@ -51,6 +53,7 @@ static uint64_t checkWakeTime(Node current);
 
 /* Static variables */
 static uint8_t running = 0;															/* Says if the scheduler is on */
+static uint8_t firstIteration = 1;													/* Indicates if is the first time the scheduler is giving the next process */
 static uint8_t usedNodes[MAX_PROCESSES];											/* Holds a list of the nodes, marking those that are occupied */
 static Node last = NULL;															/* Points to the last node in the cirular queue */
 static void *memoryPage = NULL;														/* Stores a memory page for the circular queue */
@@ -88,7 +91,7 @@ uint64_t initializeScheduler() {
 /*
  * Starts the scheduler
  */
-void startScheduler() {
+void *startScheduler() {
 	running = 1;
 }
 
@@ -100,6 +103,18 @@ void stopScheduler() {
 }
 
 
+/*
+ * Adds a process into the queue
+ * Returns 0 on success, or -1 otherwise
+ */
+uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+
+	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+		return -1;
+	}
+	return 0;
+}
+
 
 /*
  * Updates the process queue, changing to the next process
@@ -109,13 +124,18 @@ void stopScheduler() {
 void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
+
 	if (checkScheduler()) {
+		
 		return NULL;
 	}
 	current = last->next;
 	
-	setProcessStack(current->PCBIndex, currentRSP);
-	
+	if (!firstIteration) {
+		setProcessStack(current->PCBIndex, currentRSP);
+	} else {	
+		firstIteration = 0;
+	}
 	last = current;		 				/* Change to next process */
 	return nextProcessRecursive();
 
@@ -167,6 +187,8 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	if ((index = getFreeNode()) < 0) {
 		return -1;
 	}
+
+
 	PCBIndex = createProcess(parentPid, name, entryPoint, argc, argv);
 
 	if (PCBIndex < 0) {
@@ -243,6 +265,10 @@ static void *nextProcessRecursive() {
 
 	Node current = last->next;
 
+	// ncPrint("I'm here");
+	// ncPrintHex(current->state);
+	// while(1);
+
 	if (current->state == RUNNING) {
 		return getProcessStack(current->PCBIndex);
 	}
@@ -258,6 +284,9 @@ static void *nextProcessRecursive() {
 		current->state = RUNNING;
 		return getProcessStack(current->PCBIndex);
 	}
+
+
+	return NULL;
 		
 }
 
@@ -334,22 +363,23 @@ static uint64_t waitForTime(uint64_t miliseconds) {
 
 	current->state = SLEPT;
 	current->generalPurpose1 = (uint64_t) SLEPT_TIME; 							/* Stores reason of sleep */
-	current->generalPurpose2 = (uint64_t)  miliseconds * getFrequency(); 		/* Stores how many ticks must occur to wake up */
-	current->generalPurpose3 = currentTicks();									/* Stores actual amount of ticks */
+	current->generalPurpose2 = (uint64_t)  miliseconds * getPITfrequency();		/* Stores how many ticks must occur to wake up */
+	current->generalPurpose3 = ticks();											/* Stores actual amount of ticks */
+	return 0;
 }
 
 
 
 static uint64_t checkWake(Node current) {
 
-	return wakeActions[current->generalPurpose1];
+	return (wakeActions[current->generalPurpose1])(current);
 
 }
 
 
 static uint64_t checkWakeIO(Node current) {
 
-	return wakeIOActions[current->generalPurpose2];
+	return (wakeIOActions[current->generalPurpose2])(current);
 
 }
 
@@ -395,7 +425,7 @@ static uint64_t checkFreeSpace(Node current) {
  */
 static uint64_t checkWakeTime(Node current) {
 
-	uint64_t elapsed = currentTicks() - current->generalPurpose3;
+	uint64_t elapsed = ticks() - current->generalPurpose3;
 	uint64_t amount = current->generalPurpose2;
 	
 	if (elapsed < amount) {

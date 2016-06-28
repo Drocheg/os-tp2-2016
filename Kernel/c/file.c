@@ -134,7 +134,7 @@ uint64_t readChar(File file) {
 	stream = (char *)file->stream;
 	c = stream[file->dequeueIndex];
 	(file->indexManager)(&(file->dequeueIndex), file->maxSize);
-	file->unreadData = (file->enqueueIndex == file-->dequeueIndex) ? 0 : 1;
+	file->unreadData = (file->enqueueIndex == file->dequeueIndex) ? 0 : 1;
 	return (uint64_t) c;
 }
 
@@ -169,7 +169,7 @@ uint64_t dataAvailable(File file) {
  */
 uint64_t hasFreeSpace(File file) {
 
-	return !(file->unreadData) && (file->enqueueIndex == file-->dequeueIndex)
+	return !(file->unreadData) && (file->enqueueIndex == file->dequeueIndex);
 }
 
 

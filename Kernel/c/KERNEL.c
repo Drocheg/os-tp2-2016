@@ -9,6 +9,8 @@
 #include <memory.h>
 #include <stddef.h>
 #include <time.h>
+#include <process.h>
+#include <scheduler.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -45,6 +47,19 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
+	ncPrint("Initializing PCB...");
+	initializePCB();
+	ncPrint("Done\n");
+
+	ncPrint("Initilzing File System...");
+	initializeFileSystem();
+	ncPrint("Done\n");
+
+	ncPrint("Initializing Scheduler...");
+	initializeScheduler();
+	startScheduler();
+	ncPrint("Done.\n");
+
 	/* Enables interrupts (i.e: PIC Mask, and Interrupts stack) */
 	ncPrint("Enabling interrupts...");
 	if (initializeInterruptStacks()) {
@@ -58,13 +73,19 @@ int kernel_main(int argc, char *argv[]) {
 	//masterPICmask(0xFD);	//Keyboard only
 	//masterPICmask(0xFE);	//Timer tick only
 	//masterPICmask(0xFF);	//No interrupts
-	_sti();
 	ncPrint("Done.\n");
+
+	// ncPrint("I'm here\n");
+	// while(1);
+
 
 	/* Initializes scheduler */
 	char *args[] = {"init.d"};
-	createProcess(0, "init.d", runCodeModule, 1, args);
+	addProcess(0, "init.d", runCodeModule, 1, args);
 
+
+	ncPrint("Starting init.d\n");
+	_sti();
 
 
 

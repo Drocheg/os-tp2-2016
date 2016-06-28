@@ -1,11 +1,12 @@
 EXTERN IRQHandler
+EXTERN timerTickHandler
 EXTERN int80Handler
 
-EXTERN getSoftwareIntStack
-EXTERN getTimerIntStack
-EXTERN getKbdIntStack
+; EXTERN getSoftwareIntStack
+; EXTERN getTimerIntStack
+; EXTERN getKbdIntStack
 
-EXTERN getStack
+; EXTERN getStack
 
 EXTERN getKernelStack
 

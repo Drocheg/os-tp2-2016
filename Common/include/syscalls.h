@@ -16,7 +16,6 @@
 /* New Syscalls */
 #define MEMORY 10
 #define TIME 11
-
 #define CREATE_PROCESS 12
 
 

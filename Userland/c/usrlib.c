@@ -72,6 +72,7 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 	uint64_t result;
 	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
 	return result;
+}
 
 uint64_t time() {
 	// uint64_t result;

@@ -4,18 +4,13 @@
 #include <stdint.h>
 
 
-#ifndef EOF
 #define EOF -1
-#endif
 
-#ifndef MAX_NAME
 #define MAX_NAME 16
-#endif
 
-#ifndef FILE_FLAGS
 #define F_READ 0x01
-#define W_WRITE 0x02
-#endif
+#define F_WRITE 0x02
+
 
 
 
