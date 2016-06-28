@@ -114,6 +114,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Write
+	uint32_t songNum = 1;
+	fwrite(&songNum, 4, 1, f);
 	fwrite(&n, 4, 1, f);
 	for(i = 0; i < n; i++) {
 		fwrite(&(NOTES[i].freq), 4, 1, f);
