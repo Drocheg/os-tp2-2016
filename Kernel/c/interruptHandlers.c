@@ -21,6 +21,7 @@ static void timerTick();
 int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) {
 	int64_t result = 0;
 	_sti();
+
 	//No use of function pointer array because different syscalls take different parameters and have
 	//different return values.
 	switch(syscallID) {
@@ -56,14 +57,15 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MEMORY:
 			pageManager((Action)p1, (void **)p2);
 			break;
-		case CREATE_PROCESS: {
-
-			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-			result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
-			*((uint64_t *) p2) = (uint64_t) result;
-		}
 		case TIME:
-			result = time();
+			*((uint64_t *) p1) = time();
+			result = *((uint64_t *) p1);
+			break;
+		case CREATE_PROCESS: {
+				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+				*((uint64_t *) p2) = (uint64_t) result;
+			}
 			break;
 		default:
 			result = -1;
@@ -75,7 +77,6 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 
 
 uint64_t timerTickHandler(void *stack) {
-
 	tick();
 	return nextProcess(stack);
 }
@@ -86,10 +87,7 @@ uint64_t timerTickHandler(void *stack) {
 void IRQHandler(uint8_t irq) {
 	uint64_t key;
 	switch(irq) {
-		case 0:					//Timer tick
-			tick();
-			
-			break;
+		//IRQ 0 no longer handled here, see timerTickHandler()
 		case 1:					//Keyboard
 			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
 			offerKey((uint8_t) key);
