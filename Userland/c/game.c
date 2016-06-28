@@ -13,7 +13,7 @@
 #define SPACE_OBSTACLE 1
 #define HORIZONTAL_SIZE 10
 #define VERTICAL_SIZE 10
-#define GAME_TICK 50
+#define GAME_TICK 200
 #define JUMP_LAG 50
 #define OBSTACLE_LAG_MULTIPLIER 6
 
@@ -54,8 +54,10 @@ void initGame(){
 	return;
 }
 void playGame(){
+	uint64_t loopTime=time();
 	while(1){
-		for(int i=0; i<100000; i++);
+		while(time()<loopTime+GAME_TICK);
+		loopTime=time();
 		update();
 	//	yield();
 	}
@@ -88,6 +90,10 @@ void update(){
 	if(STATE_AIR){
 		uint64_t timeFromJump = updateTime-(jumpStartTime+JUMP_LAG);
 		uint64_t gameTicksFromJump = timeFromJump/GAME_TICK;
+		if(gameTicksFromJump<0){
+			print("5");
+			return;
+		}
 		if(gameTicksFromJump<=jumpForce){
 			posY=1+gameTicksFromJump;
 		}else{
@@ -99,17 +105,22 @@ void update(){
 		}
 	}
 
+	if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
+	if(posY<1) posY=1;
+
 
 
 
 	//Obstacle Update
-	uint64_t obstacleTicksFromLastUpdate = ((updateTime-lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER)%HORIZONTAL_SIZE);
+	uint64_t obstacleTicksFromLastUpdate = ((updateTime-lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
 	if(obstacleTicksFromLastUpdate>0 && obstacleTicksFromLastUpdate<HORIZONTAL_SIZE){
-		uint64_t newObstaclePosY = lastUpdateTime%VERTICAL_SIZE;
+		uint64_t newObstaclePosY = time()%VERTICAL_SIZE;
+		printNum(newObstaclePosY);
+		print("\n");
 		for(uint64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(uint64_t j =0; j<VERTICAL_SIZE; j++){
 				uint64_t oldI = i+obstacleTicksFromLastUpdate;
-				if(oldI>HORIZONTAL_SIZE){
+				if(oldI>=HORIZONTAL_SIZE){
 					if(j==newObstaclePosY) obstacle[i][j]=SPACE_OBSTACLE;
 					else obstacle[i][j]=SPACE_EMPTY;	
 				}else{
@@ -117,13 +128,13 @@ void update(){
 
 				}
 				if(i==0 && (j==posY || j==posY+1 || j==posY-1)){
-					if(obstacle[i][j]==SPACE_OBSTACLE){
-						gameOver();
-					}else{
+					//if(obstacle[i][j]==SPACE_OBSTACLE){
+					//	gameOver();
+					//}else{
 						if(j==posY+1) print("O");
 						if(j==posY  ) print("I");
 						if(j==posY-1) print("N");
-					}
+					//
 				}else{
 					if(obstacle[i][j]==SPACE_OBSTACLE){
 						print("X");
@@ -132,19 +143,20 @@ void update(){
 					}
 				}
 			}
+			print("\n");
 		}
 		lastObstacleUpdate=updateTime; //TODO trabajar por bloques desde inicio
 	}else{ //TODO imprimir personaje directamente
 		for(uint64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(uint64_t j =0; j<VERTICAL_SIZE; j++){
 				if(i==0 && (j==posY || j==posY+1 || j==posY-1)){
-					if(obstacle[i][j]==SPACE_OBSTACLE){
-						gameOver();
-					}else{
+					//if(obstacle[i][j]==SPACE_OBSTACLE){
+					//	gameOver();
+					//}else{
 						if(j==posY+1) print("O");
 						if(j==posY  ) print("I");
 						if(j==posY-1) print("N");
-					}
+					//}
 				}else{
 					if(obstacle[i][j]==SPACE_OBSTACLE){
 						print("X");
@@ -166,8 +178,8 @@ void update(){
 //TODO use msgQ
 uint64_t isPlayerJumping(){
 	
-	char c = getchar();
-	if(c=='w') return 1;
+	char c = lastUpdateTime%2;
+	if(c==1) return 1;
 	else return 0;
 
 }
