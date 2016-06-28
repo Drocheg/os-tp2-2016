@@ -23,10 +23,10 @@
 struct createProcessParams_s {
 
 	uint64_t parentPid;
-	char name[MAX_NAME_LENGTH];
+	char *name;
 	void *entryPoint;
 	uint64_t argc;
-	char *argv[];
+	char **argv;
 };
 
 

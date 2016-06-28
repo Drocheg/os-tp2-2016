@@ -57,18 +57,10 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 	struct createProcessParams_s params;
 	
 	params.parentPid = parentPid;
-	while (name[i] != 0) {
-		params.name[i] = name[i];
-		i++;
-	}
+	params.name = name;
 	params.entryPoint = entryPoint;
 	params.argc = argc;
-	//params.argv = argv;
-	i = 0;
-	while ( i < argc) {
-		(params.argv)[i] = argv[i];
-		i++;
-	}
+	params.argv = argv;
 	uint64_t result;
 	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
 	return result;

@@ -75,14 +75,10 @@ int kernel_main(int argc, char *argv[]) {
 	//masterPICmask(0xFF);	//No interrupts
 	ncPrint("Done.\n");
 
-	// ncPrint("I'm here\n");
-	// while(1);
-
 
 	/* Initializes scheduler */
 	char *args[] = {"init.d"};
 	addProcess(0, "init.d", runCodeModule, 1, args);
-
 
 	ncPrint("Starting init.d\n");
 	_sti();

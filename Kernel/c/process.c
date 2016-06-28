@@ -5,6 +5,7 @@
 #include <kernel-lib.h>
 #include <scheduler.h>
 #include <process.h>
+#include <video.h>
 
 
 
@@ -350,6 +351,7 @@ static uint64_t createStack(void **stackPage, void **stackTop) {
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]) {
 
 	int64_t count = 0;
+	uint64_t argvPosition = 0;
 	uint64_t processSS = 0;
 	uint64_t processRSP = 0;
 	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
@@ -361,12 +363,12 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	}
 
 
+
 	
 	/* Pushes stack base null */
 	*userStackTop -= sizeof(uint64_t);
 	memset(*userStackTop, 0, sizeof(uint64_t));
 
-	
 	/* Pushes argv strings */
 	count = argc - 1;
 
@@ -380,11 +382,9 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 			length += (sizeof(uint64_t) - aux);
 		}
 
-
-
 		*userStackTop -= (length / sizeof(uint64_t)) * sizeof(uint64_t);
 		memcpy(*userStackTop, (void*) argv[count], length); /* copies the NULL termination */
-		argv[count] = (char*) *userStackTop;
+		argv[count] = (char *) *userStackTop;
 		count--;
 
 	}
@@ -393,22 +393,15 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	/* Pushes end of argv null */
 	*userStackTop -= sizeof(uint64_t);
 	memset(*userStackTop, 0, sizeof(uint64_t));
+	 
 	 /*Pushes argv pointers */
 	count = argc - 1;
 	while (count >= 0) {
 		*userStackTop -= sizeof(char *);
-		// void *argvArrayInStack = ; TODO: Check this
 		memcpy(*userStackTop, &(argv[count]), sizeof(char *));
 		count--;
 	}
-
-	/* Pushes argv */
 	argv = (char **) *userStackTop;
-	*userStackTop -= sizeof(argv);
-	memcpy(*userStackTop, argv, sizeof(argv));
-	/* Pushes argc */
-	*userStackTop -= sizeof(argc);
-	memcpy(*userStackTop, &argc, sizeof(argc));
 
 	/* Pushes return address of main */
 	*userStackTop -= sizeof(void *);
@@ -451,9 +444,20 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	memcpy(*userStackTop, &processRIP, sizeof(processRIP));
 
 	/* Pushes fake registers */
-	*userStackTop -= 17 * sizeof(uint64_t);
-	memset(*userStackTop, 0, 16 * sizeof(uint64_t));
+	*userStackTop -= 5 * sizeof(uint64_t);
+	memset(*userStackTop, 0, 5 * sizeof(uint64_t));
 
+	/* Pushes argc */
+	*userStackTop -= sizeof(argc);
+	memcpy(*userStackTop, &argc, sizeof(argc));
+
+	/* Pushes argv */
+	*userStackTop -= sizeof(argvPosition);
+	memcpy(*userStackTop, &argv, sizeof(argvPosition));
+
+	/* Pushes fake registers */
+	*userStackTop -= 10 * sizeof(uint64_t);
+	memset(*userStackTop, 0, 10 * sizeof(uint64_t));
 
 	/* NOW IT CAN RUN */
 	return 0;

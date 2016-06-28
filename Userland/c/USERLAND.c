@@ -53,13 +53,19 @@ static command commands[] = {
 
 uint64_t printProcessA();
 uint64_t printProcessB();
-int32_t userland_main(int argc, char *argv[]);
+int32_t userland_main(int argc, char* argv[]);
 
-int32_t init_d() {
+int32_t init_d(int argc, char* argv[]) {
 
-	char *argvA[] = {"process A"};
-	char *argvB[] = {"process B"};
-	char *argvTerminal[] = {"terminal"};
+	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+
+	if(bssCheck != 0) {						//Improper BSS setup, abort
+		return -1;
+	}
+
+	char* argvA[] = {"process A"};
+	char* argvB[] = {"process B"};
+	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "process B", printProcessB, 1, argvB);
 	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
@@ -78,30 +84,27 @@ uint64_t printProcessA() {
 		}
 		aux++;
 	}
-	while(1);
 	return 0;
 }
 
 uint64_t printProcessB() {
 
 	uint64_t aux = 0;
-	while (1) {
+	while ((uint64_t)-1) {
 		if ( (aux % 50000000) == 0) {
 			print("Hi, from process B ");
 		}
 		aux++;
 	}
-	while(1);
 	return 0;
 }
 
-int32_t userland_main(int argc, char *argv[]) {
+int32_t userland_main(int argc, char* argv[]) {
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
 	
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
-
 
 	clearScreen();
 	char buffer[100];
