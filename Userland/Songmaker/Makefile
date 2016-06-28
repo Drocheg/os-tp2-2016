@@ -1,6 +1,8 @@
 all: build
 
-build:
+build: song1.bin
+
+song1.bin:
 	gcc songmaker.c -o songmaker.o
 	./songmaker.o
 

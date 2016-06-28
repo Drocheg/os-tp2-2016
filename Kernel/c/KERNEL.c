@@ -57,7 +57,7 @@ int kernel_main(int argc, char *argv[]) {
 	// uint64_t *imgData2 = (uint64_t *)0x500000;
 	// uint64_t width = imgData2[0],
 	// 			height = imgData2[1];
-	// imgData += 5670;
+	// imgData += sizeof(uint64_t) * 2;
 	// for(int y = 0; y < height; y++) {
 	// 	for(int x = 0; x < width; x++) {
 	// 		uint8_t red = *(imgData++);
