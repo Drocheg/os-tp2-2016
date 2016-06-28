@@ -7,8 +7,10 @@
 #include <libasm.h>
 #include <modules.h>
 #include <memory.h>
-#include <time.h>
 #include <stddef.h>
+#include <time.h>
+#include <process.h>
+#include <scheduler.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -17,12 +19,14 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 
-static const uint64_t PageSize = 0x1000;
+/* static const uint64_t PageSize = 0x1000; */
+static const uint64_t PageSize = PAGE_SIZE;
 
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
 
 int kernel_main(int argc, char *argv[]) {	
+	int32_t ret = 0;
 	setGraphicMode();
 	ncPrint("Set graphic video mode\n");
 
@@ -35,43 +39,55 @@ int kernel_main(int argc, char *argv[]) {
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
 	ncPrint("Done.\n");
 
+	ncPrint("Increasing PIT frequency...");
+	setPITfrequency(500);	//Any higher and PC speaker stops responding
+	ncPrint("Done.\n");
+
+	/* Initializes memory management */
+	ncPrint("Initializing Memory Management...");
+	initializePageStack();
+	ncPrint("Done.\n");
+
+	ncPrint("Initializing PCB...");
+	initializePCB();
+	ncPrint("Done\n");
+
+	ncPrint("Initilzing File System...");
+	initializeFileSystem();
+	ncPrint("Done\n");
+
+	ncPrint("Initializing Scheduler...");
+	initializeScheduler();
+	startScheduler();
+	ncPrint("Done.\n");
+
+	/* Enables interrupts (i.e: PIC Mask, and Interrupts stack) */
 	ncPrint("Enabling interrupts...");
+	if (initializeInterruptStacks()) {
+		ncPrint("Couldn't start the kernel. Aborting\n");
+		_cli();
+		_halt();
+		return -1;
+	}
 	//masterPICmask(0x0);	//All interrupts
 	masterPICmask(0xFC);	//Keyboard and timer tick
 	//masterPICmask(0xFD);	//Keyboard only
 	//masterPICmask(0xFE);	//Timer tick only
 	//masterPICmask(0xFF);	//No interrupts
+	ncPrint("Done.\n");
+
+
+	/* Initializes scheduler */
+	char *args[] = {"init.d"};
+	addProcess(0, "init.d", runCodeModule, 1, args);
+
+	ncPrint("Starting init.d\n");
 	_sti();
-	ncPrint("Done.\n");
-
-	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(500);	//Any higher and PC speaker stops responding
-	ncPrint("Done.\n");
-
-	ncPrint("Initializing Memory Management...");
-	initializePageStack();
-	ncPrint("Done.\n");
-
-	// ncClear();
-	// uint8_t *imgData = (uint8_t *)0x500000;
-	// uint64_t *imgData2 = (uint64_t *)0x500000;
-	// uint64_t width = imgData2[0],
-	// 			height = imgData2[1];
-	// imgData += sizeof(uint64_t) * 2;
-	// for(int y = 0; y < height; y++) {
-	// 	for(int x = 0; x < width; x++) {
-	// 		uint8_t red = *(imgData++);
-	// 		uint8_t green = *(imgData++);
-	// 		uint8_t blue = *(imgData++);
-	// 		paintPixelRGB(x, y, red, green, blue);
-	// 	}
-	// }
-	// return 0;
 
 
-	ncPrint("Jumping to user space...NOW!\n");
-	int32_t ret;
-	ret = runCodeModule();
+
+	// ncPrint("Jumping to user space...NOW!\n");
+	// ret = runCodeModule();
 	
 	ncClear();
 	ncPrint("User space returned with exit code ");

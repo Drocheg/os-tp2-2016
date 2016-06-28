@@ -50,12 +50,61 @@ static command commands[] = {
 	{"time", getTime, "Get ms since system boot"}
 };
 
+uint64_t printProcessA();
+uint64_t printProcessB();
+int32_t userland_main(int argc, char* argv[]);
 
-int32_t userland_main(int argc, char *argv[]) {
+int32_t init_d(int argc, char* argv[]) {
+
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
+
+	char* argvA[] = {"process A"};
+	char* argvB[] = {"process B"};
+	char* argvTerminal[] = {"terminal"};
+	createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+
+	while(1);
+	return 0;
+
+}
+
+uint64_t printProcessA() {
+
+	uint64_t aux = 0;
+	while (1) {
+		if ( (aux % 50000000) == 0) {
+			print("Hi, from process A ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+uint64_t printProcessB() {
+
+	uint64_t aux = 0;
+	while ((uint64_t)-1) {
+		if ( (aux % 50000000) == 0) {
+			print("Hi, from process B ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+int32_t userland_main(int argc, char* argv[]) {
+	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+	
+	if(bssCheck != 0) {						//Improper BSS setup, abort
+		return -1;
+	}
+
 	clearScreen();
 	char buffer[100];
 	printVer();
@@ -65,6 +114,7 @@ int32_t userland_main(int argc, char *argv[]) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
+
 		while((c = getchar()) != '\n') {
 			if(c != 0) {					//Recognized key, print it and save it
 				if(c == '\b') {				//Entered backspace
@@ -83,6 +133,7 @@ int32_t userland_main(int argc, char *argv[]) {
 				putchar('_');
 			}
 		}
+
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");

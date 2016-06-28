@@ -1,47 +1,67 @@
 #include <memory.h>
 #include <stdlib.h>
+#include <interrupts.h>
+#include <process.h>
+#include <file.h>
+#include <stddef.h>
+#include <time.h>
+#include <video.h>
 
 #ifndef MAX_PROCESSES
-#define MAX_PROCESSES 32
+#define MAX_PROCESSES 0x10 /* See Process.c */
 #endif
 
+
 /* Typedefs*/
-typedef enum {RUNNING = 1, WAITING, FINISHED} State;
-typedef node_t * Node;
+typedef struct node_t * Node;
+typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
+typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
+typedef uint64_t (*IOActions)(uint64_t, uint64_t);
+typedef uint64_t (*CheckWakeActions)(Node);
+typedef uint64_t (*CheckWakeIOActions)();
 
 
-/*Structs */
-struct pcb_t {
 
-	uint16_t pid;
-	char name[32];
-	void *userStackPage;
-	void *userStackTop;
-	void *kernelStackPage;
-	void *kernelStackTop;
-	State state;
-}
-
+/* Structs */
 struct node_t {
-	pcb_t process;
-	uint64_t pageIndex;
+	uint64_t PCBIndex;
+	State state;
+	uint64_t generalPurpose1;
+	uint64_t generalPurpose2;
+	uint64_t generalPurpose3;
+	uint64_t index;
 	Node next;
 };
 
 
-/* Static variables */
-static uint8_t running;							/* Says if the scheduler is running */
-static uint16_t nextPid;						/* Stores the value of the next PID that will be assigned */
-static uint8_t usedNodes[MAX_PROCESSES];		/* Holds a list of the nodes, marking those that are occupied*/
-static Node last;								/* Points to the last node in the cirular queue */
-static void *memoryPage;						/* Stores a memory page for the circular queue */
-
-
 /* Static functions prototypes */
-static int initializePCB(Node node, char[32] name, void *stack);
 static int getFreeNode();
-static int createStack(void **userStackPage, void **userStackTop);
-static int initializeStack(void **userStackTop, void *mainFunction, uint64_t argc, char *argv[], char name[32]);
+static uint64_t dequeueProcess();
+static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
+static void *nextProcessRecursive();
+static uint64_t checkScheduler();
+static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
+static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor);
+static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor);
+static uint64_t waitForTime(uint64_t miliseconds);
+static uint64_t checkWake(Node current);
+static uint64_t checkWakeIO(Node current);
+static uint64_t checkAvailableData(Node current);
+static uint64_t checkFreeSpace(Node current);
+static uint64_t checkWakeTime(Node current);
+
+
+/* Static variables */
+static uint8_t running = 0;															/* Says if the scheduler is on */
+static uint8_t firstIteration = 1;													/* Indicates if is the first time the scheduler is giving the next process */
+static uint8_t usedNodes[MAX_PROCESSES];											/* Holds a list of the nodes, marking those that are occupied */
+static Node last = NULL;															/* Points to the last node in the cirular queue */
+static void *memoryPage = NULL;														/* Stores a memory page for the circular queue */
+static IOActions ioActions[2] = {waitForInput, waitForOutput};						/* Stores a pointer to actions to be taken on IO request */
+static CheckWakeActions wakeActions[2] = {checkWakeIO, checkWakeTime};				/* Stores a pointer to actions to be taken to check if a process must be waken */
+static CheckWakeIOActions wakeIOActions[2] = {checkAvailableData, checkFreeSpace};	/* Stores a pointer to checkers of IO wakening */
+
+
 
 
 
@@ -53,23 +73,25 @@ static int initializeStack(void **userStackTop, void *mainFunction, uint64_t arg
 /*
  * Sets up the scheduler 
  * Must call initializePageStack!!
+ * Returns 0 on sucess, or -1 otherwise
  */
-void initializeScheduler() {
+uint64_t initializeScheduler() {
 
 	uint64_t i = 0;
 	pageManager(POP_PAGE, &memoryPage); /* Gets a page to store scheduler circular queue */
+	if (memoryPage == NULL) {
+		return -1;
+	}
 	while (i < MAX_PROCESSES) {
 		usedNodes[i++] = 0;
 	}
-	running = 0;
-	nextPid = 0;
-	last = NULL;
+	return 0;
 }
 
 /*
  * Starts the scheduler
  */
-void startScheduler() {
+void *startScheduler() {
 	running = 1;
 }
 
@@ -82,7 +104,20 @@ void stopScheduler() {
 
 
 /*
- * Updates the process queue, changing to the nexr process
+ * Adds a process into the queue
+ * Returns 0 on success, or -1 otherwise
+ */
+uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+
+	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+		return -1;
+	}
+	return 0;
+}
+
+
+/*
+ * Updates the process queue, changing to the next process
  * Returns the next process' stack, 
  * or NULL if scheduler is not running or if no process is scheduled
  */
@@ -90,17 +125,42 @@ void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
 
-	if (!running || last == NULL) {
+	if (checkScheduler()) {
+		
 		return NULL;
 	}
-
 	current = last->next;
-	current->(process.userStackTop) = currentRSP;
-	return switchContext(current->kernelStackTop); /* ASM function */
+	
+	if (!firstIteration) {
+		setProcessStack(current->PCBIndex, currentRSP);
+	} else {	
+		firstIteration = 0;
+	}
+	last = current;		 				/* Change to next process */
+	return nextProcessRecursive();
+
 }
 
+ 
 
 
+
+
+/*
+ * Finishes the current process
+ * Returns 0 on suceess, or -1 otherwise
+ */
+uint64_t finishProcess() {
+
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	current->state = FINISHED;
+	return 0;
+}
 
 
 
@@ -110,51 +170,42 @@ void *nextProcess(void *currentRSP) {
 /*********************/
 
 
-static int initializePCB(Node node, char[32] name, void *stack) {
-
-	node->(process.pid) = nextPid++;
-	node->(process.name) = name;
-	if ( createStack(&node->(process.userStackPage)), &node->(process.userStackTop) ) {
-		return -1;
-	}
-	if ( createStack(&node->(process.kernelStackPage)), &node->(process.kernelStackTop) ) {
-		return -1;
-	}
-	node->(process.state) = RUNNING;
-	return 0;
-}
-
-
-
 /* 
  * Enqueus a new process into the queue
  * Returns 0 if everything was OK
  * Returns -1 if no space for the process in the processes list
- * Returns -2 if there was no space to allocate a stack for the process
- * Returns -3 if there was a problem with parameters
+ * Returns -2 if process couldn't be created
  */
-int enqueueProcess(char[32] name, uint64_t argc, char *argv[]) {
+static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
+	void *entryPoint, uint64_t argc, char *argv[]) {
 
 	int index = -1;
-	Node newNode = NULL;
-	void *stack = NULL;	
+	Node newNode = NULL;	
 	Node aux = NULL;
+	uint64_t PCBIndex;
 	
 	if ((index = getFreeNode()) < 0) {
 		return -1;
 	}
 
-	newNode = (Node) (memoryPage + (index * sizeof(*newNode)));
-	if (initializePCB(newNode, name, stack)) {
+
+	PCBIndex = createProcess(parentPid, name, entryPoint, argc, argv);
+
+	if (PCBIndex < 0) {
 		return -2;
 	}
-	newNode->pageIndex = index;
-	newNode->next = newNode; /* Helps when last is NULL */
-	if (argc <= 0) {
-		return -3
-	}
-	initializeStack(&(newNode->(process.userStackTop)), argc, argv, newNode->(process.name));
 
+	usedNodes[index] = 1;
+	newNode = (Node) (memoryPage + (index * sizeof(*newNode)));
+	newNode->PCBIndex = PCBIndex;
+	newNode->state = RUNNING;
+	newNode->index = index;
+	newNode->generalPurpose1 = 0;
+	newNode->generalPurpose2 = 0;
+	newNode->generalPurpose3 = 0;
+	newNode->next = newNode; /* Helps when last is NULL */
+
+	/* attaches the new node into the circular queue */
 	aux = (last == NULL) ? newNode : last;
 	last = newNode;
 	newNode->next = aux->next;
@@ -168,7 +219,7 @@ int enqueueProcess(char[32] name, uint64_t argc, char *argv[]) {
  * Takes off the queue the current process (i.e the next one to last).
  * Returns 0 if current process was dequeued, -1 otherwise.
  */
-int dequeueProcess() {
+static uint64_t dequeueProcess() {
 
 	Node current = NULL;
 
@@ -178,8 +229,8 @@ int dequeueProcess() {
 
 	current = last->next;
 	usedNodes[current->index] = 0;
-	pageManager(PUSH_PAGE, &(current->(process.userStackPage)) ); //TODO: Check if is well written
-	if (last == last->next) {
+	destroyProcess(current->PCBIndex);
+	if (last == last->next) { /* Was the last process */
 		last = NULL;
 	} else {
 		last->next = last->next->next;
@@ -210,167 +261,179 @@ static int getFreeNode() {
 
 
 
-static int createStack(void **stackPage, void **stackTop) {
-
-	pageManager(POP_PAGE, stackPage);
-	if (*stackPage == NULL) {
-		return -1;
-	}
-	*stackTop = (void *) ((*stackPage) + PAGE_SIZE);
-	return 0;
-}
-
-
-
-/* 
- * Loads stack in order to start running 
- * Returns 0 on success, or -1 otherwise
- */
-static int initializeStack(void **userStackTop, void *mainFunction, uint64_t argc, char *argv[], char name[32]) {
-
-	uint64_t count = 0;
-	uint64_t processSS = 0;
-	uint64_t processRSP = 0;
-	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
-	uint64_t processCS = 0x008; /* WYRM value (TODO: Ask Rodrigo) */
-
-
-	if (argc <= 0) {
-		return -1; /* At least, one parameter with the process name must be passed */
-	}
-
-	
-	/* Pushes stack base null */
-	*userStackTop -= sizeof(uint64_t);
-	memset(*userStackTop, 0, sizeof(uint64_t));
-	
-	/* Pushes argv strings */
-	count = argc - 1;
-	while (count >= 0) {
-		int length = strlen(argv[count]) + 1; /* Adds NULL termination to length */
-		
-		/* Word alignment */
-		int aux = length % sizeof(uint64_t);
-		if (aux != 0) {
-			length += (sizeof(uint64_t) - aux);
-		}
-
-		*userStackTop -= (length / sizeof(uint64_t)) * sizeof(uint64_t);
-		memcpy(*userStackTop, (void*) argv[count], length); /* copies the NULL termination */
-		argv[count] = (char*) *userStackTop;
-		count--;
-	}
-
-	/* Pushes end of argv null */
-	*userStackTop -= sizeof(uint64_t);
-	memset(*userStackTop, 0, sizeof(uint64_t));
-	 /*Pushes argv pointers */
-	count = argc - 1;
-	while (count >= 0) {
-		*userStackTop -= sizeof(char *);
-		void *argvArrayInStack = ;
-		memcpy(*userStackTop, &(argv[count]), sizeof(char *));
-		count--;
-	}
-
-	/* Pushes argv */
-	argv = (char *) *userStackTop;
-	*userStackTop -= sizeof(argv);
-	memcpy(*userStackTop, argv, sizeof(argv));
-	/* Pushes argc */
-	*userStackTop -= sizeof(argc);
-	memcpy(*userStackTop, &argc, sizeof(argc));
-
-	/* Pushes return address of main */
-	// TODO: Lo mandamos a una funcion que sea la que lo pone en estado FINISHED ?
-
-	/* Pushes fake RBP (i.e the stack base of main caller) */
-	*userStackTop -= sizeof(uint64_t);
-	memset(*userStackTop, 0, sizeof(void *));
-
-	/* Up to here we have the process stack*/
-	processRSP = (uint64_t) *userStackTop;
-
-	/* Now we have to push registers values in order to start running after iretq */
-	/* Must push in this order: SS, RSP (new process'), RFLAGS (with a mask), CS, RIP */
-	/* For more info., see Intel® 64 and IA-32 Architectures Software Developers Manual, Vol. 3-A, Fig. 6-8 */
-	
-
-	/* Values got in https://bitbucket.org/RowDaBoat/wyrm/src */
-	/* /d4f3cfcc64325efb1f7d7039fc7bc7c7e85777b0/Kernel/Scheduler/Process.cpp?at=master&fileviewer=file-view-default */
-	
-	/* Pushes SS register */
-	*userStackTop -= sizeof(processSS);
-	memcpy(*userStackTop, &processSS, sizeof(processSS));
-
-	/* Pushes RSP */
-	userStackTop -= sizeof(processRSP);
-	memcpy(*userStackTop, &processRSP, sizeof(processRSP));
-
-	/* Pushes RFLAGS */
-	userStackTop -= sizeof(processRFLAGS);
-	memcpy(*userStackTop, &processRFLAGS, sizeof(processRFLAGS));
-
-	/* Pushes CS */
-	userStackTop -= sizeof(processCS);
-	memcpy(*userStackTop, &processCS, sizeof(processCS));		
-
-	/* Pushes RIP (i.e: process main function direction or entry point) */
-	*userStackTop -= sizeof(uint64_t);
-	memcpy(*userStackTop, mainFunction, sizeof(uint64_t));
-
-	/* Pushes fake registers */
-	*userStackTop -= 17 * sizeof(uint64_t);
-	memset(*userStackTop, 0, 17 * sizeof(uint64_t));
-
-	/* NOW IT CAN RUN */
-	return 0;
-}
-
-
-
-
-
-
-
-/*
- * Gets next process in the queue.
- * If  next process is running, it returns it's stack.
- * If next process is waiting, it skips it.
- * If next process is finished, it dequeus it and get the following
- */
- /*
-void *nextProcess() {
-
-	Node current = NULL;
-
-	if (last == NULL) {
-		return -1;
-	}
+static void *nextProcessRecursive() {
 
 	Node current = last->next;
 
+	// ncPrint("I'm here");
+	// ncPrintHex(current->state);
+	// while(1);
 
-	switch (current->(process.state)) {
-
-		case WAITING: last = last->next; return nextProcess;
-		case FINISHED: dequeueProcess; break;
-
-
+	if (current->state == RUNNING) {
+		return getProcessStack(current->PCBIndex);
 	}
-
-	if (current->(process.state) == FINISHED) {
+	if (current->state == FINISHED) {
 		dequeueProcess();
-		return nextProcess();
+		return nextProcessRecursive();
+	}
+	if (current->state == SLEPT) {
+		if (checkWake(current)) {				/* TODO: Check that everything is done here */
+			last = last->next;
+			return nextProcessRecursive();		/* if checkWake returns -1, the process must remain slept */
+		}
+		current->state = RUNNING;
+		return getProcessStack(current->PCBIndex);
 	}
 
+
+	return NULL;
+		
+}
+
+
+/*
+ * Checks if the scheduler is running and has processes in its queue
+ */
+static uint64_t checkScheduler() {
+
+	if (!running || last == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
+
+
+
+static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+
+	
+	Node current = (Node) NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || fileDescriptor < getFilesQuantity(current->PCBIndex)) {
+		return -1;
+	}
+	if (ioActions[(uint64_t) ioOperation]) {
+		return -1;
+	}
+	current->state = SLEPT;
+	current->generalPurpose1 = (uint64_t) SLEPT_IO; 									/* Stores reason of sleep */
+	current->generalPurpose2 = (uint64_t) ioOperation; 									/* Stores action to take place */
+	current->generalPurpose3 = (uint64_t) getFile(current-> PCBIndex, fileDescriptor); 	/* Stores file to check */
+
+	return 0;
+}
+
+
+
+static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+
+	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_READ;
+
+	if (flag != F_READ) {
+		return -1; /* Permission denied */
+	}
+	return 0;
+}
+
+
+static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+
+	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_WRITE;
+
+	if (flag != F_READ) {
+		return -1; /* Permission denied */
+	}
+	return 0;
+}
+
+
+
+static uint64_t waitForTime(uint64_t miliseconds) {
+
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	current->state = SLEPT;
+	current->generalPurpose1 = (uint64_t) SLEPT_TIME; 							/* Stores reason of sleep */
+	current->generalPurpose2 = (uint64_t)  miliseconds * getPITfrequency();		/* Stores how many ticks must occur to wake up */
+	current->generalPurpose3 = ticks();											/* Stores actual amount of ticks */
+	return 0;
+}
+
+
+
+static uint64_t checkWake(Node current) {
+
+	return (wakeActions[current->generalPurpose1])(current);
 
 }
 
-*/
+
+static uint64_t checkWakeIO(Node current) {
+
+	return (wakeIOActions[current->generalPurpose2])(current);
+
+}
+
+/*
+ * Checks if the file has data available to be read
+ * Returns 0 ig the process must be waken, or -1 otherwise
+ */
+static uint64_t checkAvailableData(Node current) {
+
+	File file = (File) current->generalPurpose3;
+
+	if (!dataAvailable(file)) {
+		return -1;
+	}
+
+	/* TODO: What do we do here? */
+	
+	return 0;
+}
 
 
+/*
+ * Checks if the file has data available to be read
+ * Returns 0 ig the process must be waken, or -1 otherwise
+ */
+static uint64_t checkFreeSpace(Node current) {
 
+	File file = (File) current->generalPurpose3;
+
+	if (!hasFreeSpace(file)) {
+		return -1;
+	}
+
+	/* TODO: What do we do here? */
+	
+	return 0;
+
+}
+
+/* 
+ * Checks if a process must be waken when was sleeping due to time
+ * Returns 0 if the process must be waken, or -1 otherwise
+ */
+static uint64_t checkWakeTime(Node current) {
+
+	uint64_t elapsed = ticks() - current->generalPurpose3;
+	uint64_t amount = current->generalPurpose2;
+	
+	if (elapsed < amount) {
+		return -1;
+	}
+	return 0;
+
+}
 
 
 
