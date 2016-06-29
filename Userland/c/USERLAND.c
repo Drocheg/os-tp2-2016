@@ -7,6 +7,7 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <game.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -33,8 +34,13 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
+
 void playMainSong();
 void playSongTwo();
+
+void game();
+
+
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -49,7 +55,8 @@ static command commands[] = {
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
-	{"time", getTime, "Get ms since system boot"}
+	{"time", getTime, "Get ms since system boot"},
+	{"game", game, "Play Game"}
 };
 
 uint64_t printProcessA();
@@ -238,6 +245,7 @@ void getTime() {
 	print("ms\n");
 }
 
+
 void playMainSong(){
 	char* argvSongPlayer[] = {"songplayer"};
 	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
@@ -247,4 +255,9 @@ void playMainSong(){
 
 void playSongTwo(){
 	playSong(1);
+}
+
+void game(){
+	initGame();
+
 }
