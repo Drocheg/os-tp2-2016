@@ -78,12 +78,12 @@ void IRQHandler(uint8_t irq) {
 }
 
 static void timerTick() {  	
-  	if(!noSound())				//NOT an else, both cases might need to be run
-  	{
-		decreaseTimer();
-	}
-	if(noSound())
-	{
-		soundOff();
-	}
+  	//if(!noSound())				//NOT an else, both cases might need to be run
+  	//{
+	//	decreaseTimer();
+	//}
+	//if(noSound())
+	//{
+	//	soundOff();
+	//}
 }

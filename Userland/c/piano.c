@@ -52,6 +52,7 @@ void piano() {
 
 void offerNote(uint8_t note, uint8_t octave, uint32_t time){
   	uint32_t nFrequence = notes[note][octave];
-  	_int80(SPEAKER, nFrequence, time, 0);
-  	sleep(20);
+  	_int80(SPEAKER, nFrequence, 0, 0);
+  	sleep(40);
+  	_int80(SPEAKER, 0, 0, 0);
 }

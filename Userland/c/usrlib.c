@@ -57,6 +57,12 @@ uint64_t time() {
 	// return result;
 }
 
+void sleep(uint64_t sleepTime){
+	uint64_t startTime = time();
+	while(time()<startTime+sleepTime);
+	return;
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;

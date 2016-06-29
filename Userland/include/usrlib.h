@@ -28,4 +28,6 @@ void printf(const char *format, vargs *args);
 
 uint64_t time();
 
+void sleep(uint64_t sleepTime);
+
 #endif

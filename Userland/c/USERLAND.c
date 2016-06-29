@@ -34,12 +34,14 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
-
+void playMainSong();
+void playSongTwo();
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
 	{"clear", clearScreen, "Clears the screen"},
-	{"playsong", playSong, "Plays the song loaded as data module"},
+	{"playsong", playMainSong, "Plays the first song loaded in the data module"},
+	{"playsong2", playSongTwo, "Plays the second song loaded in the data module"},
 	{"exit", exit, "Exits the kernel"},
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
@@ -50,6 +52,7 @@ static command commands[] = {
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"}
 };
+
 
 
 int32_t userland_main(int argc, char *argv[]) {
@@ -119,6 +122,8 @@ void printVer(const char *str) {
 
 void beep() {
 	_int80(SPEAKER, 1000, 1, 0);
+	sleep(50);
+	_int80(SPEAKER, 0, 1, 0);
 }
 
 void runCommand(char *cmd) {
@@ -176,4 +181,12 @@ void getTime() {
 	print("Current time: ");
 	printNum(time());
 	print("ms\n");
+}
+
+void playMainSong(){
+	playSong(0);
+}
+
+void playSongTwo(){
+	playSong(1);
 }
