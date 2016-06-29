@@ -13,7 +13,7 @@
 #define SPACE_OBSTACLE 1
 #define HORIZONTAL_SIZE 10
 #define VERTICAL_SIZE 10
-#define GAME_TICK 200
+#define GAME_TICK 100
 #define JUMP_LAG 200
 #define OBSTACLE_LAG_MULTIPLIER 6
 #define NO_OBSTACLE_MULTIPLIER 5
@@ -43,7 +43,7 @@ void paintFullRect(uint64_t i,uint64_t j,uint64_t width,uint64_t height,uint32_t
 void initGame(){
 	state = STATE_GROUND;
 	jumpForce=0;
-	jumpStartTime=-1;
+	jumpStartTime=time();
 	lastUpdateTime=time();
 	lastObstacleUpdate=time();
 	posY=1;
@@ -74,6 +74,7 @@ void jump(){
 	jumpForce+=1;
 	if(state==STATE_GROUND){
 		//print("S");
+		jumpForce=1;
 		state=STATE_JUMPING;
 		jumpStartTime=time();
 	}
@@ -94,21 +95,25 @@ void update(){
 		jump();
 	}
 	if(state==STATE_AIR){
-		//print("A");
+		print("A");
 		uint64_t timeFromJump = updateTime-(jumpStartTime+JUMP_LAG);
 		uint64_t gameTicksFromJump = timeFromJump/GAME_TICK;
 		if(gameTicksFromJump>0){
-			//print("B");
+			print("B");
 			if(gameTicksFromJump<=jumpForce){
-				//print("C");
+				print("C");
 				posY=1+gameTicksFromJump;
 			}else{
-				//print("D");
-				posY=(1+jumpForce)-(gameTicksFromJump-jumpForce); //the max height from jump - fall
+				print("D");
+				if(1+jumpForce<gameTicksFromJump-jumpForce){
+					posY=1;
+				}else{
+					posY=(1+jumpForce)-(gameTicksFromJump-jumpForce); //the max height from jump - fall
+				}
 			}
 			if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
 			if(posY<=1){
-				//print("G");
+				print("G");
 				posY=1;
 				state=STATE_GROUND;	
 				jumpForce=0;
@@ -159,14 +164,10 @@ void update(){
 					}
 				}else{
 					if(obstacle[i][j]==SPACE_OBSTACLE){
-						for(int k=i*50;k<50;k++){
-							paintFullRect(i*50, j*50, 50, 50, 0xFF0000);
-							
-						}
+						paintFullRect(i*50, j*50, 50, 50, 0xFF0000);
 						
 					}else{
-						paintFullRect(i*50, j*50, 50, 50, 0x000000);
-						
+						paintFullRect(i*50, j*50, 50, 50, 0x000000);	
 						
 					}
 				}
@@ -184,6 +185,12 @@ void update(){
 			}
 		}
 	}
+	
+	for(int i=0; i<10; i++){
+		paintFullRect(i*50,13*50,5,5,0x000000);
+	}
+	paintFullRect(jumpForce*50,13*50,5,5,0xFFFF00);
+
 
 
 
