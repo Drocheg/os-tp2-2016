@@ -25,11 +25,12 @@ cargada en el modulo de datos.
 void playSong(uint32_t songNum) {
 
 	char *songData;
-	songData = (char *) _int80(OPENDATAMODULE, 0, 0, 0);
+	_int80(OPENDATAMODULE, &songData, 0, 0);
 	
 	int32_t songMaxNum = (int32_t) *songData;
 	songData = songData+4;
-	printNum(songMaxNum);
+	
+	
 	if(songMaxNum<=songNum) return; //Error
 
 	for(uint32_t i=0; i<songNum; i++){
@@ -38,8 +39,7 @@ void playSong(uint32_t songNum) {
 		songData = songData+8*n;	
 	}
 	int32_t n = (int32_t) *songData;
-	printNum(999);
-	printNum(n);
+	
 	songData = songData+4;						//Skip bytes for n
 	uint16_t freq; //Porque 16???
 	uint32_t time;

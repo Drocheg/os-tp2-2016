@@ -44,7 +44,8 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = 1;
 			break;
 		case OPENDATAMODULE:
-			result = (int64_t) openDataModule();
+			*((char **) p1) = (char *) openDataModule();
+			result = 1;
 			break;
 		case RAINBOW:
 			ncRAINBOWWWWWW();
