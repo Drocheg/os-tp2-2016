@@ -33,6 +33,12 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
 void *nextProcess();
 
 /*
+ * Returns the current process' PCB index,
+ * or -1 if no process sscheduled, or schduler not initialzed
+ */
+uint64_t getCurrentPCBIndex();
+
+/*
  * Finishes the current process
  * Returns 0 on suceess, or -1 otherwise
  */

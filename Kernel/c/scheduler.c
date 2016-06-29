@@ -88,6 +88,7 @@ uint64_t initializeScheduler() {
 	return 0;
 }
 
+
 /*
  * Starts the scheduler
  */
@@ -124,7 +125,6 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
 void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
-
 	if (checkScheduler()) {		
 		return getKernelStack();
 	}
@@ -140,9 +140,21 @@ void *nextProcess(void *currentRSP) {
 
 }
 
- 
 
+/*
+ * Returns the current process' PCB index,
+ * or -1 if no process sscheduled, or schduler not initialzed
+ */ 
+uint64_t getCurrentPCBIndex() {
 
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	return current->PCBIndex;
+}
 
 
 /*

@@ -7,7 +7,6 @@
 
 
 struct file_s {
-
 	
 	char name[MAX_NAME];			/* Stores the file name */
 	uint64_t maxSize;				/* Stores the max amount of bytes the file can hold */
