@@ -183,10 +183,10 @@ void printVer(const char *str) {
 }
 
 void beep() {
-	_int80(SPEAKER, 1000, 1, 0);
-	sleep(50);
-	_int80(SPEAKER, 0, 1, 0);
+	soundFX(1000);
 }
+
+
 
 void runCommand(char *cmd) {
 	toLowerStr(cmd);

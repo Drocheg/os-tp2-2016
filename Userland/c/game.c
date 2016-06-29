@@ -18,6 +18,9 @@
 #define OBSTACLE_LAG_MULTIPLIER 6
 #define NO_OBSTACLE_MULTIPLIER 5
 #define GAME_OVER_LAG 10000
+#define JUMP_FX_1 21
+#define JUMP_FX_2 41
+#define JUMP_FX_3 82
 
 
 static uint64_t state;
@@ -88,6 +91,22 @@ void update(){
 	if(state==STATE_JUMPING){
 		//print("J");
 		if(jumpStartTime+JUMP_LAG<updateTime){
+			uint64_t randFX = ((updateTime/13)*7919)%(3);
+			uint32_t jumpFX;
+			switch(randFX){
+				case 0:
+					jumpFX=JUMP_FX_1;
+					break;
+				case 1:
+					jumpFX=JUMP_FX_2;
+					break;
+				default:
+					jumpFX=JUMP_FX_3;
+					break;
+
+			}
+
+			soundFX(jumpFX);
 			state=STATE_AIR;
 		}
 	}
