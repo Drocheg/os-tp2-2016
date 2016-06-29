@@ -8,7 +8,7 @@ void paintColorChar(uint64_t x, uint64_t y, uint8_t c, uint32_t color);
 void paintChar(uint64_t x, uint64_t y, uint8_t c);
 
 
-static uint64_t x = 8, y = 0;
+static uint64_t x = CHAR_PX_SIZE, y = 0;
 static char buffer[64] = { '0' };
 
 
@@ -21,17 +21,20 @@ void ncPrintColorChar(char character, uint32_t color) {
 	}
 	else {
 		paintColorChar(x, y, character, color);
-		x += 8;
+		x += CHAR_PX_SIZE;
 	}
 	if(x >= width) {
-		if(y >= height) {
+		if(y >= height-CHAR_PX_SIZE) {
 			ncScroll();
-			x = 8;
-			y = height-8;
+			x = CHAR_PX_SIZE;
+			y = height-CHAR_PX_SIZE*2;
+			// Content scrolled, now clear last line (can't call ncNewLine or we will have infinite recursion, as we will fall back here on the last character)
+			REKTangle r = {CHAR_PX_SIZE, height-CHAR_PX_SIZE, width, CHAR_PX_SIZE, BLACK};
+			fillRect(&r);
 		}
 		else {
-			x = 8;
-			y += 8;
+			x = CHAR_PX_SIZE;
+			y += CHAR_PX_SIZE;
 		}
 	}
 }
@@ -69,12 +72,12 @@ void ncNewline() {
 
 //Scrolls back 1 character, wrapping up to the previous line if necessary.
 void goBack() {
-	if(x > 8) {
-		x -= 8;
+	if(x > CHAR_PX_SIZE) {
+		x -= CHAR_PX_SIZE;
 	}
 	else if(y > 0) {
-		x = width - 8;
-		y -= 8;
+		x = width - CHAR_PX_SIZE;
+		y -= CHAR_PX_SIZE;
 	}
 }
 
@@ -103,7 +106,7 @@ void ncPrintBase(uint64_t value, uint32_t base) {
 
 void ncClear() {
 	clear();
-	x = 8;
+	x = CHAR_PX_SIZE;
 	y = 0;
 }
 
@@ -113,21 +116,9 @@ void ncScroll() {
 
 void ncScrollLines(uint8_t lines) {
 	if(lines > height) {
-		ncClear();
-		return;
+		lines = height;
 	}
-	// TODO
-	// uint32_t current = (width*2*lines),
-	// 			end = (width*2*height)-2-current,
-	// 			i;
-	// //Move content up
-	// for(i = 0; video+current < endVideo; current += 2, i += 2) {
-	// 	video[i] = video[current];
-	// }
-	// //Clear bottom
-	// for(i = (width*2*height)-2; i > end; i -= 2) {
-	// 	video[i] = 0;
-	// }
+	shiftUp(lines*CHAR_PX_SIZE);
 }
 
 //Modifies the color bytes of the video screen

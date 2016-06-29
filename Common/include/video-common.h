@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define CHAR_PX_SIZE 8
 #define WHITE 0xFFFFFF
 #define BLACK 0x000000
 

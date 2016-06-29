@@ -58,6 +58,9 @@ void setGraphicMode();
 //Clears the entire screen.
 void clear();
 
+//Shifts content up by the specified amount of pixels.
+void shiftUp(uint64_t pixels);
+
 //Paints a pixel in the specified location (if valid) with the specified color.
 void paintColorPixel(uint64_t x, uint64_t y, uint32_t color);
 
