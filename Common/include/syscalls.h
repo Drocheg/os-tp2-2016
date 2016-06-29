@@ -18,6 +18,12 @@
 #define TIME 11
 #define CREATE_PROCESS 12
 
+//Video
+#define PAINT_PX 860			//Paint white pixel
+#define PAINT_PX_COLOR 861		//Paint color pixel
+#define PAINT_REKT 862			//Paint REKTangle
+#define FILL_REKT 863			//Fill REKTangle
+#define PAINT_IMG 864			//Paint image
 
 
 struct createProcessParams_s {

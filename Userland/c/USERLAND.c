@@ -79,7 +79,7 @@ uint64_t printProcessA() {
 	uint64_t aux = 0;
 	while (1) {
 		if ( (aux % 50000000) == 0) {
-			print("Hi, from process A ");
+			print("A ");
 		}
 		aux++;
 	}
@@ -91,7 +91,7 @@ uint64_t printProcessB() {
 	uint64_t aux = 0;
 	while ((uint64_t)-1) {
 		if ( (aux % 50000000) == 0) {
-			print("Hi, from process B ");
+			print("B ");
 		}
 		aux++;
 	}
@@ -109,6 +109,11 @@ int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
+
+	REKTangle r = {500, 100, 100, 150, 0x07F2FF};
+	paintRect(&r);
+	paintPx(200, 200);
+
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!EXIT) {
 		uint8_t index = 0;

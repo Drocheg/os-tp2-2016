@@ -2,21 +2,22 @@
 #define VIDEO_H
 
 #include <stdint.h>
+#include <video-common.h>
 
-//Print the specified character to screen in the specified RGB color.
-void ncPrintColorChar(char character, uint8_t r, uint8_t g, uint8_t b);
+//Print the specified character to screen in the specified color.
+void ncPrintColorChar(char character, uint32_t color);
 
 //Prints the scpecified char to screen. Handles special chars, wraps around screen and scrolls if necessary.
 void ncPrintChar(char character);
 
-//Prints the specified string to screen in the specified RGB color.
-void ncPrintColor(const char * string, uint8_t r, uint8_t g, uint8_t b);
+//Prints the specified string to screen in the specified color.
+void ncPrintColor(const char * string, uint32_t color);
 
 //Prints the specified message to screen.
 void ncPrint(const char * string);
 
-//Prints the specified string to screen in the specified RGB color, followed by a newline character.
-void ncPrintlnColor(const char * string, uint8_t r, uint8_t g, uint8_t b);
+//Prints the specified string to screen in the specified color, followed by a newline character.
+void ncPrintlnColor(const char * string, uint32_t color);
 
 //Prints the specified message to screen in white, followed by a newline character.
 void ncPrintln(const char * string);
@@ -57,22 +58,16 @@ void setGraphicMode();
 //Clears the entire screen.
 void clear();
 
-//Paints a pixel in the specified location (if valid) with the specified RGB color.
-void paintPixelRGB(uint64_t x, uint64_t y, uint8_t red, uint8_t green, uint8_t blue);
+//Paints a pixel in the specified location (if valid) with the specified color.
+void paintColorPixel(uint64_t x, uint64_t y, uint32_t color);
 
 //Paints a white pixel in the specified location, if valid.
 void paintPixel(uint64_t x, uint64_t y);
 
-//Fills a rectangle at the specified position with the specified dimensions, in the specified color
-void fillrectRGB(uint64_t x, uint64_t y, uint64_t width, uint64_t height, uint8_t r, uint8_t g, uint8_t b);
+//Fills the specified rectangle.
+void fillRect(REKTangle *rekt);
 
-//Fills a rectangle at the specified position with the specified dimensions, in white
-void fillrect(uint64_t x, uint64_t y, uint64_t width, uint64_t height);
-
-//Draws a rectangle at the specified position with the specified dimensions, with the specified color border
-void drawRectRGB(uint64_t x, uint64_t y, uint64_t width, uint64_t height, uint8_t r, uint8_t g, uint8_t b);
-
-//Draws a rectangle at the specified position with the specified dimensions, with a white border
-void drawRect(uint64_t x, uint64_t y, uint64_t width, uint64_t height);
+//Draws the specified rectangle.
+void drawRect(REKTangle *rekt);
 
 #endif

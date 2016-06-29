@@ -5,6 +5,7 @@
 #include <scanCodes.h>
 #include <modules.h>
 #include <speaker.h>
+#include <video-common.h>
 #include <video.h>
 
 //Reads from different defined files: processed keyboard and unprocessed keyboard
@@ -68,7 +69,7 @@ int64_t sys_write(uint8_t fd, char *buff, uint32_t maxBytes) {
 			result = 0;
 			i = 0;
 			while(*buff != 0 && i < maxBytes) {
-				ncPrintColorChar(*buff, 255, 0, 0);
+				ncPrintColorChar(*buff, 0xFF0000);
 				buff++;
 				result++;
 			}

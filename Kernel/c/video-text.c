@@ -1,9 +1,10 @@
+#include <video-common.h>
 #include <video.h>
 #include <stdlib.h>
 
 extern const uint32_t width;
 extern const uint32_t height;
-void paintCharRGB(uint64_t x, uint64_t y, uint8_t c, uint8_t r, uint8_t g, uint8_t b);
+void paintColorChar(uint64_t x, uint64_t y, uint8_t c, uint32_t color);
 void paintChar(uint64_t x, uint64_t y, uint8_t c);
 
 
@@ -11,7 +12,7 @@ static uint64_t x = 8, y = 0;
 static char buffer[64] = { '0' };
 
 
-void ncPrintColorChar(char character, uint8_t r, uint8_t g, uint8_t b) {
+void ncPrintColorChar(char character, uint32_t color) {
 	if(character == '\n') {
 		ncNewline();
 	}
@@ -19,7 +20,7 @@ void ncPrintColorChar(char character, uint8_t r, uint8_t g, uint8_t b) {
 		ncBackspace();
 	}
 	else {
-		paintCharRGB(x, y, character, r, g, b);
+		paintColorChar(x, y, character, color);
 		x += 8;
 	}
 	if(x >= width) {
@@ -36,32 +37,32 @@ void ncPrintColorChar(char character, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void ncPrintChar(char character) {
-	ncPrintColorChar(character, 255, 255, 255);
+	ncPrintColorChar(character, WHITE);
 }
 
-void ncPrintColor(const char * string, uint8_t r, uint8_t g, uint8_t b) {
+void ncPrintColor(const char * string, uint32_t color) {
 	for (int i = 0; string[i] != 0; i++) {
-		ncPrintColorChar(string[i], r, g, b);
+		ncPrintColorChar(string[i], color);
 	}
 }
 
 void ncPrint(const char * string) {
-	ncPrintColor(string, 255, 255, 255);
+	ncPrintColor(string, WHITE);
 }
 
-void ncPrintlnColor(const char * string, uint8_t r, uint8_t g, uint8_t b) {
-	ncPrintColor(string, r, g, b);
+void ncPrintlnColor(const char * string, uint32_t color) {
+	ncPrintColor(string, color);
 	ncNewline();
 }
 
 void ncPrintln(const char * string) {
-	ncPrintlnColor(string, 255, 255, 255);
+	ncPrintlnColor(string, WHITE);
 }
 
 void ncNewline() {
 	uint64_t startY = y;
 	do {
-		ncPrintColorChar(' ', 0, 0, 0);
+		ncPrintColorChar(' ', BLACK);
 	}
 	while(y == startY);
 }

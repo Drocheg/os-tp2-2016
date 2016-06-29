@@ -67,6 +67,27 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 				*((uint64_t *) p2) = (uint64_t) result;
 			}
 			break;
+		/* *********
+		*	Video
+		* *********/
+		case PAINT_PX:
+			paintPixel(p1, p2);
+			break;
+		case PAINT_PX_COLOR:
+			paintColorPixel(p1, p2, p3);
+			break;
+		case PAINT_REKT:
+			drawRect((REKTangle *) p1);
+			break;
+		case FILL_REKT:
+			fillRect((REKTangle *) p1);
+			break;
+		case PAINT_IMG:
+			result = -1;		//Not implemented yet
+			break;
+		/* *********
+		*	Default
+		* *********/
 		default:
 			result = -1;
 			break;
