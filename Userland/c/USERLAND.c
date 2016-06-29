@@ -13,11 +13,10 @@ extern char endOfBinary;
 static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
-static const int MINOR_VER = 0;
+static const int MINOR_VER = 1;
 static int EXIT = 0;
 
-typedef struct
-{
+typedef struct {
 	char *name; 
 	void (*function)(void);
 	char *help;
@@ -53,22 +52,77 @@ static command commands[] = {
 	{"time", getTime, "Get ms since system boot"}
 };
 
+uint64_t printProcessA();
+uint64_t printProcessB();
+int32_t userland_main(int argc, char* argv[]);
 
+int32_t init_d(int argc, char* argv[]) {
 
-int32_t userland_main(int argc, char *argv[]) {
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
+
+//	char* argvA[] = {"process A"};
+//	char* argvB[] = {"process B"};
+	
+//	createProcess(0, "process A", printProcessA, 1, argvA);
+//	createProcess(0, "process B", printProcessB, 1, argvB);
+	char* argvTerminal[] = {"terminal"};
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+
+	while(1);
+	return 0;
+
+}
+
+uint64_t printProcessA() {
+
+	uint64_t aux = 0;
+	while (1) {
+		if ( (aux % 50000000) == 0) {
+			print("A ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+uint64_t printProcessB() {
+
+	uint64_t aux = 0;
+	while ((uint64_t)-1) {
+		if ( (aux % 50000000) == 0) {
+			print("B ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+int32_t userland_main(int argc, char* argv[]) {
+	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+	
+	if(bssCheck != 0) {						//Improper BSS setup, abort
+		return -1;
+	}
+
 	clearScreen();
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
+
+	REKTangle r = {500, 100, 100, 150, 0x07F2FF};
+	paintRect(&r);
+	paintPx(200, 200);
+
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!EXIT) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
+
 		while((c = getchar()) != '\n') {
 			if(c != 0) {					//Recognized key, print it and save it
 				if(c == '\b') {				//Entered backspace
@@ -87,6 +141,7 @@ int32_t userland_main(int argc, char *argv[]) {
 				putchar('_');
 			}
 		}
+
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");
@@ -184,7 +239,10 @@ void getTime() {
 }
 
 void playMainSong(){
-	playSong(0);
+	char* argvSongPlayer[] = {"songplayer"};
+	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
+	return;
+	//playSong(0);
 }
 
 void playSongTwo(){

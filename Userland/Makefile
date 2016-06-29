@@ -7,7 +7,7 @@ SOURCES= c/USERLAND.c c/piano.c c/songplayer.c c/usrlib.c ../Common/c/scanCodes.
 ASMOBJECTS= asm/interrupts.o
 COBJECTS=c/USERLAND.o c/piano.o c/songplayer.o c/usrlib.o ../Common/c/scanCodes.o ../Common/c/stdlib.o
 
-all: $(USER) songmaker
+all: $(USER) songmaker img
 
 %.o: %.c
 	$(GCC) -c $(GCCFLAGS) -I./include -I../Common/include/ $< -o $@
@@ -21,8 +21,11 @@ $(USER): $(COBJECTS) $(ASMOBJECTS)
 songmaker:
 	cd Songmaker; make
 
+img:
+	cd img; make
+
 clean:
 	rm -rf c/*.o asm/*.o *.o *.bin
 	cd Songmaker; make clean
 
-.PHONY: all clean
+.PHONY: all clean songmaker img

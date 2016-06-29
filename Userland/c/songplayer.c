@@ -29,6 +29,7 @@ void playSong(uint32_t songNum) {
 	
 	int32_t songMaxNum = (int32_t) *songData;
 	songData = songData+4;
+	printNum(songMaxNum);
 	if(songMaxNum<=songNum) return; //Error
 
 	for(uint32_t i=0; i<songNum; i++){
@@ -37,6 +38,8 @@ void playSong(uint32_t songNum) {
 		songData = songData+8*n;	
 	}
 	int32_t n = (int32_t) *songData;
+	printNum(999);
+	printNum(n);
 	songData = songData+4;						//Skip bytes for n
 	uint16_t freq; //Porque 16???
 	uint32_t time;
@@ -53,4 +56,9 @@ void playSong(uint32_t songNum) {
 	  	sleep(time);
 	}
 	_int80(SPEAKER, 0, 0, 0);
+}
+
+void playSong_main(){
+	playSong(0);
+	while(1);
 }

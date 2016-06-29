@@ -4,6 +4,7 @@
 #include <syscalls.h>
 #include <fileDescriptors.h>
 #include <scanCodes.h>
+#include <video-common.h>
 
 void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
@@ -51,10 +52,45 @@ void printNum(uint64_t num) {
 	print(buff);
 }
 
+uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+
+	int i = 0;
+	struct createProcessParams_s params;
+	
+	params.parentPid = parentPid;
+	params.name = name;
+	params.entryPoint = entryPoint;
+	params.argc = argc;
+	params.argv = argv;
+	uint64_t result;
+	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
+	return result;
+}
+
 uint64_t time() {
-	// uint64_t result;
-	return _int80(TIME, 0, 0, 0);
-	// return result;
+	uint64_t result;
+	_int80(TIME, (uint64_t)&result, 0, 0);
+	return result;
+}
+
+void paintPx(uint64_t x, uint64_t y) {
+	paintColorPx(x, y, WHITE);
+}
+
+void paintColorPx(uint64_t x, uint64_t y, uint32_t color) {
+	_int80(PAINT_PX_COLOR, x, y, color);
+}
+
+void paintRect(REKTangle *rekt) {
+	_int80(PAINT_REKT, (uint64_t) rekt, 0, 0);
+}
+
+void fillRect(REKTangle *rekt) {
+	_int80(FILL_REKT, (uint64_t) rekt, 0, 0);
+}
+
+void paintImg(Image *img) {
+	_int80(PAINT_IMG, (uint64_t) img, 0, 0);
 }
 
 void sleep(uint64_t sleepTime){
