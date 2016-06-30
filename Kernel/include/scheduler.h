@@ -47,6 +47,9 @@ uint64_t finishProcess();
 
 
 
+uint64_t fileOperation(uint64_t fileDescriptor, char **buffer, uint64_t maxBytes, IOOperation ioOperation);
+
+
 
 
 #endif /* SCHEDULER_H */
