@@ -44,7 +44,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = 1;
 			break;
 		case OPENDATAMODULE:
-			result = (int64_t) openDataModule();
+			*((char **) p1) = (char *) openDataModule();
+			result = 1;
+			break;
+		case OPENDATAIMGMODULE:
+			*((char **) p1) = (char *) openDataImgModule();
+			result = 1;
 			break;
 		case RAINBOW:
 			ncRAINBOWWWWWW();
@@ -119,6 +124,7 @@ void IRQHandler(uint8_t irq) {
 	outb(0x20, 0x20);			//EOI signal
 }
 
+<<<<<<< HEAD
 static void timerTick() {  	
   	//if(!noSound())				//NOT an else, both cases might need to be run
   	//{

@@ -7,6 +7,7 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <game.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -34,9 +35,15 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
+
 void playMainSong();
 void playSongTwo();
 void bangBang();
+
+
+
+void game();
+
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -52,7 +59,8 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-	{"1", bangBang, "Re-run your last valid command"},
+	{"game", game, "Play Game"},
+	{"1", bangBang, "Re-run your last valid command"}
 };
 
 uint64_t printProcessA();
@@ -67,11 +75,12 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-	char* argvA[] = {"process A"};
-	char* argvB[] = {"process B"};
+//	char* argvA[] = {"process A"};
+//	char* argvB[] = {"process B"};
+	
+//	createProcess(0, "process A", printProcessA, 1, argvA);
+//	createProcess(0, "process B", printProcessB, 1, argvB);
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process A", printProcessA, 1, argvA);
-	createProcess(0, "process B", printProcessB, 1, argvB);
 	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
 	while(1);
@@ -104,6 +113,7 @@ uint64_t printProcessB() {
 }
 
 int32_t userland_main(int argc, char* argv[]) {
+
 	clearScreen();
 	char buffer[100];
 	printVer();
@@ -177,10 +187,9 @@ void printVer(const char *str) {
 }
 
 void beep() {
-	_int80(SPEAKER, 1000, 1, 0);
-	sleep(50);
-	_int80(SPEAKER, 0, 1, 0);
+	soundFX(1000);
 }
+
 
 uint8_t runCommand(char *cmd) {
 	toLowerStr(cmd);
@@ -241,11 +250,18 @@ void getTime() {
 }
 
 void playMainSong(){
-	playSong(0);
+	char* argvSongPlayer[] = {"songplayer"};
+	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
+	return;
+	//playSong(0);
 }
 
 void playSongTwo(){
 	playSong(1);
+}
+
+void game(){
+	initGame();
 }
 
 void bangBang() {
@@ -257,4 +273,5 @@ void bangBang() {
 		print("\n");
 		runCommand(lastCommand);
 	}
+
 }

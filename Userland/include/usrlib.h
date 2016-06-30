@@ -32,6 +32,8 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 
 uint64_t time();
 
+void soundFX(uint32_t freq);
+
 void sleep(uint64_t sleepTime);
 
 //Paints a white pixel at the specified location.
@@ -62,5 +64,9 @@ void fillRect(REKTangle *rekt);
 
 //Paints the specified image with its top-left corner in the specified coordinates
 void paintImg(Image *img, uint64_t x, uint64_t y);
+<<<<<<< HEAD
+=======
+
+>>>>>>> songPlayerV2
 
 #endif
