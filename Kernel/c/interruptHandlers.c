@@ -90,7 +90,6 @@ uint64_t timerTickHandler(void *stack) {
 
 
 
-
 void IRQHandler(uint8_t irq) {
 	uint64_t key;
 	switch(irq) {
