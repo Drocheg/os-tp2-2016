@@ -6,13 +6,17 @@
 #include <scheduler.h>
 #include <process.h>
 #include <video.h>
+#include <fileDescriptors.h>
+
 
 
 
 /* Structs */
 struct fileDescriptorMapEntry_s {
-	File file;
-	uint64_t flags;
+	uint32_t occupied;
+	uint32_t index;
+	uint32_t fileType;	/* No use of typedef because it must be stored in 4 bytes */
+	uint32_t flags;
 };
 
 
@@ -48,9 +52,10 @@ struct pcbEntry_s {
 	void *heapPage;
 
 	/* Free Space to reach 512 Bytes (when adding a field, bytes should be taken from here)  */
-	uint64_t freeSpace[22];
-
+	uint64_t freeSpace[21];
 };
+
+
 
 
 
@@ -65,6 +70,47 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
 static uint64_t terminateProcess();
+static void *mallocRecursive(void **current, void *next, uint64_t size);
+static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation);
+
+/* 
+ * Returns a pointer to the next position with <size> bytes available in a page of the heap,
+ * or NULL if no more space available, pcb not initialize, or illegal arguments
+ */
+void *malloc(uint64_t PCBIndex, int64_t size) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || size < 0) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+
+	return mallocRecursive(&(process->heapPage), process->heapPage, size);
+}
+
+
+static void *mallocRecursive(void **current, void *next, uint64_t size) {
+
+	uint64_t aux = *((uint64_t *) next);
+	uint64_t *currentSize = ((uint64_t *) (next + sizeof(void *)));
+	if (next == NULL || size > *currentSize) {
+		pageManager(POP_PAGE, current);
+		if (*current == NULL) {
+			return NULL;
+		}
+		*((uint64_t *) *current) = (uint64_t) NULL; 										/* TODO: Check this */
+		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	/* TODO: Check this */
+		return current;
+	}
+
+	if (size <= *currentSize) {
+		void *result = *current + (*currentSize);
+		*currentSize += size;
+		return result;
+	}
+	return mallocRecursive(next, (void *) aux, size);
+}
+
 
 
 
@@ -127,9 +173,13 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	}
 	(newProcess->fileDescriptors).size = 0;
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
+	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
+	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
+	((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
+	newProcess->heapPage = NULL;
 	return index;
 }
-
 
 
 /* Getters */
@@ -178,21 +228,8 @@ uint64_t getFilesQuantity(uint64_t PCBIndex) {
 	process = &(pcb[PCBIndex]);
 	return (process->fileDescriptors).size;
 }
-uint64_t getFileDescriptor(uint64_t PCBIndex, File file) {
 
-	struct pcbEntry_s *process = NULL;
-	uint64_t index = 0;
-	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-		return -1;
-	}
-	process = &(pcb[PCBIndex]);
 
-	while (index < MAX_FILES && (process->fileDescriptors).entries[index].file != file) {
-		index++;
-	}
-
-	return (index == MAX_FILES) ? -1 : index;
-}
 uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 
 	struct pcbEntry_s *process = NULL;
@@ -201,15 +238,6 @@ uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	}
 	process = &(pcb[PCBIndex]);
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
-}
-File getFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
-	struct pcbEntry_s *process = NULL;
-	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-		return NULL;
-	}
-	process = &(pcb[PCBIndex]);
-	return (((process->fileDescriptors).entries)[fileDescriptor]).file;
 }
 
 /* Setters */
@@ -238,15 +266,16 @@ uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags
 
 /* File management */
 
+
 /*
- * Adds a file into the process opened files list
- * Returns the file descriptor of the file, or -1 otherwise
+ * Adds a file to the process' files table.
+ * Returns the file's descriptor on sucess, or -1 otherwise.
  */
-uint64_t openFile(uint64_t PCBIndex, File file, uint64_t flags) {
+uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t flags) {
 
 	struct pcbEntry_s *process = NULL;
 	struct fileDescriptorMapEntry_s *entries;
-	uint64_t index = 0;
+	uint64_t i = 0;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
 		return -1;
 	}
@@ -256,38 +285,92 @@ uint64_t openFile(uint64_t PCBIndex, File file, uint64_t flags) {
 	}
 	
 	entries = (process->fileDescriptors).entries;
-	while (entries[index].file != NULL) {
-		index++;
+	while ((entries[i]).occupied) {
+		i++;
 	}
 
 	((process->fileDescriptors).size)++;
-	entries[index].file = file;
-	entries[index].flags = flags;
+	(entries[i]).occupied = 1;
+	(entries[i]).index = index;
+	(entries[i]).fileType = (uint32_t) fileType;
+	(entries[i]).flags = flags;
 	return 0;
 }
 
-uint64_t closeFile(uint64_t PCBIndex, File file) {
+/*
+ * Removes a file from the process' files table.
+ * If no file in <fileDescriptor> entry, nothing happens.
+ * Returns 0 on sucess, or -1 otherwise.
+ */
+uint64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 
 	struct pcbEntry_s *process = NULL;
-	uint64_t index = 0;
-	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || fileDescriptor >= MAX_FILES) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
-	index = getFileDescriptor(PCBIndex, file);
-
-	if (index < 0) {
-		return -1;
-	}
-
 	((process->fileDescriptors).size)--;
-	(process->fileDescriptors).entries[index].file = NULL;
-	(process->fileDescriptors).entries[index].flags = 0;
+	(process->fileDescriptors).entries[fileDescriptor].occupied = 0;
+	(process->fileDescriptors).entries[fileDescriptor].index = 0;
+	(process->fileDescriptors).entries[fileDescriptor].fileType = 0;
+	(process->fileDescriptors).entries[fileDescriptor].flags = 0;
 	return 0;
 }
 
+/*
+ * Returns 1 if there is a file in the <fileDescriptor> position of process' file table, or 0 otherwise
+ */
+uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || fileDescriptor >= MAX_FILES) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+	return (uint64_t) (process->fileDescriptors).entries[fileDescriptor].occupied;
+}
+
+/*
+ * Generic function to operate over a file.
+ * <PCBIndex> states which process will operate over the file pointed by <fileDescriptor>.
+ * Four operation can be done (READ, WRITE, ASK IF THERE IS DATA AVAILABLE, OR ASK IF THERE IS SPACE TO WRITE)
+ * For more info. see <fileManager.h>
+ * The last parameter (<character>) is used for READ and WRITE operations. When reading, the read byte
+ * will be written into the position stated by this pointer. When writing, the written byte will be
+ * that one pointed by <character>.
+ * Note: JUST ONE BYTE WILL BE READ OR WRITTEN
+ *
+ * Returns 0 on success, or -1 otherwise. 
+ * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
+ */
+uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character) {
 
 
+	FileType fileType = 0;
+	int64_t fileIndex = 0;
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || !existsFile(PCBIndex, fileDescriptor)) {
+		return -1;
+	}
+
+	if (!hasPermissions(PCBIndex, fileDescriptor, operation)) {
+		return -1; /* Permission denied */
+	}
+	process = &(pcb[PCBIndex]);
+	fileIndex = (int64_t) (process->fileDescriptors).entries[fileDescriptor].index;
+	fileType = (FileType) (process->fileDescriptors).entries[fileDescriptor].fileType;
+
+	operate(operation, fileType, fileIndex, character);
+	if (operation == READ) { 
+		// ncPrintDec(*character);
+	}
+	return 0;
+}
+
+/*
+ * Takes the process with <PCBIndex> from the table
+ * Returns 0 on success, or -1 otherwise
+ */
 uint64_t destroyProcess(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
@@ -300,6 +383,11 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;
 }
+
+
+
+
+
 
 
 
@@ -354,8 +442,8 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	uint64_t argvPosition = 0;
 	uint64_t processSS = 0;
 	uint64_t processRSP = 0;
-	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
-	uint64_t processCS = 0x008; /* WYRM value (TODO: Ask Rodrigo) */
+	uint64_t processRFLAGS = 0x202; 					/* WYRM value (sets IF and PF) */
+	uint64_t processCS = 0x008;							/* WYRM value (TODO: Ask Rodrigo) */
 	uint64_t processRIP = (uint64_t) mainFunction;
 
 	if (argc <= 0) {
@@ -389,7 +477,6 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 
 	}
 
-
 	/* Pushes end of argv null */
 	*userStackTop -= sizeof(uint64_t);
 	memset(*userStackTop, 0, sizeof(uint64_t));
@@ -419,7 +506,7 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	/* For more info., see Intel® 64 and IA-32 Architectures Software Developers Manual, Vol. 3-A, Fig. 6-8 */
 	
 
-	/* Values got in https://bitbucket.org/RowDaBoat/wyrm/src */
+	/* Values got from https://bitbucket.org/RowDaBoat/wyrm/src */
 	/* /d4f3cfcc64325efb1f7d7039fc7bc7c7e85777b0/Kernel/Scheduler/Process.cpp?at=master&fileviewer=file-view-default */
 	
 
@@ -463,6 +550,21 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	return 0;
 }
 
+
+static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation) {
+
+	uint32_t flags = getFileFlags(PCBIndex, fileDescriptor);
+
+	switch(operation) {
+
+		case READ: 
+		case AVAILABLE_DATA: return (F_READ == (flags & F_READ));
+		case WRITE:
+		case FREE_SPACE: return (F_WRITE == (flags & F_WRITE));
+	}
+	return 0;
+
+}
 
 
 

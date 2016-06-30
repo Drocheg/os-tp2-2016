@@ -83,10 +83,8 @@ uint64_t printProcessA() {
 
 	uint64_t aux = 0;
 	while (1) {
-		if ( (aux % 50000000) == 0) {
-			print("A ");
-		}
 		aux++;
+		sleep(10000);
 	}
 	return 0;
 }
@@ -95,10 +93,8 @@ uint64_t printProcessB() {
 
 	uint64_t aux = 0;
 	while ((uint64_t)-1) {
-		if ( (aux % 50000000) == 0) {
-			print("B ");
-		}
 		aux++;
+		sleep(10000);
 	}
 	return 0;
 }

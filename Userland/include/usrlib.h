@@ -32,7 +32,7 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 
 uint64_t time();
 
-void sleep(uint64_t sleepTime);
+uint64_t sleep(uint64_t miliseconds);
 
 //Paints a white pixel at the specified location.
 void paintPx(uint64_t x, uint64_t y);

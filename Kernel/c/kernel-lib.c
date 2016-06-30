@@ -7,6 +7,24 @@
 #include <speaker.h>
 #include <video-common.h>
 #include <video.h>
+#include <scheduler.h>
+#include <fileManager.h>
+#include <process.h>
+#include <interrupts.h>
+
+
+uint64_t read(uint64_t fd, char *buffer, uint64_t maxBytes) {
+
+	return fileOperation(fd, buffer, maxBytes, INPUT, 1);
+}
+
+
+
+uint64_t write(uint64_t fd, char **buffer, uint64_t maxBytes) {
+
+	return fileOperation(fd, buffer, maxBytes, OUTPUT, 1);
+}
+
 
 //Reads from different defined files: processed keyboard and unprocessed keyboard
 int64_t sys_read(uint8_t fd, char *buff, uint32_t maxBytes) {

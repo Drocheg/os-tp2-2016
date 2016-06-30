@@ -11,7 +11,8 @@
 #include <memory.h>
 #include <video.h>
 #include <process.h>
-
+#include <interrupts.h>
+#include <scheduler.h>
 
 
 
@@ -27,6 +28,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 	switch(syscallID) {
 		case SYSREAD:
 			result = sys_read((uint8_t)p1, (char *)p2, p3);
+			// result = read(p1, (char *) p2, p3);
 			break;
 		case SYSWRITE:
 			result = sys_write((uint8_t)p1, (char *)p2, p3);
@@ -54,12 +56,17 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			outb(0x64, 0xFE);		//http://wiki.osdev.org/%228042%22_PS/2_Controller#CPU_Reset
 			result = 1;
 			break;
-		case MEMORY:
-			pageManager((Action)p1, (void **)p2);
+		case MALLOC: {
+			// pageManager((Action)p1, (void **)p2);
+			// uint64_t currentPCBIndex = 
+		}
 			break;
 		case TIME:
 			*((uint64_t *) p1) = time();
 			result = *((uint64_t *) p1);
+			break;
+		case SLEEP:
+			sleep(p1);
 			break;
 		case CREATE_PROCESS: {
 				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
@@ -101,7 +108,6 @@ uint64_t timerTickHandler(void *stack) {
 	tick();
 	return nextProcess(stack);
 }
-
 
 
 

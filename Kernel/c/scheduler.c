@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <interrupts.h>
 #include <process.h>
-#include <file.h>
+// #include <file.h>
+#include <fileManager.h>
 #include <stddef.h>
 #include <time.h>
 #include <video.h>
+
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 0x10 /* See Process.c */
@@ -16,7 +18,7 @@
 typedef struct node_t * Node;
 typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
-typedef uint64_t (*IOActions)(uint64_t, uint64_t);
+typedef uint64_t (*IOActions)(uint64_t, uint64_t, char **, uint64_t, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
@@ -26,9 +28,6 @@ typedef uint64_t (*CheckWakeIOActions)();
 struct node_t {
 	uint64_t PCBIndex;
 	State state;
-	uint64_t generalPurpose1;
-	uint64_t generalPurpose2;
-	uint64_t generalPurpose3;
 	uint64_t index;
 	Node next;
 };
@@ -40,26 +39,20 @@ static uint64_t dequeueProcess();
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 static void *nextProcessRecursive();
 static uint64_t checkScheduler();
-static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
-static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor);
-static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor);
+static uint64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blockings);
+static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
+static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForTime(uint64_t miliseconds);
-static uint64_t checkWake(Node current);
-static uint64_t checkWakeIO(Node current);
-static uint64_t checkAvailableData(Node current);
-static uint64_t checkFreeSpace(Node current);
-static uint64_t checkWakeTime(Node current);
 
 
 /* Static variables */
-static uint8_t running = 0;															/* Says if the scheduler is on */
-static uint8_t firstIteration = 1;													/* Indicates if is the first time the scheduler is giving the next process */
-static uint8_t usedNodes[MAX_PROCESSES];											/* Holds a list of the nodes, marking those that are occupied */
-static Node last = NULL;															/* Points to the last node in the cirular queue */
-static void *memoryPage = NULL;														/* Stores a memory page for the circular queue */
-static IOActions ioActions[2] = {waitForInput, waitForOutput};						/* Stores a pointer to actions to be taken on IO request */
-static CheckWakeActions wakeActions[2] = {checkWakeIO, checkWakeTime};				/* Stores a pointer to actions to be taken to check if a process must be waken */
-static CheckWakeIOActions wakeIOActions[2] = {checkAvailableData, checkFreeSpace};	/* Stores a pointer to checkers of IO wakening */
+static uint8_t running = 0;										/* Says if the scheduler is on */
+static uint8_t firstIteration = 1;								/* Indicates if is the first time the scheduler is giving the next process */
+static uint8_t usedNodes[MAX_PROCESSES];						/* Holds a list of the nodes, marking those that are occupied */
+static Node last = NULL;										/* Points to the last node in the cirular queue */
+static void *memoryPage = NULL;									/* Stores a memory page for the circular queue */
+static IOActions ioActions[2] = {waitForInput, waitForOutput};	/* Stores a pointer to actions to be taken on IO request */
+
 
 
 
@@ -88,10 +81,11 @@ uint64_t initializeScheduler() {
 	return 0;
 }
 
+
 /*
  * Starts the scheduler
  */
-void *startScheduler() {
+void startScheduler() {
 	running = 1;
 }
 
@@ -117,6 +111,30 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
 
 
 /*
+ * Makes the scheduler be in charge of an input/output operation of the current process
+ * This function will read/write <maxBytes> from/into the file mapped in the process' file table by <fileDescriptor>,
+ * into/from <buffer>.
+ * It's a blocking function, so it will return when maxBytes are achieved
+ * Returns read/written bytes, or -1 if any error ocurred
+ */
+uint64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
+
+	return waitForIO(fileDescriptor, buffer, maxBytes, ioOperation, blocking);
+
+}
+
+
+/*
+ * Stops execution of the running process for <miliseconds> miliseconds.
+ * Returns 0 on success (made a <miliseconds> long pause), or -1 otherwise.
+ */
+uint64_t sleep(uint64_t miliseconds) {
+
+	return waitForTime(miliseconds);
+}
+
+
+/*
  * Updates the process queue, changing to the next process
  * Returns the next process' stack, 
  * or NULL if scheduler is not running or if no process is scheduled
@@ -124,10 +142,8 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
 void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
-
-	if (checkScheduler()) {
-		
-		return NULL;
+	if (checkScheduler()) {		
+		return getKernelStack();
 	}
 	current = last->next;
 	
@@ -141,9 +157,21 @@ void *nextProcess(void *currentRSP) {
 
 }
 
- 
 
+/*
+ * Returns the current process' PCB index,
+ * or -1 if no process scheduled, or schduler not initialzed
+ */ 
+uint64_t getCurrentPCBIndex() {
 
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+
+	return current->PCBIndex;
+}
 
 
 /*
@@ -200,9 +228,6 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	newNode->PCBIndex = PCBIndex;
 	newNode->state = RUNNING;
 	newNode->index = index;
-	newNode->generalPurpose1 = 0;
-	newNode->generalPurpose2 = 0;
-	newNode->generalPurpose3 = 0;
 	newNode->next = newNode; /* Helps when last is NULL */
 
 	/* attaches the new node into the circular queue */
@@ -269,24 +294,19 @@ static void *nextProcessRecursive() {
 	// ncPrintHex(current->state);
 	// while(1);
 
-	if (current->state == RUNNING) {
-		return getProcessStack(current->PCBIndex);
-	}
+	// if (current->state == RUNNING || current->state == SLEPT) {
+	// 	return getProcessStack(current->PCBIndex);
+	// }
 	if (current->state == FINISHED) {
 		dequeueProcess();
 		return nextProcessRecursive();
 	}
-	if (current->state == SLEPT) {
-		if (checkWake(current)) {				/* TODO: Check that everything is done here */
-			last = last->next;
-			return nextProcessRecursive();		/* if checkWake returns -1, the process must remain slept */
-		}
-		current->state = RUNNING;
-		return getProcessStack(current->PCBIndex);
-	}
-
-
-	return NULL;
+	// if (current->state == SLEPT) {
+	// 	last = last->next;
+	// 	return nextProcessRecursive();
+	// }
+	return getProcessStack(current->PCBIndex);
+	// return NULL;
 		
 }
 
@@ -303,146 +323,112 @@ static uint64_t checkScheduler() {
 }
 
 
-
-
-static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+/*
+ * Makes the scheduler be in charge of an input/output operation of the current process
+ * This function will read/write <maxBytes> from/into the file mapped in the process' file table by <fileDescriptor>,
+ * into/from <buffer>.
+ * It's a blocking function, so it will return when maxBytes are achieved
+ * Returns read/written bytes, or -1 if any error ocurred
+ */
+static uint64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
 
 	
 	Node current = (Node) NULL;
+	uint64_t result = 0;
 	if (checkScheduler()) {
 		return -1;
 	}
 	current = last->next;
 
-	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || fileDescriptor < getFilesQuantity(current->PCBIndex)) {
-		return -1;
-	}
-	if (ioActions[(uint64_t) ioOperation]) {
+	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
 		return -1;
 	}
 	current->state = SLEPT;
-	current->generalPurpose1 = (uint64_t) SLEPT_IO; 									/* Stores reason of sleep */
-	current->generalPurpose2 = (uint64_t) ioOperation; 									/* Stores action to take place */
-	current->generalPurpose3 = (uint64_t) getFile(current-> PCBIndex, fileDescriptor); 	/* Stores file to check */
 
-	return 0;
+	result = ((ioActions[(uint64_t) ioOperation])(current->PCBIndex, fileDescriptor, buffer, maxBytes, blocking));
+	current->state = RUNNING;
+	return result;
 }
 
 
-
-static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
-	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_READ;
-
-	if (flag != F_READ) {
-		return -1; /* Permission denied */
-	}
-	return 0;
-}
-
-
-static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
-	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_WRITE;
-
-	if (flag != F_READ) {
-		return -1; /* Permission denied */
-	}
-	return 0;
-}
-
-
-
+/*
+ * Makes the process enter a loop that will be <miliseconds> long.
+ * On each turn of the process, it will check if that time has passed.
+ * If it does, it will return; if not, the process will yield
+ */
 static uint64_t waitForTime(uint64_t miliseconds) {
 
-	Node current = NULL;
+	Node current = (Node) NULL;
+	uint64_t ticksAtStart = ticks();
+	uint64_t sleepFor = (uint64_t) ((miliseconds/1000) * getPITfrequency());
+	uint64_t elapsed = 0;
+	
 	if (checkScheduler()) {
 		return -1;
 	}
 	current = last->next;
 
 	current->state = SLEPT;
-	current->generalPurpose1 = (uint64_t) SLEPT_TIME; 							/* Stores reason of sleep */
-	current->generalPurpose2 = (uint64_t)  miliseconds * getPITfrequency();		/* Stores how many ticks must occur to wake up */
-	current->generalPurpose3 = ticks();											/* Stores actual amount of ticks */
-	return 0;
-}
-
-
-
-static uint64_t checkWake(Node current) {
-
-	return (wakeActions[current->generalPurpose1])(current);
-
-}
-
-
-static uint64_t checkWakeIO(Node current) {
-
-	return (wakeIOActions[current->generalPurpose2])(current);
-
-}
-
-/*
- * Checks if the file has data available to be read
- * Returns 0 ig the process must be waken, or -1 otherwise
- */
-static uint64_t checkAvailableData(Node current) {
-
-	File file = (File) current->generalPurpose3;
-
-	if (!dataAvailable(file)) {
-		return -1;
+	while (elapsed <= sleepFor) {
+		elapsed = (ticks() - ticksAtStart);
+		yield();
 	}
-
-	/* TODO: What do we do here? */
+	current->state = RUNNING;
 	
 	return 0;
 }
 
 
-/*
- * Checks if the file has data available to be read
- * Returns 0 ig the process must be waken, or -1 otherwise
- */
-static uint64_t checkFreeSpace(Node current) {
 
-	File file = (File) current->generalPurpose3;
+static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
 
-	if (!hasFreeSpace(file)) {
-		return -1;
+	
+
+	uint64_t readData = 0;
+	while (readData <= maxBytes) {
+
+		if (operateFile(PCBIndex, fd, AVAILABLE_DATA, NULL)) {
+			if (blocking){
+				yield();
+			} else {
+				break;
+			}
+		} else {
+			char c = 0;
+			if (operateFile(PCBIndex, fd, READ, &c)) {
+				break;
+			}
+			buffer[readData] = c;
+			readData++;
+		}
 	}
 
-	/* TODO: What do we do here? */
-	
-	return 0;
-
+	return readData;
 }
 
-/* 
- * Checks if a process must be waken when was sleeping due to time
- * Returns 0 if the process must be waken, or -1 otherwise
- */
-static uint64_t checkWakeTime(Node current) {
+static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
 
-	uint64_t elapsed = ticks() - current->generalPurpose3;
-	uint64_t amount = current->generalPurpose2;
-	
-	if (elapsed < amount) {
-		return -1;
+	uint64_t writtenData = 0;
+	while (writtenData <= maxBytes) {
+
+		if (operateFile(PCBIndex, fd, FREE_SPACE, NULL)) {
+			if (blocking){
+				yield();
+			} else {
+				break;
+			}
+		} else {
+			while(1);
+			char c = buffer[writtenData];
+			if (operateFile(PCBIndex, fd, WRITE, &c)) {
+				break;
+			}
+			writtenData++;
+		}
 	}
-	return 0;
+	return writtenData;
 
 }
-
-
-
-
-
-
-
-
-
 
 
 

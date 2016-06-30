@@ -14,9 +14,10 @@
 #define REBOOT 9
 
 /* New Syscalls */
-#define MEMORY 10
+#define MALLOC 10
 #define TIME 11
 #define CREATE_PROCESS 12
+#define SLEEP 13
 
 //Video
 #define PAINT_PX 860			//Paint white pixel
