@@ -156,24 +156,26 @@ void update(){
 		for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(int64_t j =0; j<VERTICAL_SIZE; j++){
 				int64_t oldI = i+obstacleTicksFromLastUpdate;
+				uint64_t newState;
 				if(oldI>=HORIZONTAL_SIZE){
-					if(j==newObstaclePosY) obstacle[i][j]=SPACE_OBSTACLE;
-					else obstacle[i][j]=SPACE_EMPTY;	
+					if(j==newObstaclePosY) newState=SPACE_OBSTACLE;
+					else newState=SPACE_EMPTY;	
 				}else{
-					obstacle[i][j]=obstacle[oldI][j];
-
+					newState=obstacle[oldI][j];
 				}
 				
+
 				if(i!=0){
-					if(obstacle[i][j]==SPACE_OBSTACLE){
+					if(newState==SPACE_OBSTACLE && obstacle[i][j]==SPACE_EMPTY){
 						paintFullRect(i*50+100, j*50, 50, 50, 0xFF0000);
 						
-					}else{
+					}
+					if(newState==SPACE_EMPTY && obstacle[i][j]==SPACE_OBSTACLE){
 						paintFullRect(i*50+100, j*50, 50, 50, 0x000000);	
 						
 					}
 				}
-				
+				obstacle[i][j]=newState;
 			
 			}
 			
