@@ -58,7 +58,7 @@ void paintRect(REKTangle *rekt);
 //Fills the specified rectangle.
 void fillRect(REKTangle *rekt);
 
-
-// void paintImg(Image img);	Not done yet
+//Paints the specified image with its top-left corner in the specified coordinates
+void paintImg(Image *img, uint64_t x, uint64_t y);
 
 #endif

@@ -61,6 +61,9 @@ void clear();
 //Shifts content up by the specified amount of pixels.
 void shiftUp(uint64_t pixels);
 
+//Shifts content down by the specified amount of pixels.
+void shiftDown(uint64_t pixels);
+
 //Paints a pixel in the specified location (if valid) with the specified color.
 void paintColorPixel(uint64_t x, uint64_t y, uint32_t color);
 
@@ -72,5 +75,8 @@ void fillRect(REKTangle *rekt);
 
 //Draws the specified rectangle.
 void drawRect(REKTangle *rekt);
+
+//Draws the specified image, with its top-left corner at the specified coordinates.
+void paintImg(Image *img, uint64_t x, uint64_t y);
 
 #endif

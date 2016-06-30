@@ -83,7 +83,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			fillRect((REKTangle *) p1);
 			break;
 		case PAINT_IMG:
-			result = -1;		//Not implemented yet
+			paintImg((Image *)p1, p2, p3);
 			break;
 		/* *********
 		*	Default

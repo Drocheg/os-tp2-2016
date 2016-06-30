@@ -1,8 +1,8 @@
 all: build
 
-build: firanofaurio.img
+build: image.img
 
-firanofaurio.img:
+image.img:
 	gcc imageWriter.c -o imageWriter.o
 	./imageWriter.o
 
