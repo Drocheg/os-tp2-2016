@@ -12,7 +12,7 @@
 #include <video.h>
 #include <process.h>
 #include <interrupts.h>
-
+#include <scheduler.h>
 
 
 

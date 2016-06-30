@@ -18,7 +18,7 @@
 typedef struct node_t * Node;
 typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
-typedef uint64_t (*IOActions)(uint64_t, uint64_t);
+typedef uint64_t (*IOActions)(Node, char **, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
@@ -42,9 +42,9 @@ static uint64_t dequeueProcess();
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 static void *nextProcessRecursive();
 static uint64_t checkScheduler();
-// static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
-static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor);
-static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor);
+static uint64_t waitForIO(uint64_t fileDescriptor, char **buffer, uint64_t maxBytes, IOOperation ioOperation);
+static uint64_t waitForInput(Node current, char **buffer, uint64_t maxBytes);
+static uint64_t waitForOutput(Node current, char **buffer, uint64_t maxBytes);
 static uint64_t waitForTime(uint64_t miliseconds);
 static uint64_t checkWake(Node current);
 static uint64_t checkWakeIO(Node current);
@@ -342,7 +342,7 @@ static uint64_t checkScheduler() {
 // }
 
 
-uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+static uint64_t waitForIO(uint64_t fileDescriptor, char **buffer, uint64_t maxBytes, IOOperation ioOperation) {
 
 	
 	Node current = (Node) NULL;
@@ -354,38 +354,39 @@ uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
 	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
 		return -1;
 	}
+	return ((ioActions[(uint64_t) ioOperation])(current, buffer, maxBytes));
 	// if (ioActions[(uint64_t) ioOperation]) {
 	// 	return -1;
 	// }
-	current->state = SLEPT;
-	current->generalPurpose1 = (uint64_t) SLEPT_IO; 		/* Stores reason of sleep */
-	current->generalPurpose2 = (uint64_t) ioOperation; 		/* Stores action to take place */
-	current->generalPurpose3 = (uint64_t) fileDescriptor; 	/* Stores file to check */
+	// current->state = SLEPT;
+	// current->generalPurpose1 = (uint64_t) SLEPT_IO; 		/* Stores reason of sleep */
+	// current->generalPurpose2 = (uint64_t) ioOperation; 		/* Stores action to take place */
+	// current->generalPurpose3 = (uint64_t) fileDescriptor; 	/* Stores file to check */
 
-	return 0;
+	// return 0;
 }
 
 
-static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+// static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
 
-	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_READ;
+// 	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_READ;
 
-	if (flag != F_READ) {
-		return -1; /* Permission denied */
-	}
-	return 0;
-}
+// 	if (flag != F_READ) {
+// 		return -1; /* Permission denied */
+// 	}
+// 	return 0;
+// }
 
 
-static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
+// static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor) {
 
-	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_WRITE;
+// 	uint64_t flag = getFileFlags(PCBIndex, fileDescriptor) & F_WRITE;
 
-	if (flag != F_READ) {
-		return -1; /* Permission denied */
-	}
-	return 0;
-}
+// 	if (flag != F_READ) {
+// 		return -1; /* Permission denied */
+// 	}
+// 	return 0;
+// }
 
 
 
@@ -498,9 +499,53 @@ static uint64_t checkWakeTime(Node current) {
 
 
 
+uint64_t fileOperation(uint64_t fileDescriptor, char **buffer, uint64_t maxBytes, IOOperation ioOperation) {
+
+	return waitForIO(fileDescriptor, buffer, maxBytes, ioOperation);
+
+}
 
 
+static uint64_t waitForInput(Node current, char **buffer, uint64_t maxBytes) {
 
+	uint64_t readData = 0;
+	while (readData <= maxBytes) {
+
+		if (operateFile(current->PCBIndex, current->generalPurpose3, AVAILABLE_DATA, (char) 0)) {
+			yield();
+		} else {
+			char c = operateFile(current->PCBIndex, current->generalPurpose3, READ, (char) 0);
+			if (c == -1) {
+				break;
+			}
+			(*buffer)[readData] = (char) c;
+			readData++;
+		}
+	}
+	return readData;
+}
+
+
+static uint64_t waitForOutput(Node current, char **buffer, uint64_t maxBytes) {
+
+	uint64_t writtenData = 0;
+	while (writtenData <= maxBytes) {
+
+		if (operateFile(current->PCBIndex, current->generalPurpose3, FREE_SPACE, (char) 0)) {
+			yield();
+		} else {
+			uint64_t result = 0;
+			char c = (*buffer)[writtenData];
+			result = operateFile(current->PCBIndex, current->generalPurpose3, WRITE, (char) 0);
+			if ((char) result != c) {
+				break;
+			}
+			writtenData++;
+		}
+	}
+	return writtenData;
+
+}
 
 
 

@@ -12,42 +12,42 @@
 #include <interrupts.h>
 
 
-uint64_t read(uint64_t fd, char **buffer, uint64_t maxBytes) {
+// uint64_t read(uint64_t fd, char **buffer, uint64_t maxBytes) {
 
-	uint64_t readData = 0;
-	while (readData <= maxBytes) {
-		uint64_t c = 0;
-		waitForIO(fd, INPUT);
-		yield();
-		c = operateFile(getCurrentPCBIndex(), fd, READ, (char) 0);
-		if (c == - 1) {
-			break;
-		}
-		(*buffer)[readData] = (char) c;
-		readData++;
-	}
-	return readData;
-}
+// 	uint64_t readData = 0;
+// 	while (readData <= maxBytes) {
+// 		uint64_t c = 0;
+// 		waitForIO(fd, INPUT);
+// 		yield();
+// 		c = operateFile(getCurrentPCBIndex(), fd, READ, (char) 0);
+// 		if (c == - 1) {
+// 			break;
+// 		}
+// 		(*buffer)[readData] = (char) c;
+// 		readData++;
+// 	}
+// 	return readData;
+// }
 
 
 
-uint64_t write(uint64_t fd, char **buffer, uint64_t maxBytes) {
+// uint64_t write(uint64_t fd, char **buffer, uint64_t maxBytes) {
 
-	uint64_t writtenData = 0;
-	while (writtenData <= maxBytes) {
+// 	uint64_t writtenData = 0;
+// 	while (writtenData <= maxBytes) {
 
-		uint64_t result = 0;
-		char c = (*buffer)[writtenData];
-		waitForIO(fd, OUTPUT);
-		yield();
-		result = operateFile(getCurrentPCBIndex(), fd, WRITE, c);
-		if ((char) result != c) {
-			break;
-		}
-		writtenData++;
-	}
-	return writtenData;
-}
+// 		uint64_t result = 0;
+// 		char c = (*buffer)[writtenData];
+// 		waitForIO(fd, OUTPUT);
+// 		yield();
+// 		result = operateFile(getCurrentPCBIndex(), fd, WRITE, c);
+// 		if ((char) result != c) {
+// 			break;
+// 		}
+// 		writtenData++;
+// 	}
+// 	return writtenData;
+// }
 
 
 //Reads from different defined files: processed keyboard and unprocessed keyboard

@@ -46,7 +46,6 @@ uint64_t getCurrentPCBIndex();
 uint64_t finishProcess();
 
 
-uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
 
 
 
