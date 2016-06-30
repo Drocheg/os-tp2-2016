@@ -23,3 +23,9 @@ int32_t runCodeModule() {
 char * openDataModule() {
 	return (char*)DATA_MODULE_ADDR;
 }
+
+//Gets the starting address of the data module img. Does not
+//control number of simultaneous accesses to data module.
+char * openDataImgModule() {
+	return (char*)DATA_MODULE_IMG_ADDR;
+}

@@ -17,6 +17,7 @@
 #define MEMORY 10
 #define TIME 11
 #define CREATE_PROCESS 12
+#define OPENDATAIMGMODULE 13
 
 //Video
 #define PAINT_PX 860			//Paint white pixel

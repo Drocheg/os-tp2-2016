@@ -174,7 +174,15 @@ void update(){
 					if(obstacle[i][j]==SPACE_OBSTACLE){
 						gameOver();
 					}else{
-						paintFullRect(i*50,j*50,50,50,0x00FFFF);
+						if(j==posY){
+
+							Image * dinosaurio;
+							_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
+							paintImg(dinosaurio, 0, posY);
+						}else{
+							paintFullRect(i*50,j*50,50,50,0x00FFFF);	
+						}
+						
 						
 						
 						//if(j==posY+1) print("O");

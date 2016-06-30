@@ -47,6 +47,10 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			*((char **) p1) = (char *) openDataModule();
 			result = 1;
 			break;
+		case OPENDATAIMGMODULE:
+			*((char **) p1) = (char *) openDataImgModule();
+			result = 1;
+			break;
 		case RAINBOW:
 			ncRAINBOWWWWWW();
 			result = 1;

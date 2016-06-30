@@ -115,7 +115,8 @@ void * getStackBase() {
 void * initializeKernelBinary() {
 	void * moduleAddresses[] = {
 		CODE_MODULE_ADDR,
-		DATA_MODULE_ADDR
+		DATA_MODULE_ADDR,
+		DATA_MODULE_IMG_ADDR
 	};
 	loadModules(&endOfKernelBinary, moduleAddresses);
 	clearBSS(&bss, &endOfKernel - &bss);
