@@ -64,9 +64,6 @@ void fillRect(REKTangle *rekt);
 
 //Paints the specified image with its top-left corner in the specified coordinates
 void paintImg(Image *img, uint64_t x, uint64_t y);
-<<<<<<< HEAD
-=======
 
->>>>>>> songPlayerV2
 
 #endif

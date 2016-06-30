@@ -124,7 +124,7 @@ void IRQHandler(uint8_t irq) {
 	outb(0x20, 0x20);			//EOI signal
 }
 
-<<<<<<< HEAD
+
 static void timerTick() {  	
   	//if(!noSound())				//NOT an else, both cases might need to be run
   	//{
