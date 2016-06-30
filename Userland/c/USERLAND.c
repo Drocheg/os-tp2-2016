@@ -16,6 +16,7 @@ static int bssCheck = 0;
 static const int MAJOR_VER = 1;
 static const int MINOR_VER = 1;
 static int EXIT = 0;
+static char lastCommand[100] = {0};
 
 typedef struct {
 	char *name; 
@@ -28,12 +29,13 @@ void exit();
 void help();
 void jalp();
 void sayHello();
-void runCommand(char *cmd);
+uint8_t runCommand(char *cmd);
 void dumpDataModule();
 void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
+void bangBang();
 
 void playMainSong();
 void playSongTwo();
@@ -57,6 +59,7 @@ static command commands[] = {
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
 	{"game", game, "Play Game"}
+	{"1", bangBang, "Re-run your last valid command"},
 };
 
 uint64_t printProcessA();
@@ -120,10 +123,6 @@ int32_t userland_main(int argc, char* argv[]) {
 	printVer();
 	print("\nTo see available commands, type help\n");
 
-	REKTangle r = {500, 100, 100, 150, 0x07F2FF};
-	paintRect(&r);
-	paintPx(200, 200);
-
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!EXIT) {
 		uint8_t index = 0;
@@ -152,9 +151,18 @@ int32_t userland_main(int argc, char* argv[]) {
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");
-			runCommand(buffer);
-			if(!streql(buffer, "clear")) {
-				print("\n");
+			uint8_t valid = runCommand(buffer);
+
+			// if(!streql(buffer, "clear")) {
+			// 	print("\n");
+			// }
+			if(!streql(buffer, "1") && valid) {
+				//Save entered command
+				uint8_t i;
+				for(i = 0; buffer[i] != 0; i++) {
+					lastCommand[i] = buffer[i];
+				}
+				lastCommand[i] = 0;
 			}
 		}
 		else {
@@ -187,8 +195,7 @@ void beep() {
 }
 
 
-
-void runCommand(char *cmd) {
+uint8_t runCommand(char *cmd) {
 	toLowerStr(cmd);
 	int found = 0;
 	for(int i = 0; i < sizeof(commands)/sizeof(command); i++) {
@@ -199,8 +206,9 @@ void runCommand(char *cmd) {
 		}
 	}
 	if(!found) {
-		print("No such command. Try running help");
+		print("No such command. Try running help\n");
 	}
+	return found;
 }
 
 void exit() {
@@ -259,5 +267,16 @@ void playSongTwo(){
 
 void game(){
 	initGame();
+}
+
+void bangBang() {
+	if(lastCommand[0] == 0) {
+		print("No saved command\n");
+	}
+	else {
+		print(lastCommand);
+		print("\n");
+		runCommand(lastCommand);
+	}
 
 }

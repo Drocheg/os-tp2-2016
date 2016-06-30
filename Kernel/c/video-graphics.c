@@ -144,8 +144,94 @@ void drawRect(REKTangle *rekt) {
 }
 
 void clear() {
-    memset(VIDEO_ADDRESS_START, 0, WIDTH*HEIGHT*BPP);
+    //Memset sets byte by byte, we will set word by word (8 bytes at a time)
+    uint64_t *mem = (uint64_t *)VIDEO_ADDRESS_START;
+    for(uint64_t offset = 0; offset < BPL*HEIGHT/sizeof(uint64_t); offset++) {
+        mem[offset] = 0;
+    }
 }
+
+void shiftUp(uint64_t pixels) {
+    //Copy 8 bytes at a time
+    uint64_t *mem = (uint64_t *) VIDEO_ADDRESS_START,
+            offset = 0,
+            limit = (BPL*(HEIGHT-pixels))/sizeof(uint64_t);
+    //Move content up - in each iteration, put in this place what is exactly "pixels" lines below
+    while(offset <= limit) {
+        mem[offset] = mem[offset+WIDTH*pixels];
+        offset++;
+    }
+}
+
+void shiftDown(uint64_t pixels) {
+    uint64_t *mem = (uint64_t *) VIDEO_ADDRESS_START,
+            offset = (BPL*HEIGHT)/sizeof(uint64_t),
+            limit = BPL*pixels/sizeof(uint64_t);
+    while(offset >= limit) {
+        mem[offset] = mem[offset-WIDTH*pixels];
+        offset--;
+    }
+}
+
+void paintImg(Image *img, uint64_t x, uint64_t y) {
+    uint8_t *pixel = findPixel(x, y);
+    uint64_t offset = 0;
+    if(pixel == 0) {
+        return;
+    }
+    uint8_t *la = &(img->height) + sizeof(uint64_t);
+    for(uint64_t row = 0; row < img->height; row++) {
+        for(uint64_t col = 0; col < img->width; col++) {
+            pixel = findPixel(x+col, y+row);
+            pixel[0] = *(la++);
+            pixel[2] = *(la++);
+            pixel[1] = *(la++);
+            // pixel += 4;    //Skip the 4th pixel, ignored
+        }
+    }
+
+
+
+    // for(uint64_t row = 0; row < img->height; row++) {
+    //     for(uint64_t col = 0; col < img->width; col++) {
+    //         for(uint64_t i = 0; i < 3; i++) {
+    //             pixel[BPL*height + col*BPP + i] = la[offset++];
+    //         }
+    //     }
+    // }
+}
+
+// void shiftLeft(uint64_t pixels) {
+//     uint8_t *mem = VIDEO_ADDRESS_START;
+//     uint64_t offset = 0,
+//             limit = (BPL*HEIGHT)-pixels;
+//     while(offset <= limit) {
+//         mem[offset] = mem[offset+pixels];
+//         //Done with this line?
+//         if(offset % (width-pixels) == 0) {
+//             offset += BPL - ((width-pixels)*BPP);
+//         }
+//         else {
+//             offset++;
+//         }
+//     }
+// }
+
+// void shiftRight(uint64_t pixels) {
+//     uint8_t *mem = VIDEO_ADDRESS_START;
+//     uint64_t offset = BPL*HEIGHT,
+//             limit = pixels*BPP;
+//     while(offset >= limit) {
+//         mem[offset] = mem[offset-pixels];
+//         //Done with this line?
+//         if(offset % (width-pixels) == 0) {
+//             offset -= BPL - ((width-pixels)*BPP);
+//         }
+//         else {
+//             offset--;
+//         }
+//     }
+//  }
 
 void setGraphicMode() {
     BgaSetVideoMode(WIDTH, HEIGHT, VBE_DISPI_BPP_32, 1,1);

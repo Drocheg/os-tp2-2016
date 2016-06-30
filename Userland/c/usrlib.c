@@ -89,8 +89,8 @@ void fillRect(REKTangle *rekt) {
 	_int80(FILL_REKT, (uint64_t) rekt, 0, 0);
 }
 
-void paintImg(Image *img) {
-	_int80(PAINT_IMG, (uint64_t) img, 0, 0);
+void paintImg(Image *img, uint64_t x, uint64_t y) {
+	_int80(PAINT_IMG, (uint64_t) img, x, y);
 }
 
 void sleep(uint64_t sleepTime){

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define CHAR_PX_SIZE 8
 #define WHITE 0xFFFFFF
 #define BLACK 0x000000
 
@@ -14,14 +15,14 @@ typedef struct {
 	uint32_t color;	//Hex-encoded
 } REKTangle;
 
+#pragma pack(push)
+#pragma pack (1) 				//Align structure to 1 byte
 typedef struct {
-	uint64_t x;		//Top-left corner
-	uint64_t y;		//Top-left corner
 	uint64_t width;
 	uint64_t height;
-	uint32_t color;
-	void *data;
+	uint8_t *pixelData;
 } Image;
+#pragma pack(pop)
 
 /**
 * Converts the specified RGB value to a 24-bit hex value.
