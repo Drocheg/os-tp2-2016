@@ -93,15 +93,10 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 	_int80(PAINT_IMG, (uint64_t) img, x, y);
 }
 
-void sleep(uint64_t sleepTime){
-	uint64_t startTime = time();
-	while(time()<startTime+sleepTime);
-	return;
+void sleep(uint64_t miliseconds) {
+	_int80(SLEEP, miliseconds, 0, 0);
 }
 
-uint64_t sleep(uint64_t miliseconds) {
-	return _int80(SLEEP, miliseconds, 0, 0);
-}
 /*
 void printf(const char *format, vargs *args) {
 	int c;

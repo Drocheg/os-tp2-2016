@@ -37,6 +37,7 @@ void getTime();
 void playMainSong();
 void playSongTwo();
 void bangBang();
+void sleepForTwoSeconds();
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -52,7 +53,8 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-	{"1", bangBang, "Re-run your last valid command"},
+	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
+	{"1", bangBang, "Re-run your last valid command"}
 };
 
 uint64_t printProcessA();
@@ -253,4 +255,10 @@ void bangBang() {
 		print("\n");
 		runCommand(lastCommand);
 	}
+}
+
+void sleepForTwoSeconds() {
+	print("Sleeping...");
+	sleep(2000);
+	print("woke up\n");
 }
