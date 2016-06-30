@@ -2,7 +2,8 @@
 #define SCHEDULER_H
 
 #include <stdint.h>
-
+#include <processCommon.h>
+#include <process.h>
 
 /*
  * Sets up the scheduler 
@@ -30,7 +31,7 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
  * Updates the process queue, changing to the nexr process
  * Returns the next process' stack, or NULL if no process is scheduled
  */
-void *nextProcess();
+void *nextProcess(void *currentRSP);
 
 /*
  * Returns the current process' PCB index,
@@ -45,6 +46,7 @@ uint64_t getCurrentPCBIndex();
 uint64_t finishProcess();
 
 
+uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
 
 
 

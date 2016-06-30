@@ -11,6 +11,7 @@
 #include <time.h>
 #include <process.h>
 #include <scheduler.h>
+#include <fileManager.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -50,9 +51,9 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
-	/* Initializes File System */
-	ncPrint("Initilzing File System...");
-	initializeFileSystem();
+	/* Initializes File Manager */
+	ncPrint("Initilzing File Manager...");
+	initializeFileManager();
 	ncPrint("Done\n");
 
 	/* Initializes PCB */
@@ -119,8 +120,6 @@ static void finishKernel() {
 	ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
 	_cli();
 	_halt();
-	return 0;
-
 }
 
 void clearBSS(void * bssAddress, uint64_t bssSize) {

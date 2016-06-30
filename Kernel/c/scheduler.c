@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <interrupts.h>
 #include <process.h>
-#include <file.h>
+// #include <file.h>
+#include <fileManager.h>
 #include <stddef.h>
 #include <time.h>
 #include <video.h>
+
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 0x10 /* See Process.c */
@@ -40,7 +42,7 @@ static uint64_t dequeueProcess();
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 static void *nextProcessRecursive();
 static uint64_t checkScheduler();
-static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
+// static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation);
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor);
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fileDescriptor);
 static uint64_t waitForTime(uint64_t miliseconds);
@@ -92,7 +94,7 @@ uint64_t initializeScheduler() {
 /*
  * Starts the scheduler
  */
-void *startScheduler() {
+void startScheduler() {
 	running = 1;
 }
 
@@ -143,7 +145,7 @@ void *nextProcess(void *currentRSP) {
 
 /*
  * Returns the current process' PCB index,
- * or -1 if no process sscheduled, or schduler not initialzed
+ * or -1 if no process scheduled, or schduler not initialzed
  */ 
 uint64_t getCurrentPCBIndex() {
 
@@ -316,7 +318,31 @@ static uint64_t checkScheduler() {
 
 
 
-static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+// static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
+
+	
+// 	Node current = (Node) NULL;
+// 	if (checkScheduler()) {
+// 		return -1;
+// 	}
+// 	current = last->next;
+
+// 	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
+// 		return -1;
+// 	}
+// 	if (ioActions[(uint64_t) ioOperation]) {
+// 		return -1;
+// 	}
+// 	current->state = SLEPT;
+// 	current->generalPurpose1 = (uint64_t) SLEPT_IO; 		/* Stores reason of sleep */
+// 	current->generalPurpose2 = (uint64_t) ioOperation; 		/* Stores action to take place */
+// 	current->generalPurpose3 = (uint64_t) fileDescriptor 	/* Stores file to check */
+
+// 	return 0;
+// }
+
+
+uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
 
 	
 	Node current = (Node) NULL;
@@ -325,20 +351,19 @@ static uint64_t waitForIO(uint64_t fileDescriptor, IOOperation ioOperation) {
 	}
 	current = last->next;
 
-	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || fileDescriptor < getFilesQuantity(current->PCBIndex)) {
+	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
 		return -1;
 	}
-	if (ioActions[(uint64_t) ioOperation]) {
-		return -1;
-	}
+	// if (ioActions[(uint64_t) ioOperation]) {
+	// 	return -1;
+	// }
 	current->state = SLEPT;
-	current->generalPurpose1 = (uint64_t) SLEPT_IO; 									/* Stores reason of sleep */
-	current->generalPurpose2 = (uint64_t) ioOperation; 									/* Stores action to take place */
-	current->generalPurpose3 = (uint64_t) getFile(current-> PCBIndex, fileDescriptor); 	/* Stores file to check */
+	current->generalPurpose1 = (uint64_t) SLEPT_IO; 		/* Stores reason of sleep */
+	current->generalPurpose2 = (uint64_t) ioOperation; 		/* Stores action to take place */
+	current->generalPurpose3 = (uint64_t) fileDescriptor; 	/* Stores file to check */
 
 	return 0;
 }
-
 
 
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fileDescriptor) {
@@ -394,22 +419,52 @@ static uint64_t checkWakeIO(Node current) {
 
 }
 
+// /*
+//  * Checks if the file has data available to be read
+//  * Returns 0 ig the process must be waken, or -1 otherwise
+//  */
+// static uint64_t checkAvailableData(Node current) {
+
+// 	File file = (File) current->generalPurpose3;
+
+// 	if (!dataAvailable(file)) {
+// 		return -1;
+// 	}
+
+// 	/* TODO: What do we do here? */
+	
+// 	return 0;
+// }
+
+
 /*
  * Checks if the file has data available to be read
- * Returns 0 ig the process must be waken, or -1 otherwise
+ * Returns 0 if the process must be waken, or -1 otherwise
  */
 static uint64_t checkAvailableData(Node current) {
 
-	File file = (File) current->generalPurpose3;
-
-	if (!dataAvailable(file)) {
-		return -1;
-	}
-
-	/* TODO: What do we do here? */
-	
-	return 0;
+	return operateFile(current->PCBIndex, current->generalPurpose3, AVAILABLE_DATA, (char) 0);
 }
+
+
+// /*
+//  * Checks if the file has data available to be read
+//  * Returns 0 ig the process must be waken, or -1 otherwise
+//  */
+// static uint64_t checkFreeSpace(Node current) {
+
+// 	File file = (File) current->generalPurpose3;
+
+// 	if (!hasFreeSpace(file)) {
+// 		return -1;
+// 	}
+
+// 	/* TODO: What do we do here? */
+	
+// 	return 0;
+
+// }
+
 
 
 /*
@@ -418,17 +473,9 @@ static uint64_t checkAvailableData(Node current) {
  */
 static uint64_t checkFreeSpace(Node current) {
 
-	File file = (File) current->generalPurpose3;
-
-	if (!hasFreeSpace(file)) {
-		return -1;
-	}
-
-	/* TODO: What do we do here? */
-	
-	return 0;
-
+	return operateFile(current->PCBIndex, current->generalPurpose3, FREE_SPACE, (char) 0);
 }
+
 
 /* 
  * Checks if a process must be waken when was sleeping due to time

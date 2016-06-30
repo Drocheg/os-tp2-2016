@@ -8,13 +8,12 @@
 
 #define MAX_NAME 16
 
-#define F_READ 0x01
-#define F_WRITE 0x02
 
 
 
 
-typedef enum {INPUT = 0, OUTPUT} IOOperation;
+
+
 typedef enum {KERNEL = 1, HEAP} Place;
 typedef struct file_s * File;
 

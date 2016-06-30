@@ -3,10 +3,12 @@ EXTERN timerTickHandler
 EXTERN int80Handler
 
 EXTERN getKernelStack
+EXTERN nextProcess
 
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
+GLOBAL yield
 
 
 
@@ -73,6 +75,18 @@ SECTION .text
 	mov al, 20h
 	out 20h, al
 %endmacro
+
+
+yield:
+	
+	saveState
+	changeToKernel
+	pop rdi
+	call nextProcess
+	mov rsp, rax
+
+	loadState
+	iretq
 
 
 
