@@ -51,6 +51,11 @@ uint64_t sleep(uint64_t miliseconds);
 void *nextProcess(void *currentRSP);
 
 /*
+ * Makes the scheduler stop current process' execution, and resume next process
+ */
+void yield();
+
+/*
  * Returns the current process' PCB index,
  * or -1 if no process sscheduled, or schduler not initialzed
  */

@@ -18,7 +18,7 @@
 typedef struct node_t * Node;
 typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
-typedef uint64_t (*IOActions)(uint64_t, uint64_t, char **, uint64_t, uint64_t);
+typedef uint64_t (*IOActions)(uint64_t, uint64_t, char *, uint64_t, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 

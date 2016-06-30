@@ -2,6 +2,7 @@
 #include <libasm.h>
 #include <stdlib.h>
 #include <scanCodes.h>
+#include <video.h>
 
 static uint8_t queue[KEYBOARD_BUFF_SIZE] = {0};
 static uint8_t readIndex = -1, writeIndex = 0;
@@ -36,11 +37,13 @@ uint8_t pollProcessedKey() {
 
 //Adds a scan code to the end of the queue, if there is room
 uint8_t offerKey(uint8_t scanCode) {
+
 	processModifierKey(scanCode);
 	if(bufferIsFull()) {
 		return 0;
 	}
 	queue[writeIndex++] = scanCode;
+	// ncPrintChar(processScanCode(scanCode));
 	if(writeIndex == KEYBOARD_BUFF_SIZE) {
 		writeIndex = 0;
 	}

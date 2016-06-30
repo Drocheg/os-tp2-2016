@@ -294,7 +294,7 @@ uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t 
 	(entries[i]).index = index;
 	(entries[i]).fileType = (uint32_t) fileType;
 	(entries[i]).flags = flags;
-	return 0;
+	return i;
 }
 
 /*
@@ -360,11 +360,7 @@ uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation o
 	fileIndex = (int64_t) (process->fileDescriptors).entries[fileDescriptor].index;
 	fileType = (FileType) (process->fileDescriptors).entries[fileDescriptor].fileType;
 
-	operate(operation, fileType, fileIndex, character);
-	if (operation == READ) { 
-		// ncPrintDec(*character);
-	}
-	return 0;
+	return operate(operation, fileType, fileIndex, character);
 }
 
 /*

@@ -39,11 +39,13 @@ int kernel_main(int argc, char *argv[]) {
 	setInterrupt(0x20, (uint64_t)&int20Receiver);
 	setInterrupt(0x21, (uint64_t)&int21Receiver);
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
+	setInterrupt(0x81, (uint64_t)&int81Receiver);
+
 	ncPrint("Done.\n");
 
-	/* Sets PIT frequency to 500 Hz (one interruption every 2 ms) */
+	/* Sets PIT frequency to 500 Hz (one interruption every 2 ms.) */
 	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(500);	/* Any higher and PC speaker stops responding */
+	setPITfrequency(500);	/* Any higher PC speaker stops responding */
 	ncPrint("Done.\n");
 
 	/* Initializes memory management */

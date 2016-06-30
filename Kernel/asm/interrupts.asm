@@ -8,7 +8,7 @@ EXTERN nextProcess
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
-GLOBAL yield
+GLOBAL int81Receiver
 
 
 
@@ -95,11 +95,6 @@ SECTION .text
 %endmacro
 
 
-yield:
-	int 0x20
-	ret
-
-
 
 int20Receiver:
 
@@ -134,6 +129,22 @@ int80Receiver:
 	call int80Handler						; Parameter registers shouldn't have been modified
 
 	loadState
+	iretq
+
+
+
+; Same as int20Receiver, but without calling timerTickHandler, but nextProcess
+int81Receiver:
+
+	saveState				; Saves current process' state
+	changeToKernel			; Now we are in kernel's conext and user stack pushed into kernel's stack
+	pop rdi					; Takes off user stack from kernel's stack
+	call nextProcess		; Calls handler, which returns the next process' stack
+	mov rsp, rax			; Switches to next process' context
+
+	endOfInterrupt			; End of interrupt
+
+	loadState				; Restores process' state
 	iretq
 
 
