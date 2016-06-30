@@ -44,21 +44,26 @@ void playSong(uint32_t songNum) {
 	uint16_t freq; //Porque 16???
 	uint32_t time;
 	
-	clearScreen();
-	print("                   I shall now play you the song of my people\n");
-	while(n > 0) {
-		freq = *((uint32_t *)songData);
-		songData = songData+4;
-		time = (*((uint32_t *)songData));  
-		songData = songData+4;
-	  	_int80(SPEAKER, freq, 0, 0);
-	  	n--;
-	  	sleep(time);
+	//clearScreen();
+	//print("                   I shall now play you the song of my people\n");
+	int32_t m = n;
+	while(1){
+		while(n > 0) {
+			freq = *((uint32_t *)songData);
+			songData = songData+4;
+			time = (*((uint32_t *)songData));  
+			songData = songData+4;
+		  	_int80(SPEAKER, freq, 0, 0);
+		  	n--;
+		  	sleep(time);
+		}
+		n=m;
+		_int80(SPEAKER, 0, 0, 0);	
 	}
-	_int80(SPEAKER, 0, 0, 0);
+	
 }
 
 void playSong_main(){
-	playSong(0);
+	playSong(1);
 	while(1);
 }

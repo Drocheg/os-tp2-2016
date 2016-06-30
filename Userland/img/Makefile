@@ -9,6 +9,6 @@ dinosaurio.img:
 	./imageWriter.o
 
 clean:
-	rm -rf *.o *.bin
+	rm -rf *.o *.bin dinosaurio.img
 
 .PHONY: all clean build

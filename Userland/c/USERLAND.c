@@ -58,8 +58,8 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-	{"game", game, "Play Game"}
-	{"1", bangBang, "Re-run your last valid command"},
+	{"game", game, "Play Game"},
+	{"1", bangBang, "Re-run your last valid command"}
 };
 
 uint64_t printProcessA();

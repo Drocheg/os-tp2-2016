@@ -4,6 +4,7 @@
 #include <scanCodes.h>
 #include <syscalls.h>
 #include <interrupts.h>
+#include <songplayer.h>
 
 
 #define STATE_GROUND 0
@@ -24,11 +25,11 @@
 
 
 static uint64_t state;
-static uint64_t jumpForce;
+static int64_t jumpForce;
 static uint64_t jumpStartTime;
 static uint64_t lastObstacleUpdate;
 static uint64_t lastUpdateTime;
-static uint64_t posY; //Position of the center of the character
+static int64_t posY; //Position of the center of the character
 static uint64_t obstacle[HORIZONTAL_SIZE][10]={SPACE_EMPTY}; 
 
 /*There are n vertical spaces. Character can only jump vertical. In the air he can't jump. 
@@ -41,7 +42,8 @@ void jump();
 void update();
 uint64_t isPlayerJumping();
 void gameOver();
-void paintFullRect(uint64_t i,uint64_t j,uint64_t width,uint64_t height,uint32_t color);
+void playJumpFX(uint64_t seed);
+void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
 
 void initGame(){
 	state = STATE_GROUND;
@@ -50,19 +52,23 @@ void initGame(){
 	lastUpdateTime=time();
 	lastObstacleUpdate=time();
 	posY=1;
-	for(uint64_t i=0; i<HORIZONTAL_SIZE; i++){
-		for(uint64_t j =0; j<VERTICAL_SIZE; j++){
+	for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
+		for(int64_t j =0; j<VERTICAL_SIZE; j++){
 			obstacle[i][j]=SPACE_EMPTY;
 		}
 	}
-
+	//music
+	char* argvSongPlayer[] = {"songplayer"};
+	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
+	
 	playGame();
 	return;
 }
 void playGame(){
 	uint64_t loopTime=time();
+	
 	while(1){
-		while(time()<loopTime+GAME_TICK/10);
+		while(time()<loopTime+GAME_TICK/2);
 		loopTime=time();
 		update();
 	//	yield();
@@ -91,22 +97,7 @@ void update(){
 	if(state==STATE_JUMPING){
 		//print("J");
 		if(jumpStartTime+JUMP_LAG<updateTime){
-			uint64_t randFX = ((updateTime/13)*7919)%(3);
-			uint32_t jumpFX;
-			switch(randFX){
-				case 0:
-					jumpFX=JUMP_FX_1;
-					break;
-				case 1:
-					jumpFX=JUMP_FX_2;
-					break;
-				default:
-					jumpFX=JUMP_FX_3;
-					break;
-
-			}
-
-			soundFX(jumpFX);
+			playJumpFX(updateTime);
 			state=STATE_AIR;
 		}
 	}
@@ -114,25 +105,27 @@ void update(){
 		jump();
 	}
 	if(state==STATE_AIR){
-		print("A");
+		
 		uint64_t timeFromJump = updateTime-(jumpStartTime+JUMP_LAG);
-		uint64_t gameTicksFromJump = timeFromJump/GAME_TICK;
+		int64_t gameTicksFromJump = (timeFromJump/GAME_TICK);
 		if(gameTicksFromJump>0){
-			print("B");
+			
 			if(gameTicksFromJump<=jumpForce){
 				print("C");
 				posY=1+gameTicksFromJump;
 			}else{
-				print("D");
-				if(1+jumpForce<gameTicksFromJump-jumpForce){
+				
+				if(1+2*jumpForce<gameTicksFromJump){//TODO usar numero que acepten negativos
+					print("D");
 					posY=1;
 				}else{
-					posY=(1+jumpForce)-(gameTicksFromJump-jumpForce); //the max height from jump - fall
+					print("E");
+					posY=1+2*jumpForce-gameTicksFromJump; //the max height from jump - fall (1+jumpForce<gameTicksFromJump-jumpForce)
 				}
 			}
 			if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
 			if(posY<=1){
-				print("G");
+			//	print("G");
 				posY=1;
 				state=STATE_GROUND;	
 				jumpForce=0;
@@ -154,15 +147,15 @@ void update(){
 	//Obstacle Update
 	uint64_t obstacleTicksFromLastUpdate = ((updateTime-lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
 	if(obstacleTicksFromLastUpdate>0 && obstacleTicksFromLastUpdate<HORIZONTAL_SIZE){
-		uint64_t newObstaclePosY = ((updateTime/13)*7919)%(VERTICAL_SIZE*NO_OBSTACLE_MULTIPLIER);
+		int64_t newObstaclePosY = ((updateTime/13)*7919)%(VERTICAL_SIZE*NO_OBSTACLE_MULTIPLIER);
 
 		//TODO borrar estas 3 lineas. Debugging. 
 		////printNum(newObstaclePosY);
 		//print("\n");
 		
-		for(uint64_t i=0; i<HORIZONTAL_SIZE; i++){
-			for(uint64_t j =0; j<VERTICAL_SIZE; j++){
-				uint64_t oldI = i+obstacleTicksFromLastUpdate;
+		for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
+			for(int64_t j =0; j<VERTICAL_SIZE; j++){
+				int64_t oldI = i+obstacleTicksFromLastUpdate;
 				if(oldI>=HORIZONTAL_SIZE){
 					if(j==newObstaclePosY) obstacle[i][j]=SPACE_OBSTACLE;
 					else obstacle[i][j]=SPACE_EMPTY;	
@@ -170,53 +163,59 @@ void update(){
 					obstacle[i][j]=obstacle[oldI][j];
 
 				}
-				if(i==0 && (j==posY || j==posY+1 || j==posY-1)){
+				
+				if(i!=0){
 					if(obstacle[i][j]==SPACE_OBSTACLE){
-						gameOver();
-					}else{
-						if(j==posY){
-
-							Image * dinosaurio;
-							_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
-							paintImg(dinosaurio, 0, posY);
-						}else{
-							paintFullRect(i*50,j*50,50,50,0x00FFFF);	
-						}
-						
-						
-						
-						//if(j==posY+1) print("O");
-						//if(j==posY  ) print("I");
-						//if(j==posY-1) print("N");
-					}
-				}else{
-					if(obstacle[i][j]==SPACE_OBSTACLE){
-						paintFullRect(i*50, j*50, 50, 50, 0xFF0000);
+						paintFullRect(i*50+100, j*50, 50, 50, 0xFF0000);
 						
 					}else{
-						paintFullRect(i*50, j*50, 50, 50, 0x000000);	
+						paintFullRect(i*50+100, j*50, 50, 50, 0x000000);	
 						
 					}
 				}
+				
+			
 			}
 			
 		}
 		lastObstacleUpdate=updateTime; //TODO trabajar por bloques desde inicio
-	}else{
-		for(int j=0; j<VERTICAL_SIZE; j++){
-			if(j==posY || j==posY+1 || j==posY-1){
-				paintFullRect(0, j*50, 50, 50, 0x00FFFF);
+	}
+
+	for(int j=0; j<VERTICAL_SIZE; j++){
+		if(j==posY || j==posY+1 || j==posY-1){
+			if(obstacle[0][j]==SPACE_OBSTACLE){
+				gameOver();
 			}else{
-				paintFullRect(0, j*50, 50, 50, 0x000000);
-			
+				if(j==posY-1){
+				
+					Image * dinosaurio;
+					_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
+					paintImg(dinosaurio, 0, (posY-1)*50);
+				
+				}
+				
+				
+				
+				//if(j==posY+1) print("O");
+				//if(j==posY  ) print("I");
+				//if(j==posY-1) print("N");
+			}
+		}else{
+			if(obstacle[0][j]==SPACE_OBSTACLE){
+				paintFullRect(0, j*50, 150, 50, 0xFF0000);
+				
+			}else{
+				paintFullRect(0, j*50, 150, 50, 0x000000);	
+				
 			}
 		}
 	}
 	
+	
 	for(int i=0; i<10; i++){
-		paintFullRect(i*50,13*50,5,5,0x000000);
+		paintFullRect(i*50+100,13*50,5,5,0x000000);
 	}
-	paintFullRect(jumpForce*50,13*50,5,5,0xFFFF00);
+	paintFullRect(jumpForce*50+100,13*50,5,5,0xFFFF00);
 
 
 
@@ -244,7 +243,7 @@ void gameOver(){
 	reboot();
 }
 
-void paintFullRect(uint64_t i,uint64_t j,uint64_t width,uint64_t height,uint32_t color){
+void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color){
 	for(int k=0;k<width;k++){
 		REKTangle r = {k+i, j, 1, height, color};
 		paintRect(&r);
@@ -252,5 +251,22 @@ void paintFullRect(uint64_t i,uint64_t j,uint64_t width,uint64_t height,uint32_t
 }
 
 
+void playJumpFX(uint64_t seed){
+	uint64_t randFX = ((seed/13)*7919)%(3);
+	uint32_t jumpFX;
+	switch(randFX){
+		case 0:
+			jumpFX=JUMP_FX_1;
+			break;
+		case 1:
+			jumpFX=JUMP_FX_2;
+			break;
+		default:
+			jumpFX=JUMP_FX_3;
+			break;
 
+	}
+
+	soundFX(jumpFX);
+}
 
