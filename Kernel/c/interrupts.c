@@ -5,8 +5,9 @@
 #include <video.h>
 
 
-static void * kernelStack = NULL;
-static void * kernelStackPage = NULL;
+static void *kernelStack = NULL;
+static void *kernelStackPage = NULL;
+
 
 
 /*
@@ -66,4 +67,3 @@ uint64_t initializeInterruptStacks(void *finishKernel) {
 void *getKernelStack() {
 	return kernelStack;
 }
-

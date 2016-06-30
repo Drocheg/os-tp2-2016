@@ -79,10 +79,9 @@ uint64_t printProcessA() {
 
 	uint64_t aux = 0;
 	while (1) {
-		if ( (aux % 50000000) == 0) {
-			print("Hi, from process A ");
-		}
+		// print("Hi, from process A ------\n");
 		aux++;
+		sleep(10000);
 	}
 	return 0;
 }
@@ -91,10 +90,9 @@ uint64_t printProcessB() {
 
 	uint64_t aux = 0;
 	while ((uint64_t)-1) {
-		if ( (aux % 50000000) == 0) {
-			print("Hi, from process B ");
-		}
+		// print("Hi, from process B*******\n");
 		aux++;
+		sleep(10000);
 	}
 	return 0;
 }
@@ -106,6 +104,7 @@ int32_t userland_main(int argc, char* argv[]) {
 		return -1;
 	}
 
+	sleep(10000);
 	clearScreen();
 	char buffer[100];
 	printVer();

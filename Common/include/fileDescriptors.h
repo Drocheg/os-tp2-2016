@@ -1,7 +1,7 @@
 #ifndef FILE_DESCRIPTORS_H
 #define FILE_DESCRIPTORS_H
 
-#define STDIN 1
+#define STDIN 0
 #define STDIN_RAW 2
 #define STDOUT 3
 #define STDERR 4

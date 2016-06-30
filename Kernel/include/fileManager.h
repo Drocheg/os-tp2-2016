@@ -8,16 +8,6 @@
 typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUES} FileType;
 typedef enum {READ = 0, WRITE, AVAILABLE_DATA, FREE_SPACE} FileOperation;
 
-// /*
-//  * We assume that every "file" is saved into a table (each type in it's table).
-//  * If a file is unique (for example, video memory or keyboard buffer),
-//  * a wrapper function must be implemented.
-//  */
-// typedef uint64_t (*ReadCharFn)(uint64_t index);
-// typedef uint64_t (*WriteCharFn)(char c, uint64_t index);
-// typedef uint64_t (*DataAvailableFn)(uint64_t index);
-// typedef uint64_t (*HasFreeSpaceFn)(uint64_t index);
-
 
 
 /*
@@ -26,12 +16,15 @@ typedef enum {READ = 0, WRITE, AVAILABLE_DATA, FREE_SPACE} FileOperation;
 void initializeFileManager();
 
 /*
- * Make <operation> over <fileType> <index> file. Parameter <c> is used when operation is WRITE
- * Returns non-negative integer on success, or -1 otherwise.
- * 
+ * Make <operation> over <fileType> <index> file. 
+ * Parameter <character> is used when operation is READ for storing the result,
+ * or WRITE, to store a pointer to the character to be written.
+ * It will be used just the first position of the <character> pointer.
+
+ * Returns 0 on success, or -1 otherwise. 
  * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
  */
-uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char c);
+uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character);
 
 
 

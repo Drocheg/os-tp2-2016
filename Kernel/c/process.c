@@ -6,6 +6,7 @@
 #include <scheduler.h>
 #include <process.h>
 #include <video.h>
+#include <fileDescriptors.h>
 
 
 
@@ -172,10 +173,13 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	}
 	(newProcess->fileDescriptors).size = 0;
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
+	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
+	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
+	((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
 	newProcess->heapPage = NULL;
 	return index;
 }
-
 
 
 /* Getters */
@@ -226,25 +230,6 @@ uint64_t getFilesQuantity(uint64_t PCBIndex) {
 }
 
 
-
-// uint64_t getFileDescriptor(uint64_t PCBIndex, File file) {
-
-// 	struct pcbEntry_s *process = NULL;
-// 	uint64_t index = 0;
-// 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-// 		return -1;
-// 	}
-// 	process = &(pcb[PCBIndex]);
-
-// 	while (index < MAX_FILES && (process->fileDescriptors).entries[index].file != file) {
-// 		index++;
-// 	}
-
-// 	return (index == MAX_FILES) ? -1 : index;
-// }
-
-
-
 uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 
 	struct pcbEntry_s *process = NULL;
@@ -254,18 +239,6 @@ uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	process = &(pcb[PCBIndex]);
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
 }
-
-
-
-// File getFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
-// 	struct pcbEntry_s *process = NULL;
-// 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-// 		return NULL;
-// 	}
-// 	process = &(pcb[PCBIndex]);
-// 	return (((process->fileDescriptors).entries)[fileDescriptor]).file;
-// }
 
 /* Setters */
 uint64_t setProcessStack(uint64_t PCBIndex, void *stack) {
@@ -293,53 +266,6 @@ uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags
 
 /* File management */
 
-// /*
-//  * Adds a file into the process opened files list
-//  * Returns the file descriptor of the file, or -1 otherwise
-//  */
-// uint64_t openFile(uint64_t PCBIndex, File file, uint64_t flags) {
-
-// 	struct pcbEntry_s *process = NULL;
-// 	struct fileDescriptorMapEntry_s *entries;
-// 	uint64_t index = 0;
-// 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-// 		return -1;
-// 	}
-// 	process = &(pcb[PCBIndex]);
-// 	if ((process->fileDescriptors).size >= MAX_FILES) {
-// 		return -1;
-// 	}
-	
-// 	entries = (process->fileDescriptors).entries;
-// 	while (entries[index].file != NULL) {
-// 		index++;
-// 	}
-
-// 	((process->fileDescriptors).size)++;
-// 	entries[index].file = file;
-// 	entries[index].flags = flags;
-// 	return 0;
-// }
-
-// uint64_t closeFile(uint64_t PCBIndex, File file) {
-
-// 	struct pcbEntry_s *process = NULL;
-// 	uint64_t index = 0;
-// 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-// 		return -1;
-// 	}
-// 	process = &(pcb[PCBIndex]);
-// 	index = getFileDescriptor(PCBIndex, file);
-
-// 	if (index < 0) {
-// 		return -1;
-// 	}
-
-// 	((process->fileDescriptors).size)--;
-// 	(process->fileDescriptors).entries[index].file = NULL;
-// 	(process->fileDescriptors).entries[index].flags = 0;
-// 	return 0;
-// }
 
 /*
  * Adds a file to the process' files table.
@@ -404,23 +330,21 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	return (uint64_t) (process->fileDescriptors).entries[fileDescriptor].occupied;
 }
 
+/*
+ * Generic function to operate over a file.
+ * <PCBIndex> states which process will operate over the file pointed by <fileDescriptor>.
+ * Four operation can be done (READ, WRITE, ASK IF THERE IS DATA AVAILABLE, OR ASK IF THERE IS SPACE TO WRITE)
+ * For more info. see <fileManager.h>
+ * The last parameter (<character>) is used for READ and WRITE operations. When reading, the read byte
+ * will be written into the position stated by this pointer. When writing, the written byte will be
+ * that one pointed by <character>.
+ * Note: JUST ONE BYTE WILL BE READ OR WRITTEN
+ *
+ * Returns 0 on success, or -1 otherwise. 
+ * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
+ */
+uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character) {
 
-uint64_t destroyProcess(uint64_t PCBIndex) {
-
-	struct pcbEntry_s *process = NULL;
-	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-		return -1;
-	}
-
-	process = &(pcb[PCBIndex]);
-	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
-	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
-	return 0;
-}
-
-
-
-uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char c) {
 
 	FileType fileType = 0;
 	int64_t fileIndex = 0;
@@ -436,24 +360,36 @@ uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation o
 	fileIndex = (int64_t) (process->fileDescriptors).entries[fileDescriptor].index;
 	fileType = (FileType) (process->fileDescriptors).entries[fileDescriptor].fileType;
 
-	return operate(operation, fileType, fileIndex, c);
-}
-
-
-static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation) {
-
-	uint32_t flags = getFileFlags(PCBIndex, fileDescriptor);
-
-	switch(operation) {
-
-		case READ: 
-		case AVAILABLE_DATA: return (F_READ == (flags & F_READ));
-		case WRITE:
-		case FREE_SPACE: return (F_WRITE == (flags & F_WRITE));
+	operate(operation, fileType, fileIndex, character);
+	if (operation == READ) { 
+		// ncPrintDec(*character);
 	}
 	return 0;
-
 }
+
+/*
+ * Takes the process with <PCBIndex> from the table
+ * Returns 0 on success, or -1 otherwise
+ */
+uint64_t destroyProcess(uint64_t PCBIndex) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+
+	process = &(pcb[PCBIndex]);
+	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
+	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
+	return 0;
+}
+
+
+
+
+
+
+
 
 
 
@@ -614,6 +550,21 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	return 0;
 }
 
+
+static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation) {
+
+	uint32_t flags = getFileFlags(PCBIndex, fileDescriptor);
+
+	switch(operation) {
+
+		case READ: 
+		case AVAILABLE_DATA: return (F_READ == (flags & F_READ));
+		case WRITE:
+		case FREE_SPACE: return (F_WRITE == (flags & F_WRITE));
+	}
+	return 0;
+
+}
 
 
 

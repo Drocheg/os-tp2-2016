@@ -59,7 +59,25 @@ SECTION .text
 	pop rax
 %endmacro
 
+%macro saveIRETQHook 0
 
+	mov [rsp - 48], rax
+	mov [rsp - 56], rbx
+	mov rbx, rsp
+	mov rax, 0
+	push rax
+	push rbx
+	mov rax, 0x202
+	push rax
+	mov rax, 0x8
+	push rax
+	mov rax, _resumeYield
+	push rax
+	sub rsp, 16
+	pop rbx
+	pop rax
+
+%endmacro
 
 
 %macro changeToKernel 0
@@ -78,15 +96,8 @@ SECTION .text
 
 
 yield:
-	
-	saveState
-	changeToKernel
-	pop rdi
-	call nextProcess
-	mov rsp, rax
-
-	loadState
-	iretq
+	int 0x20
+	ret
 
 
 

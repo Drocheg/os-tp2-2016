@@ -31,4 +31,6 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 
 uint64_t time();
 
+uint64_t sleep(uint64_t miliseconds);
+
 #endif

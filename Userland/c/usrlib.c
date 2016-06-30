@@ -72,6 +72,9 @@ uint64_t time() {
 	// return result;
 }
 
+uint64_t sleep(uint64_t miliseconds) {
+	return _int80(SLEEP, miliseconds, 0, 0);
+}
 /*
 void printf(const char *format, vargs *args) {
 	int c;

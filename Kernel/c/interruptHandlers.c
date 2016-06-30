@@ -27,6 +27,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 	switch(syscallID) {
 		case SYSREAD:
 			result = sys_read((uint8_t)p1, (char *)p2, p3);
+			// result = read(p1, (char *) p2, p3);
 			break;
 		case SYSWRITE:
 			result = sys_write((uint8_t)p1, (char *)p2, p3);
@@ -68,6 +69,9 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		break;
 		case TIME:
 			result = time();
+			break;
+		case SLEEP:
+			sleep(p1);
 			break;
 		default:
 			result = -1;

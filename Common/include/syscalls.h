@@ -17,7 +17,7 @@
 #define MALLOC 10
 #define TIME 11
 #define CREATE_PROCESS 12
-
+#define SLEEP 13
 
 
 struct createProcessParams_s {
