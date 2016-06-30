@@ -1,10 +1,10 @@
 /* GIMP RGB C-Source image dump (dinosaurio.c) */
 
 static const struct {
-  guint  	 width;
-  guint  	 height;
-  guint  	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
-  guint8 	 pixel_data[449 * 347 * 3 + 1];
+  unsigned int 	 width;
+  unsigned int 	 height;
+  unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
+  unsigned char	 pixel_data[449 * 347 * 3 + 1];
 } dinosaurio = {
   449, 347, 3,
   "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
