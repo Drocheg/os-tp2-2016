@@ -13,11 +13,11 @@ extern char endOfBinary;
 static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
-static const int MINOR_VER = 0;
+static const int MINOR_VER = 1;
 static int EXIT = 0;
+static char lastCommand[100] = {0};
 
-typedef struct
-{
+typedef struct {
 	char *name; 
 	void (*function)(void);
 	char *help;
@@ -28,7 +28,7 @@ void exit();
 void help();
 void jalp();
 void sayHello();
-void runCommand(char *cmd);
+uint8_t runCommand(char *cmd);
 void dumpDataModule();
 void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
@@ -36,6 +36,7 @@ void printVer();
 void getTime();
 void playMainSong();
 void playSongTwo();
+void bangBang();
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -50,25 +51,70 @@ static command commands[] = {
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
-	{"time", getTime, "Get ms since system boot"}
+	{"time", getTime, "Get ms since system boot"},
+	{"1", bangBang, "Re-run your last valid command"},
 };
 
+uint64_t printProcessA();
+uint64_t printProcessB();
+int32_t userland_main(int argc, char* argv[]);
 
+int32_t init_d(int argc, char* argv[]) {
 
-int32_t userland_main(int argc, char *argv[]) {
 	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
+
 	if(bssCheck != 0) {						//Improper BSS setup, abort
 		return -1;
 	}
+
+	char* argvA[] = {"process A"};
+	char* argvB[] = {"process B"};
+	char* argvTerminal[] = {"terminal"};
+	createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+
+	while(1);
+	return 0;
+
+}
+
+uint64_t printProcessA() {
+
+	uint64_t aux = 0;
+	while (1) {
+		if ( (aux % 50000000) == 0) {
+			print("A ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+uint64_t printProcessB() {
+
+	uint64_t aux = 0;
+	while ((uint64_t)-1) {
+		if ( (aux % 50000000) == 0) {
+			print("B ");
+		}
+		aux++;
+	}
+	return 0;
+}
+
+int32_t userland_main(int argc, char* argv[]) {
 	clearScreen();
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
+
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!EXIT) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
+
 		while((c = getchar()) != '\n') {
 			if(c != 0) {					//Recognized key, print it and save it
 				if(c == '\b') {				//Entered backspace
@@ -87,12 +133,22 @@ int32_t userland_main(int argc, char *argv[]) {
 				putchar('_');
 			}
 		}
+
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");
-			runCommand(buffer);
-			if(!streql(buffer, "clear")) {
-				print("\n");
+			uint8_t valid = runCommand(buffer);
+
+			// if(!streql(buffer, "clear")) {
+			// 	print("\n");
+			// }
+			if(!streql(buffer, "1") && valid) {
+				//Save entered command
+				uint8_t i;
+				for(i = 0; buffer[i] != 0; i++) {
+					lastCommand[i] = buffer[i];
+				}
+				lastCommand[i] = 0;
 			}
 		}
 		else {
@@ -126,7 +182,7 @@ void beep() {
 	_int80(SPEAKER, 0, 1, 0);
 }
 
-void runCommand(char *cmd) {
+uint8_t runCommand(char *cmd) {
 	toLowerStr(cmd);
 	int found = 0;
 	for(int i = 0; i < sizeof(commands)/sizeof(command); i++) {
@@ -137,8 +193,9 @@ void runCommand(char *cmd) {
 		}
 	}
 	if(!found) {
-		print("No such command. Try running help");
+		print("No such command. Try running help\n");
 	}
+	return found;
 }
 
 void exit() {
@@ -189,4 +246,15 @@ void playMainSong(){
 
 void playSongTwo(){
 	playSong(1);
+}
+
+void bangBang() {
+	if(lastCommand[0] == 0) {
+		print("No saved command\n");
+	}
+	else {
+		print(lastCommand);
+		print("\n");
+		runCommand(lastCommand);
+	}
 }
