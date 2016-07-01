@@ -46,9 +46,13 @@ void print(const char *str) {
 	_int80(SYSWRITE, STDOUT, (uint64_t)str, strlen(str));
 }
 
-void printNum(uint64_t num) {
-	char buff[20];
-	intToStr(num, buff);
+void printNum(int64_t num) {
+	char buff[21];
+	int negative = num < 0;
+	if(negative) {
+		buff[0] = '-';
+	}
+	intToStr(num, negative ? buff+1 : buff);
 	print(buff);
 }
 

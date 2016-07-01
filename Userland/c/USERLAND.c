@@ -73,12 +73,13 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
+	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "process B", printProcessB, 1, argvB);
-	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
 	while(1);
 	return 0;
@@ -87,13 +88,13 @@ int32_t init_d(int argc, char* argv[]) {
 
 uint64_t printProcessA() {
 	int64_t mqFD = MQopen("test", F_WRITE);
-	print("\nWrite FD for process A: ");
-	printNum(mqFD);
+	// print("\nWrite FD for process A: ");
+	// printNum(mqFD);
+	// print("\nA sending 'Hello'\n");
+	MQsend(mqFD, "Hello", 6);
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		print("\nA sending 'Hello'\n");
-		MQsend(mqFD, "Hello", 6);
 		sleep(10000);
 	}
 	return 0;
@@ -101,23 +102,22 @@ uint64_t printProcessA() {
 
 uint64_t printProcessB() {
 	int64_t mqFD = MQopen("test", F_READ);
-	print("\nRead FD for process B: ");
-	printNum(mqFD);
+	// print("\nRead FD for process B: ");
+	// printNum(mqFD);
 	char buff[6] = {0};
+	// print("\nReceiving...");
+	MQreceive(mqFD, buff, 5);
+	print(buff);
+	print("\n");
 	uint64_t aux = 0;
-	while ((uint64_t)-1) {
+	while (1) {
 		aux++;
-		print("\nReceiving...");
-		MQreceive(mqFD, buff, 5);
-		print(buff);
-		print("\n");
 		sleep(10000);
 	}
 	return 0;
 }
 
 int32_t userland_main(int argc, char* argv[]) {
-	clearScreen();
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");

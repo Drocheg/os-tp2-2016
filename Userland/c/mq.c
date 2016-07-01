@@ -5,9 +5,10 @@
 #include <interrupts.h>
 #include <syscalls.h>
 #include <stddef.h>
+#include <usrlib.h>
 
 static int8_t MQreceiveChar(uint64_t descriptor, char *dest);
-static int8_t MQsendChar(uint64_t descriptor, char *dest);
+static int8_t MQsendChar(uint64_t descriptor, char *src);
 
 int64_t MQopen(const char* name, uint32_t accessFlags) {
 	int64_t result;
@@ -45,7 +46,7 @@ static int8_t MQreceiveChar(uint64_t descriptor, char *dest) {
 int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
 	int64_t result;
 	for(result = 0; result < msgLen; result++) {
-		if(MQsendChar(descriptor, msg+result) == -1) {
+		if(MQsendChar(descriptor, &msg[result]) == -1) {
 			return result == 0 ? -1 : result;
 		}
 	}
@@ -57,9 +58,17 @@ int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
 *
 * @return The number of characters sent (1 or 0 on EOF), or -1 on error.
 */
-static int8_t MQsendChar(uint64_t descriptor, char *dest) {
+static int8_t MQsendChar(uint64_t descriptor, char *src) {
 	int8_t result;
-	_int80(MQ_SEND, descriptor, (uint64_t) dest, (uint64_t) &result);
+	print("Sending '");
+	char la[2] = {*src, 0};
+	print(la);
+	print("' via MQ with descriptor ");
+	printNum(descriptor);
+	print("...");
+	_int80(MQ_SEND, descriptor, (uint64_t) src, (uint64_t) &result);
+	print("sent, returned ");
+	printNum(result);
 	return result;
 }
 

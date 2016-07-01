@@ -407,7 +407,6 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 }
 
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
-
 	uint64_t writtenData = 0;
 	while (writtenData <= maxBytes) {
 
@@ -418,7 +417,6 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 				break;
 			}
 		} else {
-			while(1);
 			char c = buffer[writtenData];
 			if (operateFile(PCBIndex, fd, WRITE, &c)) {
 				break;
@@ -429,14 +427,3 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 	return writtenData;
 
 }
-
-
-
-
-
-
-
-
-
-
-
