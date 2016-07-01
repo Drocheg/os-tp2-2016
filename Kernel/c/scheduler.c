@@ -110,6 +110,8 @@ void stopScheduler() {
 uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
 	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+		ncPrint("Can't enqueue process");
+		for(int i=0; i<100000000;i++);	
 		return -1;
 	}
 	return 0;
@@ -122,10 +124,12 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
  * or NULL if scheduler is not running or if no process is scheduled
  */
 void *nextProcess(void *currentRSP) {
-
+	// ncPrint("I'm here");
 	Node current = NULL;
 
-	if (checkScheduler()) {		
+	if (checkScheduler()) {	
+		ncPrint("No scheduler");
+		for(int i=0; i<100000000;i++);	
 		return getKernelStack();
 	}
 	current = last->next;
@@ -178,6 +182,8 @@ uint64_t finishProcess() {
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
 	void *entryPoint, uint64_t argc, char *argv[]) {
 
+	
+
 	int index = -1;
 	Node newNode = NULL;	
 	Node aux = NULL;
@@ -229,10 +235,10 @@ for(int i=0; i<100000000;i++);
 	newNode->next = aux->next;
 	aux->next = newNode;
 ncPrint("\nroto?\n");
-for(int i=0; i<1000000;i++);
 
 
-
+	
+	for(int i=0; i<1000000;i++);
 	return 0;
 
 }
@@ -242,21 +248,23 @@ for(int i=0; i<1000000;i++);
  * Returns 0 if current process was dequeued, -1 otherwise.
  */
 static uint64_t dequeueProcess() {
-
+	
 	Node current = NULL;
-
+	
 	if (last == NULL) {
+
 		return -1; /* No process to dequeue */
 	}
 
 	current = last->next;
 	usedNodes[current->index] = 0;
-	destroyProcess(current->PCBIndex);
 	if (last == last->next) { /* Was the last process */ 
 		last = NULL;
 	} else {
 		last->next = last->next->next;
 	}
+	destroyProcess(current->PCBIndex);
+	
 	return 0;
 }
 
@@ -281,13 +289,14 @@ static int getFreeNode() {
 }
 
 
-
+static int64_t contador=0;
 
 static void *nextProcessRecursive() {
 
 	Node current = last->next;
 
-	// ncPrint("I'm here");
+	//for(int i=0; i<100000000;i++);
+	
 	// ncPrintHex(current->state);
 	// while(1);
 
@@ -458,10 +467,30 @@ static uint64_t checkWakeTime(Node current) {
 }
 
 
-
-
-
-
+void printPS(){
+	int i = 0;
+	while(i < MAX_PROCESSES) {
+		if(usedNodes[i] == 1){
+			Node newNode = (Node) (memoryPage + (i * sizeof(*newNode)));
+			ncPrint(" State: ");
+			ncPrintDec(newNode->state);
+			ncPrint(" PCBIndex:");
+			uint64_t newPCBIndex = 	newNode->PCBIndex;
+			ncPrintDec(newPCBIndex);
+			ncPrint(" Name: ");
+			ncPrint(getProcessName(newPCBIndex));
+			ncPrint(" Next PBCindex: ");
+			ncPrintDec(newNode->next->PCBIndex);
+			ncPrint("StackPAge");
+			ncPrintHex(getProcessStackPage(newPCBIndex));
+			ncPrint("StackTop");
+			ncPrintHex(getProcessStack(newPCBIndex));
+		//	newNode->next = newNode; /* Helps when last is NULL */
+		}
+		i++;
+	}
+	
+}
 
 
 

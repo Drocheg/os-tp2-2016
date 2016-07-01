@@ -18,6 +18,8 @@ uint8_t getscancode();
 
 void scroll();
 
+void ps();
+
 void clearScreen();
 
 void reboot();

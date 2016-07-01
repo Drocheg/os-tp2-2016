@@ -23,6 +23,8 @@ uint64_t getProcessPID(uint64_t PCBIndex);
 uint64_t getProcessParentPID(uint64_t PCBIndex);
 char *getProcessName(uint64_t PCBIndex);
 void *getProcessStack(uint64_t PCBIndex);
+void *getProcessStackPage(uint64_t PCBIndex);
+
 uint64_t getFilesQuantity(uint64_t PCBIndex);
 uint64_t getFileDescriptor(uint64_t PCBIndex, File file);
 uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);

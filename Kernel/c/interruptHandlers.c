@@ -66,10 +66,11 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			break;
 
 		case CREATE_PROCESS: {
-
+			_cli();
 			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
 			result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
 			*((uint64_t *) p2) = (uint64_t) result;
+			_sti();
 		}
 		break;
 
@@ -82,7 +83,19 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			
 			terminateProcess();
 			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess.
-			while(1);
+			uint64_t aux = 0;
+			while (1) {
+				if ( (aux % 500000) == 0) {
+					ncPrint("A ");
+				}
+				
+				aux++;
+				
+			}
+			break;
+
+		case PS:
+			printPS();
 			break;
 
 		case MALLOC: //TODO descomentar esto

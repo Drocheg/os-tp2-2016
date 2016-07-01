@@ -20,6 +20,7 @@
 #define OPENDATAIMGMODULE 13
 #define EXIT 14
 #define MALLOC 15
+#define PS 16
 
 //Video
 #define PAINT_PX 860			//Paint white pixel

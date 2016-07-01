@@ -39,6 +39,8 @@ void *nextProcess();
 uint64_t finishProcess();
 
 
+void printPS();
+
 
 
 

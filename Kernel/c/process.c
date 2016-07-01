@@ -164,12 +164,19 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	if (createStack( &(newProcess->stackPage), &(newProcess->stack))) {
 		return -3; /* Couldn't create a stack for the new process */
 	}
+	
 	if (initializeStack(&(newProcess->stack), name, entryPoint, argc, argv)) {
 		return -4; /* Problems with parameters */
 	}
+	
 	(newProcess->fileDescriptors).size = 0;
-	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	ncPrint("StackPAge3\n");
+	ncPrintHex(newProcess->stackPage);
+	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
+	ncPrint("StackPAge4\n");
+	ncPrintHex(newProcess->stackPage);
 	newProcess->heapPage = NULL;
+	
 	return index;
 }
 
@@ -211,6 +218,14 @@ void *getProcessStack(uint64_t PCBIndex) {
 	}
 	process = &(pcb[PCBIndex]);
 	return process->stack;
+}
+void *getProcessStackPage(uint64_t PCBIndex) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+	return process->stackPage;
 }
 uint64_t getFilesQuantity(uint64_t PCBIndex) {
 
@@ -335,10 +350,15 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		ncPrint("processDestructionNull");
+		for(int i=0; i<100000; i++);
+	
 		return -1;
 	}
 
 	process = &(pcb[PCBIndex]);
+	
+
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
 
 	//Free heap
@@ -393,6 +413,8 @@ static uint64_t createStack(void **stackPage, void **stackTop) {
 		return -1;
 	}
 	*stackTop = (void *) ((*stackPage) + PAGE_SIZE);
+	
+	
 	return 0;
 }
 
