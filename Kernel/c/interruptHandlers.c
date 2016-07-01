@@ -84,6 +84,11 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			while(1);
 			break;
 
+		case MALLOC: //TODO descomentar esto
+			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
+
+			break;
+
 		/* *********
 		*	Video
 		* *********/

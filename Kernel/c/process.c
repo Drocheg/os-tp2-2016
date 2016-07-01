@@ -65,8 +65,8 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 /* Static functions prototypes */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
-static void *mallocRecursive(void **current, void *next, uint64_t size);
-
+static void *mallocRecursive(void **current, uint64_t size);
+static void freePages(void ** current);
 
 /* 
  * Returns a pointer to the next position with <size> bytes available in a page of the heap,
@@ -342,21 +342,11 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
 
 	//Free heap
-
+	freePages(process->heapPage);
 
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;
 }
-
-
-
-
-
-
-/*********************/
-/* Static Functions */
-/*********************/
-
 
 /*
  * Function that changes the process state to finished in the scheduler.
@@ -373,6 +363,22 @@ uint64_t terminateProcess() {
 		return -1;
 	}
 	return 0;
+}
+
+
+
+
+/*********************/
+/* Static Functions */
+/*********************/
+
+/*
+ *Returns all pages from process to the stack.
+ */
+static void freePages(void ** current){
+	if(current == NULL) return;
+	pageManager(PUSH_PAGE, &current);
+	freePages(*current);
 }
 
 

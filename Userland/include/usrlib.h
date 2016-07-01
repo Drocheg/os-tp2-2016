@@ -36,6 +36,10 @@ void soundFX(uint32_t freq);
 
 void sleep(uint64_t sleepTime);
 
+void exit(int64_t result);
+
+void * malloc(uint64_t size);
+
 //Paints a white pixel at the specified location.
 void paintPx(uint64_t x, uint64_t y);
 

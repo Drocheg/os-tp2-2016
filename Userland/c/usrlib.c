@@ -73,6 +73,12 @@ uint64_t time() {
 	return result;
 }
 
+void * malloc(uint64_t size){
+	void * result;
+	_int80(MALLOC, &result, size);
+	return result;
+}
+
 void paintPx(uint64_t x, uint64_t y) {
 	paintColorPx(x, y, WHITE);
 }
