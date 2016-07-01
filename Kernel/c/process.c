@@ -342,7 +342,7 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
 
 	//Free heap
-	freePages(process->heapPage);
+	//freePages(process->heapPage);
 
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;

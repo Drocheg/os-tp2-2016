@@ -46,8 +46,9 @@ void playSong(uint32_t songNum) {
 	
 	//clearScreen();
 	//print("                   I shall now play you the song of my people\n");
+	char * songDataAux = songData;
 	int32_t m = n;
-	while(1){
+	//while(1){
 		while(n > 0) {
 			freq = *((uint32_t *)songData);
 			songData = songData+4;
@@ -58,12 +59,15 @@ void playSong(uint32_t songNum) {
 		  	sleep(time);
 		}
 		n=m;
+		songData = songDataAux ;
 		_int80(SPEAKER, 0, 0, 0);	
-	}
+	//}
 	
 }
 
 void playSong_main(){
 	playSong(1);
+
 	exit(0);
+	while(1);
 }

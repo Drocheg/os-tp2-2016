@@ -182,6 +182,9 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	Node newNode = NULL;	
 	Node aux = NULL;
 	uint64_t PCBIndex;
+
+
+	
 	
 	if ((index = getFreeNode()) < 0) {
 		return -1;
@@ -194,6 +197,7 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 		return -2;
 	}
 
+
 	usedNodes[index] = 1;
 	newNode = (Node) (memoryPage + (index * sizeof(*newNode)));
 	newNode->PCBIndex = PCBIndex;
@@ -203,12 +207,31 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	newNode->generalPurpose2 = 0;
 	newNode->generalPurpose3 = 0;
 	newNode->next = newNode; /* Helps when last is NULL */
+ncPrint("\n");
+if(last==NULL){
+	ncPrint("NUUUUUUUUUUUUUUUUUUUUUL");
+	for(int i=0; i<100000000;i++);
+}
+ncPrint(name);
 
+//for(int i=0; i<100000000;i++);
 	/* attaches the new node into the circular queue */
+ncPrint("\n");
+
+ncPrintDec(last);
+ncPrint("\n");
+
 	aux = (last == NULL) ? newNode : last;
+ncPrintDec(newNode);
+ncPrint("\n");
+for(int i=0; i<100000000;i++);
 	last = newNode;
 	newNode->next = aux->next;
 	aux->next = newNode;
+ncPrint("\nroto?\n");
+for(int i=0; i<1000000;i++);
+
+
 
 	return 0;
 
@@ -229,7 +252,7 @@ static uint64_t dequeueProcess() {
 	current = last->next;
 	usedNodes[current->index] = 0;
 	destroyProcess(current->PCBIndex);
-	if (last == last->next) { /* Was the last process */
+	if (last == last->next) { /* Was the last process */ 
 		last = NULL;
 	} else {
 		last->next = last->next->next;

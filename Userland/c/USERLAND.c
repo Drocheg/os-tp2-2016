@@ -82,11 +82,14 @@ int32_t init_d(int argc, char* argv[]) {
 	
 //	createProcess(0, "process A", printProcessA, 1, argvA);
 //	createProcess(0, "process B", printProcessB, 1, argvB);
+
+//	char* argvSongPlayer[] = {"songplayer"};
+//	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
 	
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process C", printProcessC, 1, argvC);
-	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
 
@@ -269,7 +272,6 @@ void playMainSong(){
 	char* argvSongPlayer[] = {"songplayer"};
 	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
 	return;
-	//playSong(0);
 }
 
 void playSongTwo(){
