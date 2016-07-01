@@ -19,7 +19,6 @@
 #define CREATE_PROCESS 12
 #define OPENDATAIMGMODULE 13
 #define EXIT 14
-#define MALLOC 15
 #define PS 16
 #define IPCS 17
 #define SLEEP 18

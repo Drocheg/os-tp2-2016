@@ -65,7 +65,7 @@ static command commands[] = {
 	{"time", getTime, "Get ms since system boot"},
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
 	{"mq", testMQ, "Test MQs"},
-	{"1", bangBang, "Re-run your last valid command"}
+	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
 	{"ipcs", ipcs, "Print ipcs"}

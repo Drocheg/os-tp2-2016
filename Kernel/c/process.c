@@ -69,7 +69,6 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 /* Static functions prototypes */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
-static uint64_t terminateProcess();
 static void *mallocRecursive(void **current, uint64_t size);
 static uint64_t recursiveGetProcessMemoryAmount(void * currentPage);
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation);

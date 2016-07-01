@@ -60,10 +60,6 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			outb(0x64, 0xFE);		//http://wiki.osdev.org/%228042%22_PS/2_Controller#CPU_Reset
 			result = 1;
 			break;
-		case MEMORY:
-			pageManager((Action)p1, (void **)p2);
-			break;
-
 		case CREATE_PROCESS: {
 				_cli();
 				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
