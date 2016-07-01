@@ -140,3 +140,6 @@ void *memcpy(void *destination, const void *source, uint64_t length)
 
 
 
+void printIPCS(){
+	ncPrint("IPCS");
+}

@@ -35,7 +35,7 @@ uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags
 uint64_t destroyProcess(uint64_t PCBIndex);
 uint64_t terminateProcess();
 
-
+uint64_t getProcessMemoryAmount(uint64_t PCBIndex);
 
 
 

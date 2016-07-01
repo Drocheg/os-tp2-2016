@@ -61,7 +61,9 @@ static command commands[] = {
 	{"time", getTime, "Get ms since system boot"},
 	{"game", game, "Play Game"},
 	{"1", bangBang, "Re-run your last valid command"},
-	{"ps", ps, "Print ps"}
+	{"ps", ps, "Print ps"},
+	{"ipcs", ipcs, "Print ipcs"}
+
 };
 
 uint64_t printProcessA();

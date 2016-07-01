@@ -20,6 +20,8 @@ void scroll();
 
 void ps();
 
+void ipcs();
+
 void clearScreen();
 
 void reboot();

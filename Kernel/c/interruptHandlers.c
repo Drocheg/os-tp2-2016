@@ -86,7 +86,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			uint64_t aux = 0;
 			while (1) {
 				if ( (aux % 500000) == 0) {
-					ncPrint("A ");
+					ncPrint("Dying... ");
 				}
 				
 				aux++;
@@ -96,6 +96,10 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 
 		case PS:
 			printPS();
+			break;
+
+		case IPCS:
+			printIPCS();
 			break;
 
 		case MALLOC: //TODO descomentar esto

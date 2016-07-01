@@ -28,6 +28,10 @@ void ps(){
 	_int80(PS, 0, 0, 0);
 }
 
+void ipcs(){
+	_int80(IPCS, 0, 0, 0);
+}
+
 uint8_t getscancode() {
 	char result;
 	_int80(SYSREAD, STDIN_RAW, (uint64_t)&result, 1);

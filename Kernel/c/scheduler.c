@@ -14,13 +14,14 @@
 
 /* Typedefs*/
 typedef struct node_t * Node;
-typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
+typedef enum {RUNNING = 0, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
 typedef uint64_t (*IOActions)(uint64_t, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
 
+static char * staticChar[3] = {"R","S","F"};
 
 /* Structs */
 struct node_t {
@@ -213,32 +214,13 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	newNode->generalPurpose2 = 0;
 	newNode->generalPurpose3 = 0;
 	newNode->next = newNode; /* Helps when last is NULL */
-ncPrint("\n");
-if(last==NULL){
-	ncPrint("NUUUUUUUUUUUUUUUUUUUUUL");
-	for(int i=0; i<100000000;i++);
-}
-ncPrint(name);
 
-//for(int i=0; i<100000000;i++);
+
 	/* attaches the new node into the circular queue */
-ncPrint("\n");
-
-ncPrintDec(last);
-ncPrint("\n");
-
 	aux = (last == NULL) ? newNode : last;
-ncPrintDec(newNode);
-ncPrint("\n");
-for(int i=0; i<100000000;i++);
 	last = newNode;
 	newNode->next = aux->next;
 	aux->next = newNode;
-ncPrint("\nroto?\n");
-
-
-	
-	for(int i=0; i<1000000;i++);
 	return 0;
 
 }
@@ -472,25 +454,36 @@ void printPS(){
 	while(i < MAX_PROCESSES) {
 		if(usedNodes[i] == 1){
 			Node newNode = (Node) (memoryPage + (i * sizeof(*newNode)));
-			ncPrint(" State: ");
-			ncPrintDec(newNode->state);
-			ncPrint(" PCBIndex:");
+			
+			ncPrint(" PID:");
 			uint64_t newPCBIndex = 	newNode->PCBIndex;
-			ncPrintDec(newPCBIndex);
+			ncPrintDec(getProcessPID(newPCBIndex));
 			ncPrint(" Name: ");
 			ncPrint(getProcessName(newPCBIndex));
+			ncPrint(" State:");
+			uint64_t newState = 	newNode->state;
+			ncPrint(staticChar[newNode->state]);
+			ncPrint("\n");
+			ncPrint(" Memory: ");
+			ncPrintDec(getProcessMemoryAmount(newPCBIndex));
 			ncPrint(" Next PBCindex: ");
 			ncPrintDec(newNode->next->PCBIndex);
 			ncPrint("StackPAge");
 			ncPrintHex(getProcessStackPage(newPCBIndex));
 			ncPrint("StackTop");
 			ncPrintHex(getProcessStack(newPCBIndex));
+			
 		//	newNode->next = newNode; /* Helps when last is NULL */
+			ncPrint("\n");
 		}
+
 		i++;
 	}
 	
 }
+
+
+	
 
 
 

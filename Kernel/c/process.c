@@ -66,6 +66,8 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
 static void *mallocRecursive(void **current, uint64_t size);
+static uint64_t recursiveGetProcessMemoryAmount(void * currentPage);
+
 static void freePages(void ** current);
 
 /* 
@@ -107,6 +109,10 @@ static void *mallocRecursive(void **current, uint64_t size) {
 	return mallocRecursive(*current, size);
 }
 
+static uint64_t recursiveGetProcessMemoryAmount(void * currentPage){
+	if(currentPage==NULL) return 0;
+	return PAGE_SIZE + recursiveGetProcessMemoryAmount( *((void **) currentPage) );
+}
 
 
 
@@ -170,11 +176,9 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	}
 	
 	(newProcess->fileDescriptors).size = 0;
-	ncPrint("StackPAge3\n");
-	ncPrintHex(newProcess->stackPage);
+	
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
-	ncPrint("StackPAge4\n");
-	ncPrintHex(newProcess->stackPage);
+	
 	newProcess->heapPage = NULL;
 	
 	return index;
@@ -269,6 +273,15 @@ File getFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	process = &(pcb[PCBIndex]);
 	return (((process->fileDescriptors).entries)[fileDescriptor]).file;
 }
+uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+	return PAGE_SIZE + recursiveGetProcessMemoryAmount(process->heapPage);
+}
+
 
 /* Setters */
 uint64_t setProcessStack(uint64_t PCBIndex, void *stack) {
