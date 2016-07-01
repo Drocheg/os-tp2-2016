@@ -3,8 +3,12 @@
 #include <fileManager.h>
 #include <keyboard.h>
 #include <mq.h>
+#include <basicFile.h>
 
-
+//TODO implement these where appropriate and delete them from here
+int8_t stdinClose(uint64_t index) {
+	return -1;
+}
 
 int8_t stdoutReadChar(uint64_t index, char *character) {
 	return 0;
@@ -20,6 +24,10 @@ int8_t stdoutDataAvailable(uint64_t index) {
 
 int8_t stdoutHasFreeSpace(uint64_t index) {
 	return 0;
+}
+
+int8_t stdoutClose(uint64_t index) {
+	return -1;
 }
 
 int8_t stderrReadChar(uint64_t index, char *character) {
@@ -38,6 +46,10 @@ int8_t stderrHasFreeSpace(uint64_t index) {
 	return 0;
 }
 
+int8_t stderrClose(uint64_t index) {
+	return -1;
+}
+
 
 /* Structs */
 struct fileOperator_s {
@@ -45,6 +57,7 @@ struct fileOperator_s {
 	writeCharFn_t writeCharFn;
 	isEmptyFn_t isEmptyFn;
 	isFullFn_t isFullFn;
+	closeFn_t closeFn;
 };
 
 
@@ -76,6 +89,7 @@ static int8_t isFull(FileType fileType, int32_t fileIndex);
  * Initializes the file manager
  */
 void initializeFileManager() {
+	initializeBasicFiles();
 	initializeSTDIN();
 	initializeSTDOUT();
 	initializeSTDERR();
@@ -128,27 +142,27 @@ static int8_t isValidFileType(FileType fileType) {
 }
 
 static void initializeSTDIN() {
-
 	(fileOperators[STDIN_]).readCharFn = &stdinReadChar;
 	(fileOperators[STDIN_]).writeCharFn = &stdinWriteChar;
 	(fileOperators[STDIN_]).isEmptyFn = &stdinIsEmpty;
 	(fileOperators[STDIN_]).isFullFn = &stdinIsFull;
+	(fileOperators[STDIN_]).closeFn = &stdinClose;
 }
 
 static void initializeSTDOUT() {
-
 	(fileOperators[STDOUT_]).readCharFn = &stdoutReadChar;
 	(fileOperators[STDOUT_]).writeCharFn = &stdoutWriteChar;
 	(fileOperators[STDOUT_]).isEmptyFn = &stdoutDataAvailable;
-	(fileOperators[STDOUT_]).isEmptyFn = &stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).isFullFn = &stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).closeFn = &stdoutClose;
 }
 
 static void initializeSTDERR() {
-
 	(fileOperators[STDERR_]).readCharFn = &stderrReadChar;
 	(fileOperators[STDERR_]).writeCharFn = &stderrWriteChar;
 	(fileOperators[STDERR_]).isEmptyFn = &stderrDataAvailable;
-	(fileOperators[STDERR_]).isEmptyFn = &stderrHasFreeSpace;
+	(fileOperators[STDERR_]).isFullFn = &stderrHasFreeSpace;
+	(fileOperators[STDERR_]).closeFn = &stderrClose;
 }
 
 static void initializeMessageQueues() {
@@ -156,6 +170,7 @@ static void initializeMessageQueues() {
 	(fileOperators[MESSAGE_QUEUE]).writeCharFn = &MQwriteChar;
 	(fileOperators[MESSAGE_QUEUE]).isEmptyFn = &MQisEmpty;
 	(fileOperators[MESSAGE_QUEUE]).isFullFn = &MQisFull;
+	(fileOperators[MESSAGE_QUEUE]).closeFn = &MQclose;
 }
 
 static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {

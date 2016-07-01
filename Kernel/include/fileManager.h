@@ -59,6 +59,15 @@ typedef int8_t (*isEmptyFn_t)(uint64_t index);
 */
 typedef int8_t (*isFullFn_t)(uint64_t index);
 
+/**
+* Closes a File. May or may not destroy the File and free up resources.
+*
+* @param index If the File type has an internal table, the index in said table where
+*			   the appropriate File can be found.
+* @return A non-negative value on success (0 included), -1 on error.
+*/
+typedef int8_t (*closeFn_t)(uint64_t index);
+
 
 /*
  * Initializes the file manager
