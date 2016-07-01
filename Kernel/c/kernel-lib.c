@@ -43,7 +43,7 @@ int64_t sys_read(uint8_t fd, char *buff, uint32_t maxBytes) {
 				  	}
 					result++;
 				}
-				_halt();
+				yield();
 			}while(!done && result < maxBytes);
 	  		break;
   		case STDIN_RAW:
@@ -57,7 +57,7 @@ int64_t sys_read(uint8_t fd, char *buff, uint32_t maxBytes) {
 				  	}
 					result++;
 				}
-				_halt();
+				yield();
 			}while(!done && result < maxBytes);
   			break;
 		default:

@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <video.h>
+#include <keyboard.h>
 
 
 #ifndef MAX_PROCESSES
@@ -399,6 +400,7 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 				break;
 			}
 			buffer[readData] = c;
+			ncPrintChar(c);
 			readData++;
 		}
 	}

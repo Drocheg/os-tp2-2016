@@ -38,12 +38,11 @@ uint8_t pollProcessedKey() {
 //Adds a scan code to the end of the queue, if there is room
 uint8_t offerKey(uint8_t scanCode) {
 
-	processModifierKey(scanCode);
 	if(bufferIsFull()) {
 		return 0;
 	}
+	processModifierKey(scanCode);	
 	queue[writeIndex++] = scanCode;
-	// ncPrintChar(processScanCode(scanCode));
 	if(writeIndex == KEYBOARD_BUFF_SIZE) {
 		writeIndex = 0;
 	}
@@ -115,7 +114,7 @@ uint64_t stdinWriteChar(uint32_t index, char *character) {
 	return -1; /* Unsupported operation */
 }
 
-uint64_t stdinDataAvailable(uint32_t index, char *character) {
+uint64_t stdinDataAvailable(uint32_t index) {
 	
 	if (bufferIsEmpty()) {
 		return -1;  /* Returns -1 when there is no data available */

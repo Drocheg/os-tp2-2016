@@ -104,7 +104,7 @@ void IRQHandler(uint8_t irq) {
 		default:
 			break;
 	}
-	outb(0x20, 0x20);			//EOI signal
+	// outb(0x20, 0x20);			//EOI signal
 }
 
 // static void timerTick() {  	

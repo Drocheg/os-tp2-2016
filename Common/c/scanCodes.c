@@ -81,7 +81,7 @@ void init() {
 	scanCodes[0x0E] = '\b';		//backspace
 	scanCodes[0x1C] = '\n';		//enter
 	scanCodes[0x01] = '\e';		//escape
-	scanCodes[0xE01C] = '\n';	//keypad enter
+	// scanCodes[0xE01C] = '\n';	//keypad enter
 	/*scanCodes[0xE04D] = 0xE04D; //Right arrow
 	scanCodes[0xE04B] = 0xE04B; //Left arrow
 	scanCodes[0xE050] = 0xE050; //Down arrow

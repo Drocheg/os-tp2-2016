@@ -112,7 +112,6 @@ int32_t userland_main(int argc, char* argv[]) {
 
 	while(1) {
 		char c = getchar();
-		putchar(c);
 	}
 	while(!EXIT) {
 		uint8_t index = 0;
