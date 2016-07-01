@@ -75,7 +75,7 @@ uint64_t time() {
 
 void * malloc(uint64_t size){
 	void * result;
-	_int80(MALLOC, &result, size);
+	_int80(MALLOC, &result, size, 0);
 	return result;
 }
 
