@@ -12,7 +12,7 @@
 */
 
 //Supported File types.
-typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUES} FileType;
+typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE} FileType;
 
 
 /*

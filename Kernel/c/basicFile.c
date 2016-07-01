@@ -21,7 +21,7 @@ struct basicFile_s {
 /* Static variables */
 static uint64_t maxFiles = PAGE_SIZE / sizeof(struct basicFile_s); /* Should be...idk I didn't wanna do the math */
 // static void *filesTablePage;
-static BasicFile *filesTable = NULL; 		//"Table" (array) which keeps track of open files
+static struct basicFile_s *filesTable = NULL; 		//"Table" (array) which keeps track of open files
 static uint64_t numFiles = 0;				//Number of open files
 
 
@@ -62,7 +62,7 @@ uint64_t initializeBasicFiles() {
 		return -1; /* Couldn't start file system */
 	}
 	memset(filesTablePage, 0, PAGE_SIZE);	//Clear the page
-	filesTable = (BasicFile *)filesTablePage;
+	filesTable = (struct basicFile_s *)filesTablePage;
 	return 0;
 }
 
@@ -76,7 +76,6 @@ BasicFile createBasicFileWithName(const char* name) {
 	if (stream == NULL) {
 		return NULL;
 	}
-
 	newFile = createBasicFile(name, stream, PAGE_SIZE, HEAP);
 	if (newFile == NULL) {	//Failed, put the page back as available
 		pageManager(PUSH_PAGE, &stream);
@@ -94,29 +93,29 @@ BasicFile createBasicFile(const char* name, void *stream, uint64_t size, Place p
 
 	/* Find the next available entry in the Files table - guaranteed to exist at this point */
 	uint64_t index = 0;
-	while(filesTable[index] != NULL) {
+	while(filesTable[index].name[0] != 0) {
 		index++;
 	}
-
-	BasicFile newFile = filesTable[index];
-	memcpy((void *) newFile->name, name, strlen(name)+1);	//TODO validateParams already does strlen, consider not doing it twice
-	newFile->size = size;
-	newFile->stream = stream;
-	newFile->place = place;
-	newFile->writeIndex = 0;
-	newFile->readIndex = 0;
-	return newFile;
+	
+	struct basicFile_s newFile = filesTable[index];
+	memcpy((void *) newFile.name, name, strlen(name)+1);	//TODO validateParams already does strlen, consider not doing it twice
+	newFile.size = size;
+	newFile.stream = stream;
+	newFile.place = place;
+	newFile.writeIndex = 0;
+	newFile.readIndex = 0;
+	return &filesTable[index];		//&newFile doesn't work here because it's a local variable
 }
 
 BasicFile findBasicFile(const char* name) {
 	uint64_t index = 0;
-	while (index < maxFiles && strcmp((filesTable[index])->name, name)){
+	while (index < maxFiles && strcmp((filesTable[index]).name, name)){
 		index++;
 	}
 	if (index >= maxFiles) {
 		return NULL;
 	}
-	return filesTable[index];
+	return &filesTable[index];
 }
 
 int basicFileReadChar(BasicFile file) {
@@ -174,8 +173,8 @@ int destroyBasicFile(BasicFile file) {
 		//Reclaim the heap page - this shouldn't cause an error
 		pageManager(PUSH_PAGE, &(file->stream));
 	}
-	// memset(file, 0, sizeof(struct basicFile_s));
-	filesTable[index] = NULL;
+	memset(&filesTable[index], 0, sizeof(struct basicFile_s));
+	// filesTable[index] = NULL;
 	return 0;
 }
 
@@ -240,7 +239,7 @@ static int8_t isValidFile(BasicFile file) {
 
 static int64_t indexOfFile(BasicFile file) {
 	for(uint64_t i = 0; i < maxFiles; i++) {
-		if(streql(file->name, filesTable[i]->name)) {
+		if(streql(file->name, filesTable[i].name)) {
 			return (int64_t) i;
 		}
 	}

@@ -50,7 +50,7 @@ struct fileOperator_s {
 
 /* Static variables */
 static uint8_t initialized = 0;
-static struct fileOperator_s fileOperators[MESSAGE_QUEUES - STDIN_ + 1];
+static struct fileOperator_s fileOperators[MESSAGE_QUEUE - STDIN_ + 1];
 
 
 /* Static functions prototypes */
@@ -121,7 +121,7 @@ uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, 
  * Returns 0 if everything is OK, or -1 otherwise.
  */
 static int8_t isValidFileType(FileType fileType) {
-	if (((uint64_t)fileType) > MESSAGE_QUEUES - STDIN_) {
+	if (((uint64_t)fileType) > MESSAGE_QUEUE - STDIN_) {
 		return -1;
 	}
 	return 0;
@@ -152,10 +152,10 @@ static void initializeSTDERR() {
 }
 
 static void initializeMessageQueues() {
-	(fileOperators[MESSAGE_QUEUES]).readCharFn = &MQreadChar;
-	(fileOperators[MESSAGE_QUEUES]).writeCharFn = &MQwriteChar;
-	(fileOperators[MESSAGE_QUEUES]).isEmptyFn = &MQisEmpty;
-	(fileOperators[MESSAGE_QUEUES]).isFullFn = &MQisFull;
+	(fileOperators[MESSAGE_QUEUE]).readCharFn = &MQreadChar;
+	(fileOperators[MESSAGE_QUEUE]).writeCharFn = &MQwriteChar;
+	(fileOperators[MESSAGE_QUEUE]).isEmptyFn = &MQisEmpty;
+	(fileOperators[MESSAGE_QUEUE]).isFullFn = &MQisFull;
 }
 
 static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {

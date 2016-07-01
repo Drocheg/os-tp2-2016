@@ -75,7 +75,7 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 		}
 	}
 	//MQ valid, register it in the current process' PCB
-	int64_t MQdescriptor = addFile(getCurrentPCBIndex(), tableIndex, MESSAGE_QUEUES, accessFlags);
+	int64_t MQdescriptor = addFile(getCurrentPCBIndex(), tableIndex, MESSAGE_QUEUE, accessFlags);
 	if(MQdescriptor == -1) {
 		return -1;
 	}
