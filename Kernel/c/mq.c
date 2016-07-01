@@ -1,88 +1,109 @@
 #include <mq.h>
 #include <file.h>
+#include <basicFile.h>
 #include <kernel-lib.h>
 #include <stdlib.h>
+#include <process.h>
+#include <scheduler.h>
+#include <fileManager.h>
 
 #define MAX_MQS 256
 
 typedef struct {
-	const char* name;		//Name through which processes can identify this message queue.
+	BasicFile file;				//File where actual data is read/written
 	uint64_t links;			//The number of processes who have this message queue open. Upon reaching 0, it is destroyed.
-	File file;				//File where actual data is read/written
-	uint8_t openForRead;	//Whether this MQ has been opened for reading
-	uint8_t openForWrite;	//Whether this MQ has been opened for writing
+	int64_t readPID;		//ID of the process who has this MQ open for reading. -1 if none.
+	int64_t writePID;		//ID of the process who has this MQ open for writing. -1 if none.
 } MessageQueue;
 
-static MessageQueue[MAX_MQS] mqs = {NULL};		//Initialize with NULL
+static MessageQueue mqs[MAX_MQS] = {NULL};		//Initialize with NULL
 static uint64_t numMQs = 0;
 
 /**
 * @return The index of the message queue with the specified name, or -1 if not found.
 */
-int64_t indexOfMQ(const char* name);
+static int64_t indexOfMQ(const char* name);
 
 /**
 * Creates a new message queue with the given name.
-* @return The index at which the MQ was created, or -1 on error.
+* @return 1 on success, or -1 on error.
 */
-int64_t newMQ(const char* name);
+static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags);
 
-/*
-* Marks the specified message queue as open in the specified mode.
-* @return 1 on success, -1 on error (i.e. already open in the specified mode)
+/**
+* @return An index in the MQ table where there is room for a new MQ, or -1 if it's full.
 */
-int8_t markAccess(MessageQueue mq, uint8_t accessMode);
+static int64_t findFreeSlot();
 
-/*
-* Destroys the message queue and its resources at the specified index, if it exists.
+/**
+* Marks the specified message queue as opened in the specified mode.
+* @return 1 on success, -1 on error (e.g. already open in the specified mode)
 */
-void destroyMQ(uint64_t index);
+static int8_t markAccess(MessageQueue mq, uint64_t pid, uint32_t accessFlags);
 
-mqd_t MQopen(const char* name, uint8_t accessMode); {
-	if(name == NULL || (accessMode != F_READ && accessMode != F_WRITE)) {
-		return NULL;
+/**
+* Destroys the specified message queue and its resources, if it exists.
+*
+* @return 1 on success, -1 on error.
+*/
+static int8_t destroyMQ(uint64_t index);
+
+
+/* **********************************************
+*			FileManager imlpementations
+* **********************************************/
+int64_t MQopen(const char* name, uint32_t accessFlags) {
+	if(name == NULL || (accessFlags != F_READ && accessFlags != F_WRITE)) {
+		return -1;
 	}
-	int64_t index = indexOfMQ(name);
+	int64_t tableIndex = indexOfMQ(name);
 	//Nonexistant MQ, create
-	if(index == -1) {
-		index = newMQ(name);
-		if(index == -1) {
-			return NULL;
+	if(tableIndex == -1) {
+		tableIndex = findFreeSlot();
+		if(tableIndex == -1) {
+			return -1;
 		}
-		if(markAccess(mqs[index], accessMode) == -1) {	//Set as opened in the specified access mode
-			return NULL;
+		if(newMQ(name, tableIndex, accessFlags) == -1) {
+			return -1;
 		}
-		mqd_t result = malloc(sizeof(*result));	//TODO malloc
-		result->tableIndex = index;
-		result->accessMode = accessMode;
-		return result;
 	}
-	//Add link to existing MQ
+	//Existint MQ, check priviledges
 	else {
 		//Only 1 process can have the MQ open for reading/writing at the same time
-		if(markAccess(mqs[index], accessMode) == -1) {
-			return NULL;
+		if(markAccess(mqs[tableIndex], getCurrentPID(), accessFlags) == -1) {
+			return -1;
 		}
-		mqd_t result = malloc(sizeof(*result));	//TODO malloc
-		result->tableIndex = index;
-		result->accessMode = accessMode;
-		return result;
 	}
+	//MQ valid, register it in the current process' PCB
+	int64_t MQdescriptor = addFile(getCurrentPCBIndex(), tableIndex, MESSAGE_QUEUES, accessFlags);
+	if(MQdescriptor == -1) {
+		return -1;
+	}
+	mqs[tableIndex].links++;
+	return (int64_t) MQdescriptor;
 }
 
-int8_t MQclose(mqd_t descriptor) {
-	uint64_t index = descriptor.tableIndex;
-	MessageQueue mq = mqs[index];
-	if(mq == NULL) {
+int8_t MQclose(uint64_t tableIndex) {
+	MessageQueue mq = mqs[tableIndex];
+	if(mq.file == NULL) {
 		return -1;
 	}
-	if(mq.accessMode != descriptor.accessMode) {	//Shouldn't happen
+	uint64_t pid = getCurrentPID();
+	if(mq.readPID == pid) {
+		mq.readPID = -1;
+	}
+	else if(mq.writePID == pid) {
+		mq.writePID = -1;
+	}
+	else {
 		return -1;
 	}
-	//TODO free() the descriptor? Otherwise users could still access the MQ
+	//Unregister it from the current process' PCB
+	ncPrint("\nMQ closed - TODO fileManager tiene que llamar removeFile() con el FD, en MQclose no tengo el FD\n");
+	
 	mq.links--;
 	if(mq.links == 0) {		//No more links, destroy
-		destroyMQ(descriptor.tableIndex);
+		destroyMQ(tableIndex);
 		return 1;
 	}
 	else {
@@ -90,126 +111,167 @@ int8_t MQclose(mqd_t descriptor) {
 	}
 }
 
-int8_t MQreceive(mqd_t descriptor, char *buff, size_t buffLen) {
-	if(descriptor.accessMode != F_READ || mqs[descriptor.tableIndex] == NULL) {
+int8_t MQreadChar(uint64_t tableIndex, char *dest) {
+	if(tableIndex < 0 || tableIndex >= MAX_MQS || mqs[tableIndex].file == NULL || mqs[tableIndex].readPID != getCurrentPID()) {
 		return -1;
 	}
-	File f = mqs[descriptor.tableIndex].file;
-	size_t readBytes = 0;
-	for(readBytes = 0; readBytes < buffLen; readBytes++) {
-		int8_t c = readChar(f);
-		buff[readBytes] = c;
-		if(c == EOF) {
-			break;
-		}
-	}
-	return readBytes;
+	*dest = basicFileReadChar(mqs[tableIndex].file);
+	return *dest == EOF ? 0 : 1;
 }
 
-int8_t MQreceiveNoblock(mqd_t descriptor, char *buff, size_t buffLen) {
-	if(descriptor.accessMode != F_READ || mqs[descriptor.tableIndex] == NULL) {
+
+// int8_t MQreceive(mqd_t descriptor, char *buff, size_t buffLen) {
+// 	if(descriptor.accessMode != F_READ || mqs[descriptor.tableIndex] == NULL) {
+// 		return -1;
+// 	}
+// 	File f = mqs[descriptor.tableIndex].file;
+// 	size_t readBytes = 0;
+// 	for(readBytes = 0; readBytes < buffLen; readBytes++) {
+// 		int8_t c = basicFileReadChar(f);
+// 		buff[readBytes] = c;
+// 		if(c == EOF) {
+// 			break;
+// 		}
+// 	}
+// 	return readBytes;
+// }
+
+// int8_t MQreceiveNoblock(mqd_t descriptor, char *buff, size_t buffLen) {
+// 	if(descriptor.accessMode != F_READ || mqs[descriptor.tableIndex] == NULL) {
+// 		return -1;
+// 	}
+// 	File f = mqs[descriptor.tableIndex].file;
+// 	size_t readBytes = 0;
+// 	for(readBytes = 0; readBytes < buffLen; readBytes++) {
+// 		if(!dataAvailable(f)) {
+// 			break;
+// 		}
+// 		int8_t c = basicFileReadChar(f);
+// 		buff[readBytes] = c;
+// 		if(c == EOF) {
+// 			break;
+// 		}
+// 	}
+// 	return readBytes;
+// }
+
+int8_t MQwriteChar(uint64_t tableIndex, char *src) {
+	if(tableIndex < 0 || tableIndex >= MAX_MQS || mqs[tableIndex].file == NULL || mqs[tableIndex].writePID != getCurrentPID()) {
 		return -1;
 	}
-	File f = mqs[descriptor.tableIndex].file;
-	size_t readBytes = 0;
-	for(readBytes = 0; readBytes < buffLen; readBytes++) {
-		if(!dataAvailable(f)) {
-			break;
-		}
-		int8_t c = readChar(f);
-		buff[readBytes] = c;
-		if(c == EOF) {
-			break;
-		}
-	}
-	return readBytes;
+	return basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
 }
 
-int8_t MQsend(mqd_t descriptor, const char *msg, size_t mgsLen) {
-	if(descriptor.accessMode != F_WRITE || mqs[descriptor.tableIndex] == NULL) {
+// int8_t MQsend(mqd_t descriptor, const char *msg, size_t mgsLen) {
+// 	if(descriptor.accessMode != F_WRITE || mqs[descriptor.tableIndex] == NULL) {
+// 		return -1;
+// 	}
+// 	File f = mqs[descriptor.tableIndex].file;
+// 	size_t writtenBytes = 0;
+// 	for(writtenBytes = 0; writtenBytes < buffLen; writtenBytes++) {
+// 		basicFileWriteChar(msg[writtenBytes], f);
+// 	}
+// 	return writtenBytes;
+// }
+
+// int8_t MQsendNoblock(mqd_t descriptor, const char *msg, size_t mgsLen) {
+// 	if(descriptor.accessMode != F_WRITE || mqs[descriptor.tableIndex] == NULL) {
+// 		return -1;
+// 	}
+// 	File f = mqs[descriptor.tableIndex].file;
+// 	size_t writtenBytes = 0;
+// 	for(writtenBytes = 0; writtenBytes < buffLen; writtenBytes++) {
+// 		if(!hasFreeSpace(f)) {
+// 			break;
+// 		}
+// 		basicFileWriteChar(msg[writtenBytes], f);
+// 	}
+// 	return writtenBytes;
+// }
+
+int8_t MQisEmpty(uint64_t index) {
+	if(index < 0 || index >= MAX_MQS || mqs[index].file == NULL) {
 		return -1;
 	}
-	File f = mqs[descriptor.tableIndex].file;
-	size_t writtenBytes = 0;
-	for(writtenBytes = 0; writtenBytes < buffLen; writtenBytes++) {
-		writeChar(msg[writtenBytes], f);
-	}
-	return writtenBytes;
+	return basicFileIsEmpty(mqs[index].file);
 }
 
-int8_t MQsendNoblock(mqd_t descriptor, const char *msg, size_t mgsLen) {
-	if(descriptor.accessMode != F_WRITE || mqs[descriptor.tableIndex] == NULL) {
+int8_t MQisFull(uint64_t index) {
+	if(index < 0 || index >= MAX_MQS || mqs[index].file == NULL) {
 		return -1;
 	}
-	File f = mqs[descriptor.tableIndex].file;
-	size_t writtenBytes = 0;
-	for(writtenBytes = 0; writtenBytes < buffLen; writtenBytes++) {
-		if(!hasFreeSpace(f)) {
-			break;
-		}
-		writeChar(msg[writtenBytes], f);
-	}
-	return writtenBytes;
+	return basicFileIsFull(mqs[index].file);
 }
 
-int64_t indexOfMQ(const char* name) {
+
+/* **********************************************
+*				Static functions
+* **********************************************/
+static int64_t indexOfMQ(const char* name) {
 	for(uint64_t i = 0; i <  numMQs; i++) {
-		if(mqs[i] != NULL && strcmp(mqs[i].name, name)) {
+		if(mqs[i].file != NULL && strcmp(getBasicFileName(mqs[i].file), name)) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-int64_t newMQ(const char* name) {
-	for(uint64_t i = 0; i <  numMQs; i++) {
-		//TODO memcpy() the name, needs malloc
-		if(mqs[i] == NULL) {
-			File file = createFileWithName(name);
-			if(file == NULL) {
-				return -1;
-			}
-			//Create the fresh MQ with 1 link
-			mqs[i] = {
-				name,
-				1,
-				file
-			};
-			numMQs++;
-			return (int64_t) i;
-		}
-	}
-	//No more room
-	return -1;
-}
-
-int8_t markAccess(MessageQueue mq, uint8_t accessMode) {
-	if(mq == NULL) {
+static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags) {
+	if(mqs[tableIndex].file != NULL || (accessFlags != F_READ && accessFlags != F_WRITE)) {
 		return -1;
 	}
-	if(accessMode == F_READ) {
-		if(mq.openForRead) {
+	BasicFile file = createBasicFileWithName(name);
+	if(file == NULL) {
+		return -1;
+	}
+	//Actually create MQ struct
+	uint64_t pid = getCurrentPID();
+	mqs[tableIndex] = (MessageQueue) {
+		file,
+		1,
+		accessFlags == F_READ ? pid : -1,
+		accessFlags == F_WRITE ? pid : -1
+	};
+	numMQs++;
+	return 1;
+}
+
+static int8_t markAccess(MessageQueue mq, uint64_t pid, uint32_t accessFlags) {
+	if(mq.file == NULL) {
+		return -1;
+	}
+	if(accessFlags == F_READ) {
+		if(mq.readPID != -1) {
 			return -1;
 		}
-		mq.openForRead = 1;
+		mq.readPID = pid;
 		return 1;
 	}
 	else {
-		if(mq.openForWrite) {
+		if(mq.writePID != -1) {
 			return -1;
 		}
-		mq.openForWrite = 1;
-		return 1;	
+		mq.writePID = pid;
+		return 1;
 	}
 }
 
-void destroyMQ(uint64_t index) {
-	MessageQueue mq = mqs[index];
-	if(mq == NULL) {
-		return;
+static int8_t destroyMQ(uint64_t index) {
+	BasicFile f = mqs[index].file;
+	if(f == NULL) {
+		return -1;
 	}
-	destroyFile(mq.file);
-	//TODO free() the name?
-	mqs[index] = NULL;
+	destroyBasicFile(f);
+	mqs[index].file = NULL;	//TODO consider clearing out the whole struct rather than just the File?
 	numMQs--;
+	return 1;
+}
+
+static int64_t findFreeSlot() {
+	for(uint64_t i = 0; i < numMQs; i++) {
+		if(mqs[i].file == NULL) {
+			return (int64_t) i;
+		}
+	}
+	return -1;
 }

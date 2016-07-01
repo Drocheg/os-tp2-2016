@@ -1,37 +1,36 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <stdint.h>
+/*
+* This kernel manages a series of different "files." A File is an abstraction
+* over any readable or writeable section of data (similar to Java's Stream
+* abstraction) and supports the following operations:
+* - Create
+* - Destroy
+* - Read
+* - Write
+* - Is full
+* - Is empty
+*
+* Each File implements its own behavior for these operations. Each File is
+* identified by its unique name, of limited length. The FileManager is responsible
+* for interfacing with the different types of Files available.
+*/
+
+/*
+* Bascic File operations, as mentioned bove.
+*/
+typedef enum {OPEN = 0, READ, WRITE, IS_EMPTY, IS_FULL, CLOSE} FileOperation;
 
 
+/*
+* End Of file - indicates that a File cannot be read from or written to, or
+* that there was an error carrying out an operation.
+*/
 #define EOF -1
-
+/*
+* Maximum length of a File name
+*/
 #define MAX_NAME 16
-
-
-
-
-
-
-
-typedef enum {KERNEL = 1, HEAP} Place;
-typedef struct file_s * File;
-
-typedef void (*IndexManager)(uint64_t *, uint64_t);
-
-uint64_t initializeFileSystem();
-
-File createFileWithName(char name[MAX_NAME]);
-File createFile(char name[MAX_NAME], void *stream, uint64_t maxSize, Place place, IndexManager indexManager);
-File searchForFileByName(char name[MAX_NAME]);
-uint64_t readChar(File file);
-uint64_t writeChar(char c, File file);
-uint64_t dataAvailable(File file);
-uint64_t hasFreeSpace(File file);
-uint64_t destroyFile(File file);
-
-
-void basicIndexManager(uint64_t *index, uint64_t maxSize);
-
 
 #endif /* FILE_H */

@@ -29,19 +29,38 @@ uint64_t initializePCB();
  */
 uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 
-/* Getters */
+
+/* **************************************
+*				Getters
+* **************************************/
+
+/**
+* @return The ID of the currently running process.
+*/
+uint64_t getCurrentPID();
+
 uint64_t getProcessPID(uint64_t PCBIndex);
+
 uint64_t getProcessParentPID(uint64_t PCBIndex);
+
 char *getProcessName(uint64_t PCBIndex);
+
 void *getProcessStack(uint64_t PCBIndex);
+
 uint64_t getFilesQuantity(uint64_t PCBIndex);
+
 uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);
+
 /* Setters */
 uint64_t setProcessStack(uint64_t PCBIndex, void *stack);
+
 uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags);
 
 
-/* File management */
+
+/* **************************************
+*			File Management
+* **************************************/
 
 /*
  * Adds a file to the process' files table.
@@ -72,7 +91,7 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor);
  * Note: JUST ONE BYTE WILL BE READ OR WRITTEN
  *
  * Returns 0 on success, or -1 otherwise. 
- * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
+ * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
 uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character);
 

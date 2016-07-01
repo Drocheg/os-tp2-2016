@@ -183,6 +183,11 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 
 
 /* Getters */
+
+uint64_t getCurrentPID() {
+	return getProcessPID(getCurrentPCBIndex());
+}
+
 uint64_t getProcessPID(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
@@ -341,7 +346,7 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
  * Note: JUST ONE BYTE WILL BE READ OR WRITTEN
  *
  * Returns 0 on success, or -1 otherwise. 
- * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
+ * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
 uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character) {
 
@@ -558,9 +563,9 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
 	switch(operation) {
 
 		case READ: 
-		case AVAILABLE_DATA: return (F_READ == (flags & F_READ));
+		case IS_EMPTY: return (F_READ == (flags & F_READ));
 		case WRITE:
-		case FREE_SPACE: return (F_WRITE == (flags & F_WRITE));
+		case IS_FULL: return (F_WRITE == (flags & F_WRITE));
 	}
 	return 0;
 

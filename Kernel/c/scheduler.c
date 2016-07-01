@@ -387,7 +387,7 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 	uint64_t readData = 0;
 	while (readData <= maxBytes) {
 
-		if (operateFile(PCBIndex, fd, AVAILABLE_DATA, NULL)) {
+		if (operateFile(PCBIndex, fd, IS_EMPTY, NULL) == 0) {
 			if (blocking){
 				yield();
 			} else {
@@ -411,7 +411,7 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 	uint64_t writtenData = 0;
 	while (writtenData <= maxBytes) {
 
-		if (operateFile(PCBIndex, fd, FREE_SPACE, NULL)) {
+		if (operateFile(PCBIndex, fd, IS_FULL, NULL) == 0) {
 			if (blocking){
 				yield();
 			} else {

@@ -6,52 +6,54 @@
 #include <file.h>
 
 /**
-* Opens a message queue in the specified access mode (either F_READ or F_WRITE).
-* NOTE: Only 1 process may have a message queue open in a particular access mode at a time.
-* 
-* @return A message queue descriptor for the solicited message queue, or NULL on error.
+* Opens a message queue with the specified name, with the specified access parameters.
+*
+* @return A file descriptor for the calling process to reference the opened MQ.
 */
-uint64_t MQopen(const char* name, uint8_t accessMode);
+int64_t MQopen(const char* name, uint32_t accessFlags);
+
+/**
+* Reads a single character from the specified message queue, storing it in dest.
+*
+* @param index Index of the MQ in the MQ table. Not a file descriptor.
+* @param dest Where to store the read char.
+* @return The number of read characters (1 or 0 in case of EOF), or -1 on invalid parameters.
+*/
+int8_t MQreadChar(uint64_t index, char *dest);
+
+/**
+* Writes a single character to the specified message queue, reading it from dest.
+*
+* @param index Index of the MQ in the MQ table. Not a file descriptor.
+* @param dest Where to get the character to write.
+* @return The number of written characters (1 or 0 in case of EOF), or -1 on invalid parameters.
+*/
+int8_t MQwriteChar(uint64_t index, char *src);
+
+/**
+* Checks whether the message queue at the specified index is empty.
+*
+* @param index Index of the MQ in the MQ table. Not a file descriptor.
+* @return 1 if empty, 0 otherwise, -1 on error (e.g. nonexistent MQ).
+*/
+int8_t MQisEmpty(uint64_t index);
+
+/**
+* Checks whether the message queue at the specified index is full.
+*
+* @param index Index of the MQ in the MQ table. Not a file descriptor.
+* @return 1 if full, 0 otherwise, -1 on error (e.g. nonexistent MQ).
+*/
+int8_t MQisFull(uint64_t index);
 
 /**
 * Closes the message queue with the given descriptor.
-* NOTE: The queue itself will not be erased until all processes who have MQopen()ed it call MQclose() on it.
+* NOTE: The queue itself will not be destroyed until all processes who have MQopen()ed it call MQclose() on it.
 *
+* @param index Index of the MQ in the MQ table. Not a file descriptor.
 * @return 0 if the MQ was unlinked successfully but not destroyed, 1 if unlinked successfully and destroyed,
 * -1 on error.
 */
-int8_t MQclose(uint64_t descriptor);
-
-/**
-* Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff
-* NOTE: Will block the process if there is nothing to read.
-*
-* @return The actual number of bytes received, or -1 on error.
-*/
-int8_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
-
-/**
-* Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff
-* If there is no more data available, returns.
-*
-* @return The actual number of bytes received, or -1 on error.
-*/
-int8_t MQreceiveNoblock(uint64_t descriptor, char *buff, size_t buffLen);
-
-/**
-* Sends the specified message (of length mgsLen) to the specified message queue.
-* NOTE: Will block the process if the message queue is full.
-*
-* @return The actual number of bytes sent, or -1 on error.
-*/
-int8_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
-
-/**
-* Sends the specified message (of length mgsLen) to the specified message queue.
-* Will fail if the message queue is full.
-*
-* @return The actual number of bytes sent, or -1 on error.
-*/
-int8_t MQsendNoblock(uint64_t descriptor, const char *msg, size_t mgsLen);
+int8_t MQclose(uint64_t index);
 
 #endif
