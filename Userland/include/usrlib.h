@@ -18,6 +18,10 @@ uint8_t getscancode();
 
 void scroll();
 
+void ps();
+
+void ipcs();
+
 void clearScreen();
 
 void reboot();
@@ -32,7 +36,13 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 
 uint64_t time();
 
-void sleep(uint64_t miliseconds);
+void soundFX(uint32_t freq);
+
+void sleep(uint64_t sleepTime);
+
+void exit(int64_t result);
+
+void * malloc(uint64_t size);
 
 //Paints a white pixel at the specified location.
 void paintPx(uint64_t x, uint64_t y);

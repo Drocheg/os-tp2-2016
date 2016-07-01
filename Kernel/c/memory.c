@@ -53,8 +53,10 @@ void pageManager(Action action, void **page) {
 static void pushPage(void *page) {
 
 	if (stackTop > 0 && stackTop < STACK_SIZE) {
+	
 		pageStack[--stackTop] = page;
 	}
+
 
 }
 
@@ -62,6 +64,7 @@ static void pushPage(void *page) {
 static void *popPage() {
 
 	if (stackTop < STACK_SIZE) {
+
 		return pageStack[stackTop++];
 	}
 	return NULL;

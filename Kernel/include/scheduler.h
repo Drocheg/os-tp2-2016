@@ -63,6 +63,9 @@ uint64_t getCurrentPCBIndex();
 uint64_t finishProcess();
 
 
+void printPS();
+
+
 
 
 

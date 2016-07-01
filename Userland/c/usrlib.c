@@ -24,6 +24,14 @@ char getchar() {
 	return result;
 }
 
+void ps(){
+	_int80(PS, 0, 0, 0);
+}
+
+void ipcs(){
+	_int80(IPCS, 0, 0, 0);
+}
+
 uint8_t getscancode() {
 	char result;
 	_int80(SYSREAD, STDIN_RAW, (uint64_t)&result, 1);
@@ -77,6 +85,12 @@ uint64_t time() {
 	return result;
 }
 
+void * malloc(uint64_t size){
+	void * result;
+	_int80(MALLOC, &result, size, 0);
+	return result;
+}
+
 void paintPx(uint64_t x, uint64_t y) {
 	paintColorPx(x, y, WHITE);
 }
@@ -99,6 +113,16 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 
 void sleep(uint64_t miliseconds) {
 	_int80(SLEEP, miliseconds, 0, 0);
+}
+
+void soundFX(uint32_t freq){
+	_int80(SPEAKER, freq, 1, 0);
+	sleep(50);
+	_int80(SPEAKER, 0, 1, 0);
+}
+
+void exit(int64_t result){
+	_int80(EXIT, result,0,0);
 }
 
 /*

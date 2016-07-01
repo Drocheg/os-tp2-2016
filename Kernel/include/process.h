@@ -47,6 +47,8 @@ char *getProcessName(uint64_t PCBIndex);
 
 void *getProcessStack(uint64_t PCBIndex);
 
+void *getProcessStackPage(uint64_t PCBIndex);
+
 uint64_t getFilesQuantity(uint64_t PCBIndex);
 
 uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);
@@ -100,14 +102,11 @@ int64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation op
  * Returns 0 on success, or -1 otherwise
  */
 uint64_t destroyProcess(uint64_t PCBIndex);
-
-
+uint64_t terminateProcess();
 
 void *malloc(uint64_t PCBIndex, int64_t size);
 
-
-
-
+uint64_t getProcessMemoryAmount(uint64_t PCBIndex);
 
 
 #endif /* PROCESS_H */

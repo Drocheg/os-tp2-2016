@@ -30,7 +30,6 @@ void * initializeKernelBinary();
 static void finishKernel();
 
 int kernel_main(int argc, char *argv[]) {
-	
 	int32_t ret = 0;
 	setGraphicMode();
 	ncPrint("Set graphic video mode\n");
@@ -140,7 +139,8 @@ void * getStackBase() {
 void * initializeKernelBinary() {
 	void * moduleAddresses[] = {
 		CODE_MODULE_ADDR,
-		DATA_MODULE_ADDR
+		DATA_MODULE_ADDR,
+		DATA_MODULE_IMG_ADDR
 	};
 	loadModules(&endOfKernelBinary, moduleAddresses);
 	clearBSS(&bss, &endOfKernel - &bss);

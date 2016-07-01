@@ -70,8 +70,11 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
 static uint64_t terminateProcess();
-static void *mallocRecursive(void **current, void *next, uint64_t size);
+static void *mallocRecursive(void **current, uint64_t size);
+static uint64_t recursiveGetProcessMemoryAmount(void * currentPage);
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation);
+static void freePages(void ** current);
+
 
 /* 
  * Returns a pointer to the next position with <size> bytes available in a page of the heap,
@@ -80,37 +83,42 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
 void *malloc(uint64_t PCBIndex, int64_t size) {
 
 	struct pcbEntry_s *process = NULL;
-	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || size < 0) {
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || size < 0 || size>PAGE_SIZE - (sizeof(void *) + sizeof(uint64_t)) ) {
 		return NULL;
 	}
 	process = &(pcb[PCBIndex]);
 
-	return mallocRecursive(&(process->heapPage), process->heapPage, size);
+	return mallocRecursive(&(process->heapPage), size);
 }
 
 
-static void *mallocRecursive(void **current, void *next, uint64_t size) {
+static void *mallocRecursive(void **current, uint64_t size) {
 
-	uint64_t aux = *((uint64_t *) next);
-	uint64_t *currentSize = ((uint64_t *) (next + sizeof(void *)));
-	if (next == NULL || size > *currentSize) {
+	uint64_t *currentSize;
+
+	if ((uint64_t *) *current == NULL) {
 		pageManager(POP_PAGE, current);
-		if (*current == NULL) {
+		if (current == NULL) {
 			return NULL;
 		}
-		*((uint64_t *) *current) = (uint64_t) NULL; 										/* TODO: Check this */
-		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	/* TODO: Check this */
-		return current;
+		*((uint64_t *) *current) = (uint64_t) NULL; //Next = null;							/* TODO: Check this */
+		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	/* TODO: Check this */ 
 	}
 
-	if (size <= *currentSize) {
+	currentSize = ((uint64_t *) (*current + sizeof(void *)));
+
+	if (size <= PAGE_SIZE-*currentSize) { 
 		void *result = *current + (*currentSize);
 		*currentSize += size;
 		return result;
 	}
-	return mallocRecursive(next, (void *) aux, size);
+	return mallocRecursive(*current, size);
 }
 
+static uint64_t recursiveGetProcessMemoryAmount(void * currentPage){
+	if(currentPage==NULL) return 0;
+	return PAGE_SIZE + recursiveGetProcessMemoryAmount( *((void **) currentPage) );
+}
 
 
 
@@ -168,16 +176,20 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	if (createStack( &(newProcess->stackPage), &(newProcess->stack))) {
 		return -3; /* Couldn't create a stack for the new process */
 	}
+	
 	if (initializeStack(&(newProcess->stack), name, entryPoint, argc, argv)) {
 		return -4; /* Problems with parameters */
 	}
+	
 	(newProcess->fileDescriptors).size = 0;
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
+	//Open STDIN_ for the new process
 	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
 	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
 	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
 	((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
 	newProcess->heapPage = NULL;
+	
 	return index;
 }
 
@@ -224,6 +236,14 @@ void *getProcessStack(uint64_t PCBIndex) {
 	process = &(pcb[PCBIndex]);
 	return process->stack;
 }
+void *getProcessStackPage(uint64_t PCBIndex) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+	return process->stackPage;
+}
 uint64_t getFilesQuantity(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
@@ -250,6 +270,15 @@ uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	ncPrint(": ");
 	ncPrintDec((((process->fileDescriptors).entries)[fileDescriptor]).flags);
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
+}
+
+uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+	return PAGE_SIZE + recursiveGetProcessMemoryAmount(process->heapPage);
 }
 
 /* Setters */
@@ -401,29 +430,23 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		ncPrint("processDestructionNull");
+		for(int i=0; i<100000; i++);
+	
 		return -1;
 	}
 
 	process = &(pcb[PCBIndex]);
+	
+
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
+
+	//Free heap
+	//freePages(process->heapPage);
+
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-/*********************/
-/* Static Functions */
-/*********************/
-
 
 /*
  * Function that changes the process state to finished in the scheduler.
@@ -434,12 +457,28 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
  * will continue running until the terminated process' turn. When that happens, it will destroy the process.
  * TODO: Check kernel-userland issue
  */
-static uint64_t terminateProcess() {
+uint64_t terminateProcess() {
 
 	if (finishProcess()) {
 		return -1;
 	}
 	return 0;
+}
+
+
+
+
+/*********************/
+/* Static Functions */
+/*********************/
+
+/*
+ *Returns all pages from process to the stack.
+ */
+static void freePages(void ** current){
+	if(current == NULL) return;
+	pageManager(PUSH_PAGE, &current);
+	freePages(*current);
 }
 
 
@@ -454,6 +493,8 @@ static uint64_t createStack(void **stackPage, void **stackTop) {
 		return -1;
 	}
 	*stackTop = (void *) ((*stackPage) + PAGE_SIZE);
+	
+	
 	return 0;
 }
 

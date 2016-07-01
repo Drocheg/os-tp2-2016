@@ -15,7 +15,6 @@
 #include <scheduler.h>
 
 
-
 static void timerTick();
 
 
@@ -46,7 +45,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = 1;
 			break;
 		case OPENDATAMODULE:
-			result = (int64_t) openDataModule();
+			*((char **) p1) = (char *) openDataModule();
+			result = 1;
+			break;
+		case OPENDATAIMGMODULE:
+			*((char **) p1) = (char *) openDataImgModule();
+			result = 1;
 			break;
 		case RAINBOW:
 			ncRAINBOWWWWWW();
@@ -56,10 +60,17 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			outb(0x64, 0xFE);		//http://wiki.osdev.org/%228042%22_PS/2_Controller#CPU_Reset
 			result = 1;
 			break;
-		case MALLOC: {
-			// pageManager((Action)p1, (void **)p2);
-			// uint64_t currentPCBIndex = 
-		}
+		case MEMORY:
+			pageManager((Action)p1, (void **)p2);
+			break;
+
+		case CREATE_PROCESS: {
+				_cli();
+				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+				*((uint64_t *) p2) = (uint64_t) result;
+				_sti();
+			}
 			break;
 		case TIME:
 			*((uint64_t *) p1) = time();
@@ -68,12 +79,32 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case SLEEP:
 			sleep(p1);
 			break;
-		case CREATE_PROCESS: {
-				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
-				*((uint64_t *) p2) = (uint64_t) result;
+		case EXIT: //TODO hacer algo con el codigo de error en p1.
+			
+			terminateProcess();
+			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess.
+			uint64_t aux = 0;
+			while (1) {
+				if ( (aux % 500000) == 0) {
+					ncPrint("Dying... ");
+				}
+				aux++;
 			}
 			break;
+
+		case PS:
+			printPS();
+			break;
+
+		case IPCS:
+			printIPCS();
+			break;
+
+		case MALLOC: //TODO descomentar esto
+			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
+
+			break;
+
 		/* *********
 		*	Video
 		* *********/
@@ -144,6 +175,7 @@ void IRQHandler(uint8_t irq) {
 	}
 	outb(0x20, 0x20);			//EOI signal
 }
+
 
 static void timerTick() {  	
   	//if(!noSound())				//NOT an else, both cases might need to be run

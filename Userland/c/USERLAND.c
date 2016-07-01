@@ -9,6 +9,7 @@
 #include <fileDescriptors.h>
 #include <mq.h>
 #include <file-common.h>
+#include <game.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -16,7 +17,7 @@ static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
 static const int MINOR_VER = 1;
-static int EXIT = 0;
+static int isExit = 0;
 static char lastCommand[100] = {0};
 
 typedef struct {
@@ -26,7 +27,7 @@ typedef struct {
 } command;
 
 void beep();
-void exit();
+void exitKernel();
 void help();
 void jalp();
 void sayHello();
@@ -36,18 +37,24 @@ void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
+
 void playMainSong();
 void playSongTwo();
 void bangBang();
 void sleepForTwoSeconds();
 void testMQ();
 
+
+
+void game();
+
+
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
 	{"clear", clearScreen, "Clears the screen"},
 	{"playsong", playMainSong, "Plays the first song loaded in the data module"},
 	{"playsong2", playSongTwo, "Plays the second song loaded in the data module"},
-	{"exit", exit, "Exits the kernel"},
+	{"exit", exitKernel, "Exits the kernel"},
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
 	{"jalp", jalp, "Ai can't spik inglish"},
@@ -59,10 +66,14 @@ static command commands[] = {
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
 	{"mq", testMQ, "Test MQs"},
 	{"1", bangBang, "Re-run your last valid command"}
+	{"game", game, "Play Game"},
+	{"ps", ps, "Print ps"},
+	{"ipcs", ipcs, "Print ipcs"}
 };
 
 uint64_t printProcessA();
 uint64_t printProcessB();
+uint64_t printProcessC();
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -76,15 +87,18 @@ int32_t init_d(int argc, char* argv[]) {
 	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
+//	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process A", printProcessA, 1, argvA);
 	// createProcess(0, "process B", printProcessB, 1, argvB);
 	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
-
+	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
 
 }
+
+
 
 uint64_t printProcessA() {
 	int64_t mqFD = MQopen("test", F_WRITE);
@@ -117,13 +131,19 @@ uint64_t printProcessB() {
 	return 0;
 }
 
+uint64_t printProcessC() {
+	print("CCCC");
+	exit(0);
+	return 0;
+}
+
 int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
 	
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
-	while(!EXIT) {
+	while(!isExit) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
@@ -190,10 +210,9 @@ void printVer(const char *str) {
 }
 
 void beep() {
-	_int80(SPEAKER, 1000, 1, 0);
-	sleep(50);
-	_int80(SPEAKER, 0, 1, 0);
+	soundFX(1000);
 }
+
 
 uint8_t runCommand(char *cmd) {
 	toLowerStr(cmd);
@@ -211,8 +230,8 @@ uint8_t runCommand(char *cmd) {
 	return found;
 }
 
-void exit() {
-	EXIT = 1;
+void exitKernel() {
+	isExit = 1;
 }
 
 void sayHello() {
@@ -254,11 +273,19 @@ void getTime() {
 }
 
 void playMainSong(){
-	playSong(0);
+	char* argvSongPlayer[] = {"2"};
+	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+	return;
 }
 
 void playSongTwo(){
 	playSong(1);
+}
+
+void game(){
+	char* argvGame[] = {"2"};
+	createProcess(0, "Game", game_start, 1, argvGame);
+	return;
 }
 
 void bangBang() {

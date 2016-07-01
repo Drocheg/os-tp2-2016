@@ -16,13 +16,14 @@
 
 /* Typedefs*/
 typedef struct node_t * Node;
-typedef enum {RUNNING = 1, SLEPT, FINISHED} State;
+typedef enum {RUNNING = 0, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
 typedef uint64_t (*IOActions)(uint64_t, uint64_t, char **, uint64_t, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
 
+static char * staticChar[3] = {"R","S","F"};
 
 /* Structs */
 struct node_t {
@@ -104,6 +105,8 @@ void stopScheduler() {
 uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
 	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+		ncPrint("Can't enqueue process");
+		for(int i=0; i<100000000;i++);	
 		return -1;
 	}
 	return 0;
@@ -143,9 +146,11 @@ uint64_t sleep(uint64_t miliseconds) {
  * or NULL if scheduler is not running or if no process is scheduled
  */
 void *nextProcess(void *currentRSP) {
-
+	// ncPrint("I'm here");
 	Node current = NULL;
-	if (checkScheduler()) {		
+	if (checkScheduler()) {	
+		ncPrint("No scheduler");
+		for(int i=0; i<100000000;i++);
 		return getKernelStack();
 	}
 	current = last->next;
@@ -210,10 +215,15 @@ uint64_t finishProcess() {
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
 	void *entryPoint, uint64_t argc, char *argv[]) {
 
+	
+
 	int index = -1;
 	Node newNode = NULL;	
 	Node aux = NULL;
 	uint64_t PCBIndex;
+
+
+	
 	
 	if ((index = getFreeNode()) < 0) {
 		return -1;
@@ -226,6 +236,7 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 		return -2;
 	}
 
+
 	usedNodes[index] = 1;
 	newNode = (Node) (memoryPage + (index * sizeof(*newNode)));
 	newNode->PCBIndex = PCBIndex;
@@ -233,12 +244,12 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	newNode->index = index;
 	newNode->next = newNode; /* Helps when last is NULL */
 
+
 	/* attaches the new node into the circular queue */
 	aux = (last == NULL) ? newNode : last;
 	last = newNode;
 	newNode->next = aux->next;
 	aux->next = newNode;
-
 	return 0;
 
 }
@@ -248,21 +259,23 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
  * Returns 0 if current process was dequeued, -1 otherwise.
  */
 static uint64_t dequeueProcess() {
-
+	
 	Node current = NULL;
-
+	
 	if (last == NULL) {
+
 		return -1; /* No process to dequeue */
 	}
 
 	current = last->next;
 	usedNodes[current->index] = 0;
-	destroyProcess(current->PCBIndex);
-	if (last == last->next) { /* Was the last process */
+	if (last == last->next) { /* Was the last process */ 
 		last = NULL;
 	} else {
 		last->next = last->next->next;
 	}
+	destroyProcess(current->PCBIndex);
+	
 	return 0;
 }
 
@@ -287,13 +300,14 @@ static int getFreeNode() {
 }
 
 
-
+static int64_t contador=0;
 
 static void *nextProcessRecursive() {
 
 	Node current = last->next;
 
-	// ncPrint("I'm here");
+	//for(int i=0; i<100000000;i++);
+	
 	// ncPrintHex(current->state);
 	// while(1);
 
@@ -431,5 +445,37 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 		}
 	}
 	return writtenData;
+}
 
+void printPS() {
+	int i = 0;
+	while(i < MAX_PROCESSES) {
+		if(usedNodes[i] == 1){
+			Node newNode = (Node) (memoryPage + (i * sizeof(*newNode)));
+			
+			ncPrint(" PID:");
+			uint64_t newPCBIndex = 	newNode->PCBIndex;
+			ncPrintDec(getProcessPID(newPCBIndex));
+			ncPrint(" Name: ");
+			ncPrint(getProcessName(newPCBIndex));
+			ncPrint(" State:");
+			uint64_t newState = 	newNode->state;
+			ncPrint(staticChar[newNode->state]);
+			ncPrint("\n");
+			ncPrint(" Memory: ");
+			ncPrintDec(getProcessMemoryAmount(newPCBIndex));
+			ncPrint(" Next PBCindex: ");
+			ncPrintDec(newNode->next->PCBIndex);
+			ncPrint("StackPAge");
+			ncPrintHex(getProcessStackPage(newPCBIndex));
+			ncPrint("StackTop");
+			ncPrintHex(getProcessStack(newPCBIndex));
+			
+		//	newNode->next = newNode; /* Helps when last is NULL */
+			ncPrint("\n");
+		}
+
+		i++;
+	}
+	
 }
