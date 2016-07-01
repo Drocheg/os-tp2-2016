@@ -87,20 +87,27 @@ void ncBackspace() {
 	goBack();
 }
 
-void ncPrintDec(uint64_t value) {
+void ncPrintDec(int64_t value) {
 	ncPrintBase(value, 10);
 }
 
-void ncPrintHex(uint64_t value) {
+void ncPrintHex(int64_t value) {
 	ncPrintBase(value, 16);
 }
 
-void ncPrintBin(uint64_t value) {
+void ncPrintBin(int64_t value) {
 	ncPrintBase(value, 2);
 }
 
-void ncPrintBase(uint64_t value, uint32_t base) {
+void ncPrintBase(int64_t value, uint32_t base) {
+    int8_t negative = value < 0;
+    if(negative) {
+    	value *= -1;
+    }
     intToStrBase(value, buffer, base);
+    if(negative) {
+    	ncPrintChar('-');
+    }
     ncPrint(buffer);
 }
 

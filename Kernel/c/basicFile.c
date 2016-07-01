@@ -173,38 +173,11 @@ int destroyBasicFile(BasicFile file) {
 		pageManager(PUSH_PAGE, &(file->stream));
 	}
 	memset(&filesTable[index], 0, sizeof(struct basicFile_s));
-	// filesTable[index] = NULL;
 	return 0;
 }
 
 char* getBasicFileName(BasicFile f) {
 	return f->name;
-}
-
-int64_t advanceFileBasic(BasicFile f) {
-	if(basicFileIsFull(f)) {
-		return -1;
-	}
-	if(f->writeIndex >= f->size-1) {
-		f->writeIndex = 0;
-	}
-	else {
-		f->writeIndex++;
-	}
-	return 1;
-}
-
-int64_t rewindFileBasic(BasicFile f) {
-	if(basicFileIsEmpty(f)) {
-		return -1;
-	}
-	if(f->writeIndex <= 0) {
-		f->writeIndex = f->size-1;
-	}
-	else {
-		f->writeIndex--;
-	}
-	return 1;
 }
 
 uint64_t getBasicFileSize(BasicFile f) {

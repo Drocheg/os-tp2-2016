@@ -26,6 +26,15 @@
 #define FILL_REKT 863			//Fill REKTangle
 #define PAINT_IMG 864			//Paint image
 
+//Message queues
+#define MQ_OPEN 770
+#define MQ_CLOSE 771
+#define MQ_SEND 772
+#define MQ_RECEIVE 773
+#define MQ_IS_FULL 774
+#define MQ_IS_EMPTY 775
+
+
 
 struct createProcessParams_s {
 

@@ -1,9 +1,8 @@
 #ifndef MQ_H
 #define MQ_H
 
-#include <stddef.h>
 #include <stdint.h>
-#include <file.h>
+#include <stddef.h>
 
 /**
 * Opens a message queue in the specified access mode (either F_READ or F_WRITE).
@@ -23,13 +22,16 @@ int64_t MQopen(const char* name, uint32_t accessFlags);
 */
 int8_t MQclose(uint64_t descriptor);
 
-/**
-* Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff
-* NOTE: Will block the process if there is nothing to read.
+/*
+* Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff.
+* If the MQ was not opened non-blockingly and there is no data to read, the process will block until
+* there is enough data to fill buff. If it was opened non-blockingly, the function will return as soon
+* as data runs out or when buff is filled, whichever comes first.
+* NOTE: Does not add a null terminator.
 *
-* @return The actual number of bytes received, or -1 on error.
+* @param descriptor 
 */
-int8_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
+int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
 
 /**
 * Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff
@@ -37,7 +39,7 @@ int8_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
 *
 * @return The actual number of bytes received, or -1 on error.
 */
-int8_t MQreceiveNoblock(uint64_t descriptor, char *buff, size_t buffLen);
+int64_t MQreceiveNoblock(uint64_t descriptor, char *buff, size_t buffLen);
 
 /**
 * Sends the specified message (of length mgsLen) to the specified message queue.
@@ -45,7 +47,7 @@ int8_t MQreceiveNoblock(uint64_t descriptor, char *buff, size_t buffLen);
 *
 * @return The actual number of bytes sent, or -1 on error.
 */
-int8_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
+int64_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
 
 /**
 * Sends the specified message (of length mgsLen) to the specified message queue.
@@ -53,6 +55,6 @@ int8_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
 *
 * @return The actual number of bytes sent, or -1 on error.
 */
-int8_t MQsendNoblock(uint64_t descriptor, const char *msg, size_t mgsLen);
+int64_t MQsendNoblock(uint64_t descriptor, const char *msg, size_t mgsLen);
 
 #endif

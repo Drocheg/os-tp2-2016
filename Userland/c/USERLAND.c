@@ -7,6 +7,8 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <mq.h>
+#include <file-common.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -38,6 +40,7 @@ void playMainSong();
 void playSongTwo();
 void bangBang();
 void sleepForTwoSeconds();
+void testMQ();
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -54,6 +57,7 @@ static command commands[] = {
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
+	{"mq", testMQ, "Test MQs"},
 	{"1", bangBang, "Re-run your last valid command"}
 };
 
@@ -82,20 +86,31 @@ int32_t init_d(int argc, char* argv[]) {
 }
 
 uint64_t printProcessA() {
-
+	int64_t mqFD = MQopen("test", F_WRITE);
+	print("\nWrite FD for process A: ");
+	printNum(mqFD);
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
+		print("\nA sending 'Hello'\n");
+		MQsend(mqFD, "Hello", 6);
 		sleep(10000);
 	}
 	return 0;
 }
 
 uint64_t printProcessB() {
-
+	int64_t mqFD = MQopen("test", F_READ);
+	print("\nRead FD for process B: ");
+	printNum(mqFD);
+	char buff[6] = {0};
 	uint64_t aux = 0;
 	while ((uint64_t)-1) {
 		aux++;
+		print("\nReceiving...");
+		MQreceive(mqFD, buff, 5);
+		print(buff);
+		print("\n");
 		sleep(10000);
 	}
 	return 0;
@@ -106,7 +121,7 @@ int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
-
+	
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!EXIT) {
 		uint8_t index = 0;
@@ -261,4 +276,10 @@ void sleepForTwoSeconds() {
 	print("Sleeping...");
 	sleep(2000);
 	print("woke up\n");
+}
+
+void testMQ() {
+	int64_t read = MQopen("test", F_READ);
+	print("Read FD: ");
+	printNum(read);
 }

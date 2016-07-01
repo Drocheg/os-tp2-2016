@@ -10,7 +10,7 @@
 #define MAX_MQS 256
 
 typedef struct {
-	BasicFile file;				//File where actual data is read/written
+	BasicFile file;			//File where actual data is read/written
 	uint64_t links;			//The number of processes who have this message queue open. Upon reaching 0, it is destroyed.
 	int64_t readPID;		//ID of the process who has this MQ open for reading. -1 if none.
 	int64_t writePID;		//ID of the process who has this MQ open for writing. -1 if none.
@@ -53,7 +53,7 @@ static int8_t destroyMQ(uint64_t index);
 *			FileManager imlpementations
 * **********************************************/
 int64_t MQopen(const char* name, uint32_t accessFlags) {
-	if(name == NULL || (accessFlags != F_READ && accessFlags != F_WRITE)) {
+	if(name == NULL || (accessFlags & F_READ == 0 && accessFlags & F_WRITE == 0)) {
 		return -1;
 	}
 	int64_t tableIndex = indexOfMQ(name);
@@ -208,8 +208,8 @@ int8_t MQisFull(uint64_t index) {
 *				Static functions
 * **********************************************/
 static int64_t indexOfMQ(const char* name) {
-	for(uint64_t i = 0; i <  numMQs; i++) {
-		if(mqs[i].file != NULL && strcmp(getBasicFileName(mqs[i].file), name)) {
+	for(uint64_t i = 0; i <  MAX_MQS; i++) {
+		if(mqs[i].file != NULL && streql(getBasicFileName(mqs[i].file), name)) {
 			return i;
 		}
 	}
@@ -217,7 +217,8 @@ static int64_t indexOfMQ(const char* name) {
 }
 
 static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags) {
-	if(mqs[tableIndex].file != NULL || (accessFlags != F_READ && accessFlags != F_WRITE)) {
+	//TODO verify flags with &, not & and implement NOBLOCK flag
+	if(mqs[tableIndex].file != NULL || (accessFlags & F_READ == 0 && accessFlags & F_WRITE == 0)) {
 		return -1;
 	}
 	BasicFile file = createBasicFileWithName(name);
@@ -268,7 +269,7 @@ static int8_t destroyMQ(uint64_t index) {
 }
 
 static int64_t findFreeSlot() {
-	for(uint64_t i = 0; i < numMQs; i++) {
+	for(uint64_t i = 0; i < MAX_MQS; i++) {
 		if(mqs[i].file == NULL) {
 			return (int64_t) i;
 		}
