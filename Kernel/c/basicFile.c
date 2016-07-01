@@ -97,14 +97,13 @@ BasicFile createBasicFile(const char* name, void *stream, uint64_t size, Place p
 		index++;
 	}
 	
-	struct basicFile_s newFile = filesTable[index];
-	memcpy((void *) newFile.name, name, strlen(name)+1);	//TODO validateParams already does strlen, consider not doing it twice
-	newFile.size = size;
-	newFile.stream = stream;
-	newFile.place = place;
-	newFile.writeIndex = 0;
-	newFile.readIndex = 0;
-	return &filesTable[index];		//&newFile doesn't work here because it's a local variable
+	memcpy((void *) filesTable[index].name, name, strlen(name)+1);	//TODO validateParams already does strlen, consider not doing it twice
+	filesTable[index].size = size;
+	filesTable[index].stream = stream;
+	filesTable[index].place = place;
+	filesTable[index].writeIndex = 0;
+	filesTable[index].readIndex = 0;
+	return &filesTable[index];
 }
 
 BasicFile findBasicFile(const char* name) {
@@ -137,7 +136,7 @@ int basicFileReadChar(BasicFile file) {
 
 
 int basicFileWriteChar(char c, BasicFile file) {
-	if (!isValidFile(file) || basicFileIsFull(file)) {
+	if (!isValidFile(file) || basicFileIsFull(file)) {	//TODO this returns true when writeIndex == file->size && readIndex == 0-- but when that happens, the write hasn't actually been performed. So 1 byte is wasted
 		return EOF;
 	}
 	char *stream = (char *)file->stream;
@@ -206,6 +205,10 @@ int64_t rewindFileBasic(BasicFile f) {
 		f->writeIndex--;
 	}
 	return 1;
+}
+
+uint64_t getBasicFileSize(BasicFile f) {
+	return f->size;
 }
 
 

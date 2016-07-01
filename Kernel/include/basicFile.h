@@ -94,6 +94,8 @@ int basicFileIsEmpty(BasicFile file);
 */
 char* getBasicFileName(BasicFile f);
 
+uint64_t getBasicFileSize(BasicFile f);
+
 /**
 * Finds a File with the specified name.
 *
