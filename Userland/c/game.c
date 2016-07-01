@@ -31,6 +31,7 @@ static uint64_t lastObstacleUpdate;
 static uint64_t lastUpdateTime;
 static int64_t posY; //Position of the center of the character
 static uint64_t obstacle[HORIZONTAL_SIZE][10]={SPACE_EMPTY}; 
+static int isGameOver = 0;
 
 /*There are n vertical spaces. Character can only jump vertical. In the air he can't jump. 
 If he touch an obstacle you lose. The character is 3 blocks tall, so he uses 3 of the n space 
@@ -44,6 +45,21 @@ uint64_t isPlayerJumping();
 void gameOver();
 void playJumpFX(uint64_t seed);
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
+void initGame();
+int64_t game_main(int argc, char* argv[]);
+
+
+void game_start(int argc, char* argv[]){
+	int64_t result = game_main(argc, argv);
+	exit(result);
+	while(1); //TODO borrar el while(1);
+}
+
+
+int64_t game_main(int argc, char* argv[]){
+	initGame();
+	return 0;
+}
 
 void initGame(){
 	state = STATE_GROUND;
@@ -58,8 +74,10 @@ void initGame(){
 		}
 	}
 	//music
-	char* argvSongPlayer[] = {"songplayer"};
-	createProcess(0, "SongPlayer", playSong_main, 1, argvSongPlayer);
+	char* argvSongPlayer[] = {"1"};
+	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+//	char* argvInputReceiver[] = {"inputReceiver"};
+//	createProcess(0, "InputReceiver", inputReceiver_main, 1, argvInputReceiver);
 	
 	playGame();
 	return;
@@ -67,7 +85,7 @@ void initGame(){
 void playGame(){
 	uint64_t loopTime=time();
 	
-	while(1){
+	while(!isGameOver){
 		while(time()<loopTime+GAME_TICK/2);
 		loopTime=time();
 		update();
@@ -187,6 +205,7 @@ void update(){
 		if(j==posY || j==posY+1 || j==posY-1){
 			if(obstacle[0][j]==SPACE_OBSTACLE){
 				gameOver();
+				return;
 			}else{
 				if(j==posY-1){
 				
@@ -236,13 +255,10 @@ uint64_t isPlayerJumping(){
 }
 
 void gameOver(){
+	isGameOver=1;
 	clearScreen(); 
-	print("\n\n\n Game Over \n rebooting");
-	uint64_t loopTime=time();
-	while(time()<loopTime+GAME_OVER_LAG){
-		
-	}
-	reboot();
+	print("\n\n\n Game Over ");
+	
 }
 
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color){

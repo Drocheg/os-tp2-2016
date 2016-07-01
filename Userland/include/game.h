@@ -1,6 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-void initGame();
 
+void game_start(int argc, char* argv[]);
 #endif
