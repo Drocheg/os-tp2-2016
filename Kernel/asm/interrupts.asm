@@ -2,18 +2,13 @@ EXTERN IRQHandler
 EXTERN timerTickHandler
 EXTERN int80Handler
 
-; EXTERN getSoftwareIntStack
-; EXTERN getTimerIntStack
-; EXTERN getKbdIntStack
-
-; EXTERN getStack
-
 EXTERN getKernelStack
 
 GLOBAL int20Receiver
 GLOBAL int21Receiver
 GLOBAL int80Receiver
-GLOBAL getActualStackTop
+
+
 
 SECTION .text
 
@@ -74,9 +69,11 @@ SECTION .text
 %endmacro
 
 %macro endOfInterrupt 0
+	
 	mov al, 20h
 	out 20h, al
 %endmacro
+
 
 
 int20Receiver:

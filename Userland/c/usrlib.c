@@ -105,6 +105,10 @@ void soundFX(uint32_t freq){
 	_int80(SPEAKER, 0, 1, 0);
 }
 
+void exit(int64_t result){
+	_int80(EXIT, result,0,0);
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;

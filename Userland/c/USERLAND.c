@@ -15,7 +15,7 @@ static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
 static const int MINOR_VER = 1;
-static int EXIT = 0;
+static int isExit = 0;
 static char lastCommand[100] = {0};
 
 typedef struct {
@@ -25,7 +25,7 @@ typedef struct {
 } command;
 
 void beep();
-void exit();
+void exitKernel();
 void help();
 void jalp();
 void sayHello();
@@ -50,7 +50,7 @@ static command commands[] = {
 	{"clear", clearScreen, "Clears the screen"},
 	{"playsong", playMainSong, "Plays the first song loaded in the data module"},
 	{"playsong2", playSongTwo, "Plays the second song loaded in the data module"},
-	{"exit", exit, "Exits the kernel"},
+	{"exit", exitKernel, "Exits the kernel"},
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
 	{"jalp", jalp, "Ai can't spik inglish"},
@@ -65,6 +65,7 @@ static command commands[] = {
 
 uint64_t printProcessA();
 uint64_t printProcessB();
+uint64_t printProcessC();
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -77,10 +78,13 @@ int32_t init_d(int argc, char* argv[]) {
 
 //	char* argvA[] = {"process A"};
 //	char* argvB[] = {"process B"};
+	char* argvC[] = {"process C"};
 	
 //	createProcess(0, "process A", printProcessA, 1, argvA);
 //	createProcess(0, "process B", printProcessB, 1, argvB);
+	
 	char* argvTerminal[] = {"terminal"};
+	createProcess(0, "process C", printProcessC, 1, argvC);
 	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
 	while(1);
@@ -88,14 +92,18 @@ int32_t init_d(int argc, char* argv[]) {
 
 }
 
+
+
 uint64_t printProcessA() {
 
 	uint64_t aux = 0;
 	while (1) {
-		if ( (aux % 50000000) == 0) {
+		if ( (aux % 500000) == 0) {
 			print("A ");
 		}
+		
 		aux++;
+		
 	}
 	return 0;
 }
@@ -112,15 +120,23 @@ uint64_t printProcessB() {
 	return 0;
 }
 
+uint64_t printProcessC() {
+	print("CCCC");
+	exit(0);
+	return 0;
+}
+
 int32_t userland_main(int argc, char* argv[]) {
 
-	clearScreen();
+	//clearScreen();
+	
+
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
 
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
-	while(!EXIT) {
+	while(!isExit) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
@@ -207,8 +223,8 @@ uint8_t runCommand(char *cmd) {
 	return found;
 }
 
-void exit() {
-	EXIT = 1;
+void exitKernel() {
+	isExit = 1;
 }
 
 void sayHello() {

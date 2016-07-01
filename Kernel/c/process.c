@@ -48,9 +48,10 @@ struct pcbEntry_s {
 	void *heapPage;
 
 	/* Free Space to reach 512 Bytes (when adding a field, bytes should be taken from here)  */
-	uint64_t freeSpace[22];
-
+	uint64_t freeSpace[21];
 };
+
+
 
 
 
@@ -64,7 +65,48 @@ static struct pcbEntry_s *pcb; /* Easier to acccess data in pcb */
 /* Static functions prototypes */
 static uint64_t createStack(void **stackPage, void **stackTop);
 static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFunction, uint64_t argc, char *argv[]);
-static uint64_t terminateProcess();
+static void *mallocRecursive(void **current, void *next, uint64_t size);
+
+
+/* 
+ * Returns a pointer to the next position with <size> bytes available in a page of the heap,
+ * or NULL if no more space available, pcb not initialize, or illegal arguments
+ */
+void *malloc(uint64_t PCBIndex, int64_t size) {
+
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || size < 0 || size>PAGE_SIZE - (sizeof(void *) + sizeof(uint64_t)) ) {
+		return NULL;
+	}
+	process = &(pcb[PCBIndex]);
+
+	return mallocRecursive(&(process->heapPage), size);
+}
+
+
+static void *mallocRecursive(void **current, uint64_t size) {
+
+	uint64_t *currentSize;
+
+	if ((uint64_t *) *current == NULL) {
+		pageManager(POP_PAGE, current);
+		if (current == NULL) {
+			return NULL;
+		}
+		*((uint64_t *) *current) = (uint64_t) NULL; //Next = null;							/* TODO: Check this */
+		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	/* TODO: Check this */ 
+	}
+
+	currentSize = ((uint64_t *) (*current + sizeof(void *)));
+
+	if (size <= PAGE_SIZE-*currentSize) { 
+		void *result = *current + (*currentSize);
+		*currentSize += size;
+		return result;
+	}
+	return mallocRecursive(*current, size);
+}
+
 
 
 
@@ -127,6 +169,7 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	}
 	(newProcess->fileDescriptors).size = 0;
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	newProcess->heapPage = NULL;
 	return index;
 }
 
@@ -297,6 +340,10 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 	process = &(pcb[PCBIndex]);
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
+
+	//Free heap
+
+
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;
 }
@@ -320,7 +367,7 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
  * will continue running until the terminated process' turn. When that happens, it will destroy the process.
  * TODO: Check kernel-userland issue
  */
-static uint64_t terminateProcess() {
+uint64_t terminateProcess() {
 
 	if (finishProcess()) {
 		return -1;
@@ -354,8 +401,8 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	uint64_t argvPosition = 0;
 	uint64_t processSS = 0;
 	uint64_t processRSP = 0;
-	uint64_t processRFLAGS = 0x202; /* WYRM value (sets IF and PF) */
-	uint64_t processCS = 0x008; /* WYRM value (TODO: Ask Rodrigo) */
+	uint64_t processRFLAGS = 0x202; 					/* WYRM value (sets IF and PF) */
+	uint64_t processCS = 0x008;							/* WYRM value (TODO: Ask Rodrigo) */
 	uint64_t processRIP = (uint64_t) mainFunction;
 
 	if (argc <= 0) {
@@ -389,7 +436,6 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 
 	}
 
-
 	/* Pushes end of argv null */
 	*userStackTop -= sizeof(uint64_t);
 	memset(*userStackTop, 0, sizeof(uint64_t));
@@ -419,7 +465,7 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 	/* For more info., see Intel® 64 and IA-32 Architectures Software Developers Manual, Vol. 3-A, Fig. 6-8 */
 	
 
-	/* Values got in https://bitbucket.org/RowDaBoat/wyrm/src */
+	/* Values got from https://bitbucket.org/RowDaBoat/wyrm/src */
 	/* /d4f3cfcc64325efb1f7d7039fc7bc7c7e85777b0/Kernel/Scheduler/Process.cpp?at=master&fileviewer=file-view-default */
 	
 

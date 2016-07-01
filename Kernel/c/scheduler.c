@@ -125,9 +125,8 @@ void *nextProcess(void *currentRSP) {
 
 	Node current = NULL;
 
-	if (checkScheduler()) {
-		
-		return NULL;
+	if (checkScheduler()) {		
+		return getKernelStack();
 	}
 	current = last->next;
 	

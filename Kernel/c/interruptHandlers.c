@@ -11,6 +11,8 @@
 #include <memory.h>
 #include <video.h>
 #include <process.h>
+#include <interrupts.h>
+#include <scheduler.h>
 
 
 
@@ -62,16 +64,26 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MEMORY:
 			pageManager((Action)p1, (void **)p2);
 			break;
+
+		case CREATE_PROCESS: {
+
+			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+			result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+			*((uint64_t *) p2) = (uint64_t) result;
+		}
+		break;
+
 		case TIME:
 			*((uint64_t *) p1) = time();
 			result = *((uint64_t *) p1);
 			break;
-		case CREATE_PROCESS: {
-				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
-				*((uint64_t *) p2) = (uint64_t) result;
-			}
+
+		case EXIT: //TODO hacer algo con el codigo de error en p1.
+			terminateProcess();
+			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess.
+			while(1);
 			break;
+
 		/* *********
 		*	Video
 		* *********/

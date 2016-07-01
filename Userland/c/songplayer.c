@@ -65,5 +65,5 @@ void playSong(uint32_t songNum) {
 
 void playSong_main(){
 	playSong(1);
-	while(1);
+	exit(0);
 }
