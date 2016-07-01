@@ -102,15 +102,15 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MQ_CLOSE:
 			ncPrint("\nMQClose not handled implemented yet\n");
 			result = -1;
-			*((int64_t *)p3) = result;
+			*((int8_t *)p3) = (int8_t)result;
 			break;
 		case MQ_RECEIVE:
 			result = read(p1, (char *)p2, 1);
-			*((int64_t *)p3) = result;
+			*((int8_t *)p3) = (int8_t)result;
 			break;
 		case MQ_SEND:
 			result = write(p1, (char *)p2, 1);
-			*((int64_t *)p3) = result;
+			*((int8_t *)p3) = (int8_t)result;
 			break;
 		/* *********
 		*	Default

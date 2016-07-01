@@ -78,7 +78,7 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvB[] = {"process B"};
 	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process A", printProcessA, 1, argvA);
-	createProcess(0, "process B", printProcessB, 1, argvB);
+	// createProcess(0, "process B", printProcessB, 1, argvB);
 	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 
 	while(1);

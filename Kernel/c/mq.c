@@ -53,7 +53,7 @@ static int8_t destroyMQ(uint64_t index);
 *			FileManager imlpementations
 * **********************************************/
 int64_t MQopen(const char* name, uint32_t accessFlags) {
-	if(name == NULL || (accessFlags & F_READ == 0 && accessFlags & F_WRITE == 0)) {
+	if(name == NULL || ((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0)) {
 		return -1;
 	}
 	int64_t tableIndex = indexOfMQ(name);

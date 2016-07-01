@@ -1,6 +1,9 @@
 #ifndef FILE_COMMON_H
 #define FILE_COMMON_H
 
+#include <stdint.h>
+
+
 /*
 * This system manages a series of different "files." A File is an abstraction
 * over any readable or writeable section of data (similar to Java's Stream
@@ -29,8 +32,8 @@
 /*
 * File creation/access flags
 */
-#define F_READ 0x01
-#define F_WRITE 0x02
-#define F_NOBLOCK 0x04
+#define F_READ (uint32_t) 0x01
+#define F_WRITE (uint32_t) 0x02
+#define F_NOBLOCK (uint32_t) 0x04
 
 #endif

@@ -49,12 +49,12 @@ void *getProcessStack(uint64_t PCBIndex);
 
 uint64_t getFilesQuantity(uint64_t PCBIndex);
 
-uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);
+uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);
 
 /* Setters */
 uint64_t setProcessStack(uint64_t PCBIndex, void *stack);
 
-uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags);
+int64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint32_t flags);
 
 
 
@@ -93,7 +93,7 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor);
  * Returns 0 on success, or -1 otherwise. 
  * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
-uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character);
+int64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character);
 
 /*
  * Takes the process with <PCBIndex> from the table

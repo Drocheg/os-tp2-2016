@@ -111,6 +111,7 @@ uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, 
 	if (isValidFileType(fileType)) {
 		return -1;
 	}
+	ncPrint("At operate");
 	switch(operation) {
 		case READ: return readChar(fileType, fileIndex, character);
 		case WRITE: return writeChar(fileType, fileIndex, character);

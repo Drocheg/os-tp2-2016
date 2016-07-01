@@ -172,7 +172,7 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 		return -4; /* Problems with parameters */
 	}
 	(newProcess->fileDescriptors).size = 0;
-	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
 	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
 	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
 	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
@@ -235,13 +235,20 @@ uint64_t getFilesQuantity(uint64_t PCBIndex) {
 }
 
 
-uint64_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
+uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
+	ncPrint("\nFlags for file of PCB index #");
+	ncPrintDec(PCBIndex);
+	ncPrint(" at index #");
+	ncPrintDec((((process->fileDescriptors).entries)[fileDescriptor]).index);
+	ncPrint(" and file type ");
+	ncPrintDec((((process->fileDescriptors).entries)[fileDescriptor]).fileType);
+	ncPrint(": ");
+	ncPrintDec((((process->fileDescriptors).entries)[fileDescriptor]).flags);
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
 }
 
@@ -256,14 +263,19 @@ uint64_t setProcessStack(uint64_t PCBIndex, void *stack) {
 	process->stack = stack;
 	return 0;
 }
-uint64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint64_t flags) {
+
+int64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint32_t flags) {
 
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
+	ncPrint("Setting flags to ");
+	ncPrintDec(flags);
 	(((process->fileDescriptors).entries)[fileDescriptor]).flags = flags;
+	ncPrint("\nFlags set to ");
+	ncPrintDec((((process->fileDescriptors).entries)[fileDescriptor]).flags);
 	return 0;
 }
 
@@ -295,10 +307,18 @@ uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t 
 	}
 
 	((process->fileDescriptors).size)++;
-	(entries[i]).occupied = 1;
-	(entries[i]).index = index;
-	(entries[i]).fileType = (uint32_t) fileType;
-	(entries[i]).flags = flags;
+	(((process->fileDescriptors).entries)[i]).occupied = 1;
+	(((process->fileDescriptors).entries)[i]).index = index;
+	(((process->fileDescriptors).entries)[i]).fileType = (uint32_t) fileType;
+	(((process->fileDescriptors).entries)[i]).flags = flags;
+	ncPrint("\nFile for PCB index #");
+	ncPrintDec(PCBIndex);
+	ncPrint(" at index #");
+	ncPrintDec((((process->fileDescriptors).entries)[i]).index);
+	ncPrint(" and file type ");
+	ncPrintDec((((process->fileDescriptors).entries)[i]).fileType);
+	ncPrint(" set to ");
+	ncPrintDec((((process->fileDescriptors).entries)[i]).flags);
 	return 0;
 }
 
@@ -348,17 +368,18 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
  * Returns 0 on success, or -1 otherwise. 
  * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
-uint64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character) {
-
-
+int64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation, char *character) {
 	FileType fileType = 0;
 	int64_t fileIndex = 0;
 	struct pcbEntry_s *process = NULL;
+	ncPrint("\nAt operateFile");
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || !existsFile(PCBIndex, fileDescriptor)) {
+		ncPrint("\nInvalid params");
 		return -1;
 	}
-
 	if (!hasPermissions(PCBIndex, fileDescriptor, operation)) {
+		ncPrint("\nPermission denied");
+		while(1);
 		return -1; /* Permission denied */
 	}
 	process = &(pcb[PCBIndex]);
@@ -557,28 +578,27 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 
 
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation) {
-
 	uint32_t flags = getFileFlags(PCBIndex, fileDescriptor);
-
+	ncPrint("Flags: ");
+	ncPrintHex(flags);
+	ncPrint(" - can read 1: ");
+	ncPrintDec(flags & F_READ);
+	ncPrint(" - can read 2: ");
+	ncPrintDec((flags & F_READ) == F_READ);
+	ncPrint("\nOperation: ");
+	ncPrintDec(operation);
+	ncPrint(" (READ is ");
+	ncPrintDec(READ);
+	ncPrint(")");
+	while(1);
 	switch(operation) {
-
 		case READ: 
-		case IS_EMPTY: return (F_READ == (flags & F_READ));
+			return (flags & F_READ);
 		case WRITE:
-		case IS_FULL: return (F_WRITE == (flags & F_WRITE));
+			return (flags & F_WRITE);
+		default:
+			return 1;
 	}
 	return 0;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-

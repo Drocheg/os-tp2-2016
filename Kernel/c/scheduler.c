@@ -39,7 +39,7 @@ static uint64_t dequeueProcess();
 static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 static void *nextProcessRecursive();
 static uint64_t checkScheduler();
-static uint64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blockings);
+static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blockings);
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForTime(uint64_t miliseconds);
@@ -117,10 +117,13 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
  * It's a blocking function, so it will return when maxBytes are achieved
  * Returns read/written bytes, or -1 if any error ocurred
  */
-uint64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
-
+int64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
+	// ncPrint("\nAt fileOperation");
+	// int64_t la = waitForIO(fileDescriptor, buffer, maxBytes, ioOperation, blocking);
+	// ncPrint("waitForIO returned ");
+	// ncPrintDec(la);
+	// return la;
 	return waitForIO(fileDescriptor, buffer, maxBytes, ioOperation, blocking);
-
 }
 
 
@@ -330,7 +333,7 @@ static uint64_t checkScheduler() {
  * It's a blocking function, so it will return when maxBytes are achieved
  * Returns read/written bytes, or -1 if any error ocurred
  */
-static uint64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
+static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
 
 	
 	Node current = (Node) NULL;
@@ -408,9 +411,12 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
 	uint64_t writtenData = 0;
+	// ncPrint("\nAt waitForOutput ");
 	while (writtenData <= maxBytes) {
-
-		if (operateFile(PCBIndex, fd, IS_FULL, NULL) == 0) {
+		// int64_t la = operateFile(PCBIndex, fd, IS_FULL, NULL);
+		// ncPrint("operateFile returned ");
+		// ncPrintDec(la);
+		if (/*la == 0*/operateFile(PCBIndex, fd, IS_FULL, NULL) == 0) {
 			if (blocking){
 				yield();
 			} else {
