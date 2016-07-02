@@ -76,7 +76,7 @@ BasicFile createBasicFileWithName(const char* name) {
 	if (stream == NULL) {
 		return NULL;
 	}
-	newFile = createBasicFile(name, stream, PAGE_SIZE, HEAP);	//TODO SET BACK TO NORMAL SIZE!!
+	newFile = createBasicFile(name, stream, PAGE_SIZE, HEAP);
 	if (newFile == NULL) {	//Failed, put the page back as available
 		pageManager(PUSH_PAGE, &stream);
 	}

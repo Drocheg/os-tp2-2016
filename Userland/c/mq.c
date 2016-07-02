@@ -25,7 +25,13 @@ int8_t MQclose(uint64_t descriptor) {
 int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen) {
 	int64_t result;
 	for(result = 0; result < buffLen; result++) {
-		if(MQreceiveChar(descriptor, buff+result) == -1) {
+		int64_t recvResult = MQreceiveChar(descriptor, buff+result);
+		if(recvResult == 0) {
+			//No bytes received - e.g. readubg with F_NOBLOCK and file is empty
+			return result;
+		}
+		else if(recvResult == -1) {
+			//Failed - return how many bytes were received, or error error if none were received.
 			return result == 0 ? -1 : result;
 		}
 	}
@@ -46,7 +52,13 @@ static int8_t MQreceiveChar(uint64_t descriptor, char *dest) {
 int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
 	int64_t result;
 	for(result = 0; result < msgLen; result++) {
-		if(MQsendChar(descriptor, &msg[result]) == -1) {
+		int64_t sendResult = MQsendChar(descriptor, &msg[result]);
+		if(sendResult == 0) {
+			//No bytes sent - e.g. writing with F_NOBLOCK and file is full
+			return result;
+		}
+		else if(sendResult == -1) {
+			//Failed - return how many bytes were sent, or error error if none were sent.
 			return result == 0 ? -1 : result;
 		}
 	}

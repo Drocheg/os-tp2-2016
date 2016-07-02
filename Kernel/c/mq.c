@@ -232,9 +232,14 @@ static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags)
 	mqs[tableIndex] = (MessageQueue) {
 		file,
 		1,
-		accessFlags == F_READ ? pid : -1,
-		accessFlags == F_WRITE ? pid : -1
+		-1,		//Not setting access PIDs here, delegating to markAccess() below
+		-1
 	};
+	if(markAccess(tableIndex, pid, accessFlags) == -1) {
+		destroyBasicFile(file);
+		mqs[tableIndex].file = NULL;
+		return -1;
+	}
 	numMQs++;
 	return 1;
 }
