@@ -133,19 +133,15 @@ uint64_t printProcessA() {
 
 uint64_t printProcessB() {
 	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
-<<<<<<< HEAD
-	int64_t mqFD = MQopen("test", F_READ /*| F_NOBLOCK*/);
-=======
+
 	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
 	print("B opened MQ");
->>>>>>> juanmsgQAndan
+
 	char buff[17] = {0};
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-<<<<<<< HEAD
-		int64_t bytesRead = MQreceive(mqFD, buff, 6);
-=======
+
 			// print("\nB MQ:\n  Empty? ");
 			// printNum(MQisEmpty(mqFD));
 			// print("\n  Full? ");
@@ -155,7 +151,7 @@ uint64_t printProcessB() {
 			sleep(1000);
 		}
 		int64_t bytesRead = MQreceive(mqFD, buff, 16);
->>>>>>> juanmsgQAndan
+
 		if(bytesRead > 0) {
 			print("\nB <- '");
 			buff[bytesRead] = 0;

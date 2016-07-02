@@ -109,7 +109,7 @@ void initGame(GameData gameData){
 	
 	gameData->mqFDInputReceiverSend = MQopen("MQGameInputReceiverSend", F_WRITE /*| F_NOBLOCK*/);
 	char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
-	createProcess("InputReceiver", inputReceiver_main, 1, argvInputReceiver);
+	//createProcess("InputReceiver", inputReceiver_main, 1, argvInputReceiver);
 	
 
 	playGame(gameData);
