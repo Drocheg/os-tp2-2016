@@ -8,7 +8,7 @@ static uint8_t running = 0;
 //Jumps to the code module and executes code there
 int32_t runCodeModule() {
 	if(running) {
-		sys_write(STDERR, "Code module already running", 27);
+		// sys_write(STDERR, "Code module already running", 27);
 		return -1;
 	}
 	running = 1;

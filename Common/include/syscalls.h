@@ -17,11 +17,18 @@
 #define MALLOC 10
 #define TIME 11
 #define CREATE_PROCESS 12
-#define OPENDATAIMGMODULE 13
-#define EXIT 14
-#define PS 16
-#define IPCS 17
-#define SLEEP 18
+
+// Scheduler
+#define SLEEP 13
+#define WAITPID 14
+#define YIELD 15
+
+
+#define OPENDATAIMGMODULE 20
+#define EXIT 21
+#define PS 22
+#define IPCS 23
+
 
 //Video
 #define PAINT_PX 860			//Paint white pixel
@@ -37,7 +44,6 @@
 #define MQ_RECEIVE 773
 #define MQ_IS_FULL 774
 #define MQ_IS_EMPTY 775
-
 
 
 struct createProcessParams_s {

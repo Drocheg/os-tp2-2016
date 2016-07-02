@@ -5,6 +5,7 @@
 #include <fileDescriptors.h>
 #include <scanCodes.h>
 #include <video-common.h>
+#include <file-common.h>
 
 void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
@@ -15,12 +16,12 @@ void fwrite(uint8_t fd, char *buff, uint64_t maxBytes) {
 }
 
 void putchar(char c) {
-	_int80(SYSWRITE, STDOUT, (uint64_t)&c, 1);
+	_int80(SYSWRITE, STDOUT_, (uint64_t)&c, 1);
 }
 
 char getchar() {
 	char result;
-	_int80(SYSREAD, STDIN, (uint64_t)&result, 1);
+	_int80(SYSREAD, STDIN_, (uint64_t)&result, 1);
 	return result;
 }
 
@@ -51,7 +52,7 @@ void reboot() {
 }
 
 void print(const char *str) {
-	_int80(SYSWRITE, STDOUT, (uint64_t)str, strlen(str));
+	_int80(SYSWRITE, STDOUT_, (uint64_t)str, strlen(str));
 }
 
 void printNum(int64_t num) {
@@ -93,6 +94,16 @@ void * malloc(uint64_t size){
 
 void paintPx(uint64_t x, uint64_t y) {
 	paintColorPx(x, y, WHITE);
+}
+
+int64_t waitpid(uint64_t pid) {
+	int64_t result = 0;
+	_int80(WAITPID, pid, (uint64_t) &result, 0);
+	return result;
+}
+
+void yield() {
+	_int80(YIELD, 0, 0, 0);
 }
 
 void paintColorPx(uint64_t x, uint64_t y, uint32_t color) {

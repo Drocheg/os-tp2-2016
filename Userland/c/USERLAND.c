@@ -85,6 +85,22 @@ int32_t init_d(int argc, char* argv[]) {
 	}
 
 	clearScreen();
+
+	char array[40];
+	char c;
+	uint64_t i = 0;
+	print("La puta que te pario\n");
+	do {
+		c = getchar();
+		array[i++] = (c == '\n') ? 0 : c;
+		putchar(c);
+	}
+	while (c != '\n' && i < 40);
+	print("Termine el ciclo\n");
+	print(array);
+	while(1);
+
+
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
@@ -132,6 +148,7 @@ uint64_t printProcessB() {
 	print("B opened MQ");
 	char buff[17] = {0};
 	uint64_t aux = 0;
+	
 	while (1) {
 		aux++;
 			// print("\nB MQ:\n  Empty? ");
@@ -164,6 +181,7 @@ uint64_t printProcessC() {
 	exit(0);
 	return 0;
 }
+
 
 int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];

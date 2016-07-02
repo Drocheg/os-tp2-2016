@@ -1,54 +1,13 @@
 #include <memory.h>
 #include <kernel-lib.h>
 #include <fileManager.h>
-#include <keyboard.h>
+// #include <keyboard.h>
+#include <tty.h>
 #include <mq.h>
 #include <basicFile.h>
 
-//TODO implement these where appropriate and delete them from here
-int8_t stdinClose(uint64_t index) {
-	return -1;
-}
 
-int8_t stdoutReadChar(uint64_t index, char *character) {
-	return -1; //0;
-}
 
-int8_t stdoutWriteChar(uint64_t index, char *character) {
-	return -1; //0;
-}
-
-int8_t stdoutDataAvailable(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stdoutHasFreeSpace(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stdoutClose(uint64_t index) {
-	return -1;
-}
-
-int8_t stderrReadChar(uint64_t index, char *character) {
-	return -1; //0;
-}
-
-int8_t stderrWriteChar(uint64_t index, char *character) {
-	return -1; //0;
-}
-
-int8_t stderrDataAvailable(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stderrHasFreeSpace(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stderrClose(uint64_t index) {
-	return -1;
-}
 
 
 /* Structs */
@@ -173,16 +132,16 @@ static void initializeSTDIN() {
 static void initializeSTDOUT() {
 	(fileOperators[STDOUT_]).readCharFn = stdoutReadChar;
 	(fileOperators[STDOUT_]).writeCharFn = stdoutWriteChar;
-	(fileOperators[STDOUT_]).isEmptyFn = stdoutDataAvailable;
-	(fileOperators[STDOUT_]).isFullFn = stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).isEmptyFn = stdoutIsEmpty;
+	(fileOperators[STDOUT_]).isFullFn = stdoutIsFull;
 	(fileOperators[STDOUT_]).closeFn = stdoutClose;
 }
 
 static void initializeSTDERR() {
 	(fileOperators[STDERR_]).readCharFn = stderrReadChar;
 	(fileOperators[STDERR_]).writeCharFn = stderrWriteChar;
-	(fileOperators[STDERR_]).isEmptyFn = stderrDataAvailable;
-	(fileOperators[STDERR_]).isFullFn = stderrHasFreeSpace;
+	(fileOperators[STDERR_]).isEmptyFn = stderrIsEmpty;
+	(fileOperators[STDERR_]).isFullFn = stderrIsFull;
 	(fileOperators[STDERR_]).closeFn = stderrClose;
 }
 
