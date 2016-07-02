@@ -1,26 +1,25 @@
 
-#include <inputReceiver.h>
+#include <game.h>
 #include <stdlib.h>
 #include <usrlib.h>
 #include <scanCodes.h>
-
-typedef int64_t MsgQ;
-
-MsgQ msgQSend;
-MsgQ msgQReceive; 
+#include <syscalls.h>
+#include <interrupts.h>
+#include <songplayer.h>
+#include <inputReceiver.h>
+#include <mq.h>
+#include <file-common.h>
+ 
 
 //TODO cambiar input a int8_t en todos lados? ScanCodes siempre eso?
 
-//TODO borrar y usar las del merca y Juan
-int64_t getScanCode(){} 
-int64_t read(MsgQ msgQReceive){}
-void send(int64_t input, MsgQ msgQSend){}
+
 
 int64_t inputReceiver_main(int argc, char* argv[]);
-int8_t checkEnd();
+int8_t checkEnd(int64_t mqFDRead);
 void processInput(int64_t * input);
 int8_t validInput(int64_t inputProcessed);
-void sendInput(int64_t inputProcessed);
+void sendInput(int64_t inputProcessed, int64_t mqFDSend);
 
 void inputReceiver_start(int argc, char* argv[]){
 	int64_t result;
@@ -30,19 +29,29 @@ void inputReceiver_start(int argc, char* argv[]){
 
 
 int64_t inputReceiver_main(int argc, char* argv[]){
-	msgQSend = (MsgQ) argv[0];
-	msgQReceive = (MsgQ) argv[1];
+	int64_t mqFDSend;
+	int64_t mqFDRead;
+	mqFDSend = MQopen( argv[0], F_WRITE /*| F_NOBLOCK*/);
+	mqFDRead = MQopen(argv[1], F_READ | F_NOBLOCK);
+	
 	int64_t input;
-	while(checkEnd()){
-		input=getScanCode();
-		processInput(&input);
-		if(validInput(input)) sendInput(input);
+	while(checkEnd(mqFDRead)){
+		//input=getScanCode();
+		input=((time()/13)*7919)%2;
+		//processInput(&input);
+		if(validInput(input)) sendInput(input, mqFDSend);
 	}
+	return 0;
 }
 
-int8_t checkEnd(){
-	int64_t msgR = read(msgQReceive);
-	if(msgR==0) return 0;
+int8_t checkEnd(int64_t mqFDRead){
+	
+	if(!MQisEmpty(mqFDRead)){
+		int64_t msg;
+		MQreceive(mqFDRead, (char *)&msg, sizeof(int64_t));
+		if(msg==0) return 0;
+	}
+	
 	return 1;
 }
 
@@ -63,9 +72,12 @@ void processInput(int64_t * input){
 }
 
 int8_t validInput(int64_t inputProcessed){
-	return inputProcessed!=0; //0 era true o false? Se puede resumir esto. 
+	return inputProcessed==1; //0 era true o false? Se puede resumir esto. 
 }
 
-void sendInput(int64_t inputProcessed){
-	send(inputProcessed,msgQSend);
+void sendInput(int64_t inputProcessed, int64_t mqFDSend){
+	print("isEmptySender?");
+	printNum(MQsend(mqFDSend, (char *)&inputProcessed, sizeof(int64_t)));
+	printNum(MQisEmpty(mqFDSend));
+	for(int i=0; i<100000;i++);
 }

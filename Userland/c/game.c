@@ -107,9 +107,9 @@ void initGame(GameData gameData){
 	}
 	gameData->isGameOver = 0;
 	
-	gameData->mqFDInputReceiverSend = MQopen("MQGameInputReceiverSend", F_WRITE /*| F_NOBLOCK*/);
+	gameData->mqFDInputReceiverRead = MQopen("MQGameInputReceiverRead", F_READ /*| F_NOBLOCK*/);
 	char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
-	//createProcess("InputReceiver", inputReceiver_main, 1, argvInputReceiver);
+	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
 	
 
 	playGame(gameData);
@@ -255,12 +255,22 @@ void update(GameData gameData){
 	return;
 }
 
-//TODO use msgQ
+//TODO hacer una estapa en donde checkea input y tener un variable que sea isPlayerJumping. Para el exit.
 uint64_t isPlayerJumping(GameData gameData){
 	
-	char c = ((gameData->lastUpdateTime/13)*7919)%2;
-	if(c==1) return 1;
-	else return 0;
+	//char c = ((gameData->lastUpdateTime/13)*7919)%2;
+	int8_t isJumping = 0;
+	int64_t msg=0;
+	//print("isEmpty?");
+	//printNum(MQisEmpty(gameData->mqFDInputReceiverRead));
+	//print("\n");
+	while(!MQisEmpty(gameData->mqFDInputReceiverRead)){
+		MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
+			printNum(msg);
+		if(msg==1) isJumping=1;
+	}
+
+	return isJumping;
 
 }
 

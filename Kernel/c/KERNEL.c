@@ -45,7 +45,7 @@ int kernel_main(int argc, char *argv[]) {
 
 	/* Sets PIT frequency to 500 Hz (one interruption every 2 ms) */
 	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(500);	/* Any higher and PC speaker stops responding */
+	setPITfrequency(80);	/* Any higher and PC speaker stops responding */
 	ncPrint("Done.\n");
 
 	/* Initializes memory management */
