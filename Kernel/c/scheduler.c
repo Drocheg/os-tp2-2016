@@ -146,7 +146,6 @@ uint64_t sleep(uint64_t miliseconds) {
 int64_t waitpid(uint64_t pid) {
 
 	Node current = NULL;
-	uint64_t flag = 0;
 	if (checkScheduler()) {
 		return -1;
 	}
@@ -323,7 +322,7 @@ static int getFreeNode() {
 }
 
 
-static int64_t contador=0;
+/* static int64_t contador=0; TODO: Deprecate this */
 
 static void *nextProcessRecursive() {
 

@@ -10,15 +10,15 @@ void ttyPrintPrompt();
 
 
 
-int64_t stdinReadChar(uint32_t index, char *character);
-int64_t stdinWriteChar(uint32_t index, char *character);
-int64_t stdinDataAvailable(uint32_t index);
-int64_t stdinHasFreeSpace(uint32_t index);
+int8_t stdinReadChar(uint64_t index, char *dest);
+int8_t stdinWriteChar(uint64_t index, char *src);
+int8_t stdinIsEmpty(uint64_t index);
+int8_t stdinIsFull(uint64_t index);
 
-int64_t stdoutReadChar(uint32_t index, char *character);
-int64_t stdoutWriteChar(uint32_t index, char *character);
-int64_t stdoutDataAvailable(uint32_t index);
-int64_t stdoutHasFreeSpace(uint32_t index);
+int8_t stdoutReadChar(uint64_t index, char *dest);
+int8_t stdoutWriteChar(uint64_t index, char *src);
+int8_t stdoutIsEmpty(uint64_t index);
+int8_t stdoutIsFull(uint64_t index);
 
 
 #endif /* TTY_H */

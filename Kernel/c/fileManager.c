@@ -25,11 +25,11 @@ int8_t stderrWriteChar(uint64_t index, char *character) {
 	return -1; //0;
 }
 
-int8_t stderrDataAvailable(uint64_t index) {
+int8_t stderrIsEmpty(uint64_t index) {
 	return -1; //0;
 }
 
-int8_t stderrHasFreeSpace(uint64_t index) {
+int8_t stderrIsFull(uint64_t index) {
 	return -1; //0;
 }
 
@@ -161,16 +161,16 @@ static void initializeSTDIN() {
 static void initializeSTDOUT() {
 	(fileOperators[STDOUT_]).readCharFn = stdoutReadChar;
 	(fileOperators[STDOUT_]).writeCharFn = stdoutWriteChar;
-	(fileOperators[STDOUT_]).isEmptyFn = stdoutDataAvailable;
-	(fileOperators[STDOUT_]).isFullFn = stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).isEmptyFn = stdoutIsEmpty;
+	(fileOperators[STDOUT_]).isFullFn = stdoutIsFull;
 	(fileOperators[STDOUT_]).closeFn = stdoutClose;
 }
 
 static void initializeSTDERR() {
 	(fileOperators[STDERR_]).readCharFn = stderrReadChar;
 	(fileOperators[STDERR_]).writeCharFn = stderrWriteChar;
-	(fileOperators[STDERR_]).isEmptyFn = stderrDataAvailable;
-	(fileOperators[STDERR_]).isFullFn = stderrHasFreeSpace;
+	(fileOperators[STDERR_]).isEmptyFn = stderrIsEmpty;
+	(fileOperators[STDERR_]).isFullFn = stderrIsFull;
 	(fileOperators[STDERR_]).closeFn = stderrClose;
 }
 

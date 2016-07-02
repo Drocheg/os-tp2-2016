@@ -28,8 +28,7 @@ static uint64_t stdinDeqIdx = 0;
 
 static int64_t stdinEnqueueChar(int64_t value);
 static int64_t stdinDequeueChar();
-static uint64_t stdinIsFull();
-static uint64_t stdinIsEmpty();
+
 
 
 
@@ -40,8 +39,7 @@ static uint64_t stdoutBufferSize = 0;
 static uint64_t stdoutEnqIdx = 0;
 static uint64_t stdoutDeqIdx = 0;
 
-static uint64_t stdoutIsFull();
-static uint64_t stdoutIsEmpty();
+
 static int64_t stdoutEnqueueChar(int64_t value);
 static int64_t stdoutDequeueChar();
 static int64_t stdoutPopChar();
@@ -204,7 +202,7 @@ void ttyPrintPrompt() {
 
 void fflush() {
 
-    while(!stdoutIsEmpty()) {
+    while(!stdoutIsEmpty(0)) {
         ncPrintChar((char) stdoutDequeueChar());
     }
     backSpaceLimit = 0;
@@ -213,74 +211,53 @@ void fflush() {
 
 
 
-int64_t stdoutReadChar(uint32_t index, char *character) {
-    return -1;
+int8_t stdoutReadChar(uint64_t index, char *dest) {
+    return -1;  /* Unsupported operation */
 }
 
 
-int64_t stdoutWriteChar(uint32_t index, char *character) {
-    return ttySTDOUTPrint(&character);
+int8_t stdoutWriteChar(uint64_t index, char *src) {
+    return ttySTDOUTPrint(*src);
+}
+
+int8_t stdoutIsFull(uint64_t index) {
+    return (stdoutBufferSize == STDOUT_BUFFER_SIZE);
+}
+
+int8_t stdoutIsEmpty(uint64_t index) {
+    return (stdoutBufferSize == 0);
 }
 
 
-int64_t stdoutDataAvailable(uint32_t index) {
-    return 0;
-}
 
 
-int64_t stdoutHasFreeSpace(uint32_t index) {
-    return 0;
-}
-
-
-
-
-
-
-int64_t stdinReadChar(uint32_t index, char *character) {
+int8_t stdinReadChar(uint64_t index, char *src) {
     // *character = (char) pollProcessedKey();
     // return 0;
     return 0;
 }
 
-
-int64_t stdinWriteChar(uint32_t index, char *character) {
-    // return -1;  Unsupported operation 
-    return 0;
+int8_t stdinWriteChar(uint64_t index, char *dest) {
+    return -1;  /* Unsupported operation */
 }
 
-int64_t stdinDataAvailable(uint32_t index) {
-    
-    // if (bufferIsEmpty()) {
-    //  return -1;   Returns -1 when there is no data available 
-    // }
-    // return 0; /* Returns 0 when there is data available */
-    return 0;
-}
-
-
-int64_t stdinHasFreeSpace(uint32_t index) {
-    // if (bufferIsFull()) {
-    //  return -1;   Returns -1 when file doesn't have space 
-    // }
-    // return 0; /* Returns 0 when it has free space */
-    return 0;
-}
-
-
-
-static uint64_t stdinIsFull() {
+int8_t stdinIsFull(uint64_t index) {
     return (stdinBufferSize == STDIN_BUFFER_SIZE);
 }
 
-static uint64_t stdinIsEmpty() {
+int8_t stdinIsEmpty(uint64_t index) {
     return (stdinBufferSize == 0);
 }
 
 
+
+
+
+
+
 static int64_t stdinEnqueueChar(int64_t value) {
 
-	if (stdinIsFull()) {
+	if (stdinIsFull(0)) {
 		return -1;
 	}
 
@@ -295,7 +272,7 @@ static int64_t stdinEnqueueChar(int64_t value) {
 static int64_t stdinDequeueChar() {
 
 	char c = 0;
-	if (stdinIsEmpty()) {
+	if (stdinIsEmpty(0)) {
 		return -1; /* Same position of index can be achieved is full or if is empty */
 	}
 	c = stdinBuffer[stdinDeqIdx++];
@@ -310,18 +287,12 @@ static int64_t stdinDequeueChar() {
 
 
 
-static uint64_t stdoutIsFull() {
-    return (stdoutBufferSize == STDOUT_BUFFER_SIZE);
-}
 
-static uint64_t stdoutIsEmpty() {
-    return (stdoutBufferSize == 0);
-}
 
 
 static int64_t stdoutEnqueueChar(int64_t value) {
 
-    if (stdoutIsFull()) {
+    if (stdoutIsFull(0)) {
         return -1;
     }
 
@@ -337,7 +308,7 @@ static int64_t stdoutEnqueueChar(int64_t value) {
 static int64_t stdoutDequeueChar() {
 
     char c = 0;
-    if (stdoutIsEmpty()) {
+    if (stdoutIsEmpty(0)) {
         return -1;
     }
     c = stdoutBuffer[stdoutDeqIdx++];
@@ -351,7 +322,7 @@ static int64_t stdoutDequeueChar() {
 
 static int64_t stdoutPopChar() {
 
-    if (stdoutIsEmpty()) {
+    if (stdoutIsEmpty(0)) {
         return -1;
     }
     if (stdoutEnqIdx == 0) {
