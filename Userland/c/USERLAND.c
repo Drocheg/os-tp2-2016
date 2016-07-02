@@ -7,40 +7,54 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <mq.h>
+#include <file-common.h>
+#include <game.h>
 
 extern char bss;
 extern char endOfBinary;
 static int bssCheck = 0;
 
 static const int MAJOR_VER = 1;
-static const int MINOR_VER = 0;
-static int EXIT = 0;
+static const int MINOR_VER = 1;
+static int isExit = 0;
+static char lastCommand[100] = {0};
 
-typedef struct
-{
+typedef struct {
 	char *name; 
 	void (*function)(void);
 	char *help;
 } command;
 
 void beep();
-void exit();
+void exitKernel();
 void help();
 void jalp();
 void sayHello();
-void runCommand(char *cmd);
+uint8_t runCommand(char *cmd);
 void dumpDataModule();
 void rainbow();
 void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
 
+void playMainSong();
+void playSongTwo();
+void bangBang();
+void sleepForTwoSeconds();
+void testMQ();
+
+
+
+void game();
+
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
 	{"clear", clearScreen, "Clears the screen"},
-	{"playsong", playSong, "Plays the song loaded as data module"},
-	{"exit", exit, "Exits the kernel"},
+	{"playsong", playMainSong, "Plays the first song loaded in the data module"},
+	{"playsong2", playSongTwo, "Plays the second song loaded in the data module"},
+	{"exit", exitKernel, "Exits the kernel"},
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
 	{"jalp", jalp, "Ai can't spik inglish"},
@@ -48,11 +62,18 @@ static command commands[] = {
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
-	{"time", getTime, "Get ms since system boot"}
+	{"time", getTime, "Get ms since system boot"},
+	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
+	{"mq", testMQ, "Test MQs"},
+	{"1", bangBang, "Re-run your last valid command"},
+	{"game", game, "Play Game"},
+	{"ps", ps, "Print ps"},
+	{"ipcs", ipcs, "Print ipcs"}
 };
 
 uint64_t printProcessA();
 uint64_t printProcessB();
+uint64_t printProcessC();
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -63,57 +84,75 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
+	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
+//	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "process B", printProcessB, 1, argvB);
-	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
-
+	createProcess(0, "process A", printProcessA, 1, argvA);
+	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
 
 }
 
-uint64_t printProcessA() {
 
+
+uint64_t printProcessA() {
+	int64_t mqFD = MQopen("test", F_WRITE);
 	uint64_t aux = 0;
 	while (1) {
-		// print("Hi, from process A ------\n");
 		aux++;
-		sleep(3000);
+		print("\nA -> 'Hello'\n");
+		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		// if(aux >= 3) {
+		// 	if(aux == 3) {
+		// 		print("\nClosing MQ returned ");
+		// 		printNum(MQclose(mqFD));
+		// 		print("\n");
+		// 	}
+		// }
+		// else {
+		// 	print("\nA -> 'Hello'\n");
+		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		// }
+		sleep(1000);
 	}
 	return 0;
 }
 
 uint64_t printProcessB() {
-
+	int64_t mqFD = MQopen("test", F_READ);
+	char buff[17] = {0};
 	uint64_t aux = 0;
-	while ((uint64_t)-1) {
-		// sprint("Hi, from process B*******\n");
+	
+	while (1) {
 		aux++;
-		sleep(10000);
+		print("\nB <- '");
+		MQreceive(mqFD, buff, 16);
+		print(buff);
+		print("'\n");
+		sleep(2000);
 	}
 	return 0;
 }
 
-int32_t userland_main(int argc, char* argv[]) {
-	memset(&bss, 0, &endOfBinary - &bss);	//Clean BSS
-	
-	if(bssCheck != 0) {						//Improper BSS setup, abort
-		return -1;
-	}
+uint64_t printProcessC() {
+	print("CCCC");
+	exit(0);
+	return 0;
+}
 
-	clearScreen();
+
+int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
+	
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
-
-	while(1) {
-		char c = getchar();
-	}
-	while(!EXIT) {
+	while(!isExit) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
@@ -140,9 +179,18 @@ int32_t userland_main(int argc, char* argv[]) {
 		if(index > 0) {						//Don't do anything if buffer is empty
 			buffer[index] = 0;				//Entry finished, terminate with null
 			print("\n");
-			runCommand(buffer);
-			if(!streql(buffer, "clear")) {
-				print("\n");
+			uint8_t valid = runCommand(buffer);
+
+			// if(!streql(buffer, "clear")) {
+			// 	print("\n");
+			// }
+			if(!streql(buffer, "1") && valid) {
+				//Save entered command
+				uint8_t i;
+				for(i = 0; buffer[i] != 0; i++) {
+					lastCommand[i] = buffer[i];
+				}
+				lastCommand[i] = 0;
 			}
 		}
 		else {
@@ -171,10 +219,11 @@ void printVer(const char *str) {
 }
 
 void beep() {
-	_int80(SPEAKER, 1000, 1, 0);
+	soundFX(1000);
 }
 
-void runCommand(char *cmd) {
+
+uint8_t runCommand(char *cmd) {
 	toLowerStr(cmd);
 	int found = 0;
 	for(int i = 0; i < sizeof(commands)/sizeof(command); i++) {
@@ -185,12 +234,13 @@ void runCommand(char *cmd) {
 		}
 	}
 	if(!found) {
-		print("No such command. Try running help");
+		print("No such command. Try running help\n");
 	}
+	return found;
 }
 
-void exit() {
-	EXIT = 1;
+void exitKernel() {
+	isExit = 1;
 }
 
 void sayHello() {
@@ -229,4 +279,43 @@ void getTime() {
 	print("Current time: ");
 	printNum(time());
 	print("ms\n");
+}
+
+void playMainSong(){
+	char* argvSongPlayer[] = {"2"};
+	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+	return;
+}
+
+void playSongTwo(){
+	playSong(1);
+}
+
+void game(){
+	char* argvGame[] = {"2"};
+	createProcess(0, "Game", game_start, 1, argvGame);
+	return;
+}
+
+void bangBang() {
+	if(lastCommand[0] == 0) {
+		print("No saved command\n");
+	}
+	else {
+		print(lastCommand);
+		print("\n");
+		runCommand(lastCommand);
+	}
+}
+
+void sleepForTwoSeconds() {
+	print("Sleeping...");
+	sleep(2000);
+	print("woke up\n");
+}
+
+void testMQ() {
+	int64_t read = MQopen("test", F_READ);
+	print("Read FD: ");
+	printNum(read);
 }

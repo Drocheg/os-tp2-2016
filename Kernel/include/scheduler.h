@@ -35,7 +35,7 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
  * It's a blocking function, so it will return when maxBytes are achieved
  * Returns read/written bytes, or -1 if any error ocurred
  */
-uint64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking);
+int64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking);
 
 /*
  * Stops execution of the running process for <miliseconds> miliseconds.
@@ -73,6 +73,9 @@ uint64_t getCurrentPCBIndex();
  * Returns 0 on suceess, or -1 otherwise
  */
 uint64_t finishProcess();
+
+
+void printPS();
 
 
 

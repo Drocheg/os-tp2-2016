@@ -4,6 +4,7 @@
 #include <syscalls.h>
 #include <fileDescriptors.h>
 #include <scanCodes.h>
+#include <video-common.h>
 
 void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
@@ -21,6 +22,14 @@ char getchar() {
 	char result;
 	_int80(SYSREAD, STDIN, (uint64_t)&result, 1);
 	return result;
+}
+
+void ps(){
+	_int80(PS, 0, 0, 0);
+}
+
+void ipcs(){
+	_int80(IPCS, 0, 0, 0);
 }
 
 uint8_t getscancode() {
@@ -45,9 +54,13 @@ void print(const char *str) {
 	_int80(SYSWRITE, STDOUT, (uint64_t)str, strlen(str));
 }
 
-void printNum(uint64_t num) {
-	char buff[20];
-	intToStr(num, buff);
+void printNum(int64_t num) {
+	char buff[21];
+	int negative = num < 0;
+	if(negative) {
+		buff[0] = '-';
+	}
+	intToStr(num, negative ? buff+1 : buff);
 	print(buff);
 }
 
@@ -67,13 +80,19 @@ uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *ent
 }
 
 uint64_t time() {
-	// uint64_t result;
-	return _int80(TIME, 0, 0, 0);
-	// return result;
+	uint64_t result;
+	_int80(TIME, (uint64_t)&result, 0, 0);
+	return result;
 }
 
-uint64_t sleep(uint64_t miliseconds) {
-	return _int80(SLEEP, miliseconds, 0, 0);
+void * malloc(uint64_t size){
+	void * result;
+	_int80(MALLOC, &result, size, 0);
+	return result;
+}
+
+void paintPx(uint64_t x, uint64_t y) {
+	paintColorPx(x, y, WHITE);
 }
 
 int64_t waitpid(uint64_t pid) {
@@ -85,6 +104,37 @@ int64_t waitpid(uint64_t pid) {
 void yield() {
 	_int80(YIELD, 0, 0, 0);
 }
+
+void paintColorPx(uint64_t x, uint64_t y, uint32_t color) {
+	_int80(PAINT_PX_COLOR, x, y, color);
+}
+
+void paintRect(REKTangle *rekt) {
+	_int80(PAINT_REKT, (uint64_t) rekt, 0, 0);
+}
+
+void fillRect(REKTangle *rekt) {
+	_int80(FILL_REKT, (uint64_t) rekt, 0, 0);
+}
+
+void paintImg(Image *img, uint64_t x, uint64_t y) {
+	_int80(PAINT_IMG, (uint64_t) img, x, y);
+}
+
+void sleep(uint64_t miliseconds) {
+	_int80(SLEEP, miliseconds, 0, 0);
+}
+
+void soundFX(uint32_t freq){
+	_int80(SPEAKER, freq, 1, 0);
+	sleep(50);
+	_int80(SPEAKER, 0, 1, 0);
+}
+
+void exit(int64_t result){
+	_int80(EXIT, result,0,0);
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;

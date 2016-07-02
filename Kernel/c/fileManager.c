@@ -1,86 +1,70 @@
 #include <memory.h>
 #include <kernel-lib.h>
 #include <fileManager.h>
-
 #include <keyboard.h>
 #include <tty.h>
+#include <mq.h>
+#include <basicFile.h>
 
 
 
-
-int64_t stderrReadChar(uint32_t index, char *character) {
-	return 0;
+//TODO implement these where appropriate and delete them from here
+int8_t stdinClose(uint64_t index) {
+	return -1;
 }
 
-int64_t stderrWriteChar(uint32_t index, char *character) {
-	return 0;
+int8_t stdoutClose(uint64_t index) {
+	return -1;
 }
 
-int64_t stderrDataAvailable(uint32_t index) {
-	return 0;
+int8_t stderrReadChar(uint64_t index, char *character) {
+	return -1; //0;
 }
 
-int64_t stderrHasFreeSpace(uint32_t index) {
-	return 0;
+int8_t stderrWriteChar(uint64_t index, char *character) {
+	return -1; //0;
 }
 
-int64_t msqsReadChar(uint32_t index, char *character) {
-	return 0;
+int8_t stderrDataAvailable(uint64_t index) {
+	return -1; //0;
 }
 
-int64_t msqsWriteChar(uint32_t index, char *character) {
-	return 0;
+int8_t stderrHasFreeSpace(uint64_t index) {
+	return -1; //0;
 }
 
-int64_t msqsDataAvailable(uint32_t index) {
-	return 0;
+int8_t stderrClose(uint64_t index) {
+	return -1;
 }
 
-int64_t msqsHasFreeSpace(uint32_t index) {
-	return 0;
-}
-
-
-
-
-/* Typedefs */
-
-/*
- * We assume that every "file" is saved into a table.
- * If a file is unique (for example, video memory or keyboard buffer),
- * a wrapper function must be implemented.
- */
-typedef int64_t (*ReadCharFn)(int32_t, char*);
-typedef int64_t (*WriteCharFn)(int32_t, char*);
-typedef int64_t (*DataAvailableFn)(int32_t);
-typedef int64_t (*HasFreeSpaceFn)(int32_t);
 
 
 /* Structs */
-struct fileManagerDescriptor_s {
-
-	ReadCharFn readCharFn;
-	WriteCharFn writeCharFn;
-	DataAvailableFn dataAvailableFn;
-	HasFreeSpaceFn hasFreeSpaceFn;
+struct fileOperator_s {
+	readCharFn_t readCharFn;
+	writeCharFn_t writeCharFn;
+	isEmptyFn_t isEmptyFn;
+	isFullFn_t isFullFn;
+	closeFn_t closeFn;
 };
 
 
 /* Static variables */
 static uint8_t initialized = 0;
-static struct fileManagerDescriptor_s fileManagerTable[MESSAGE_QUEUES - STDIN_ + 1];
+static struct fileOperator_s fileOperators[RAW_KEYS - STDIN_ + 1];
 
 
 /* Static functions prototypes */
-static uint64_t checkParameters(FileType fileType);
+static int8_t isValidFileType(FileType fileType);
 static void initializeSTDIN();
 static void initializeSTDOUT();
 static void initializeSTDERR();
 static void initializeMessageQueues();
-static uint64_t readChar(FileType fileType, int32_t fileIndex, char *character);
-static uint64_t writeChar(FileType fileType, int32_t fileIndex, char *character);
-static uint64_t dataAvailable(FileType fileType, int32_t fileIndex);
-static uint64_t hasFreeSpace(FileType fileType, int32_t fileIndex);
+static int8_t readChar(FileType fileType, int32_t fileIndex, char *character);
+static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character);
+static int8_t isEmpty(FileType fileType, int32_t fileIndex);
+static int8_t isFull(FileType fileType, int32_t fileIndex);
+static int8_t close(FileType fileType, int32_t fileIndex);
 
 
 
@@ -94,14 +78,12 @@ static uint64_t hasFreeSpace(FileType fileType, int32_t fileIndex);
  * Initializes the file manager
  */
 void initializeFileManager() {
-
-
+	initializeBasicFiles();
 	initializeSTDIN();
 	initializeSTDOUT();
 	initializeSTDERR();
 	initializeMessageQueues();
 	initialized = 1;
-
 }
 
 
@@ -112,22 +94,39 @@ void initializeFileManager() {
  * It will be used just the first position of the <character> pointer.
 
  * Returns 0 on success, or -1 otherwise. 
- * Note: for AVAILABLE_DATA and FREE_SPACE, 0 is returned when true, and -1 when false
+ * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
-uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character) {
-
-
-	if (checkParameters(fileType)) {
+int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character) {
+	if (isValidFileType(fileType)) {
 		return -1;
 	}
+	int64_t result;
+	int8_t operationResult;
 	switch(operation) {
-
-		case READ: return readChar(fileType, fileIndex, character);
-		case WRITE: return writeChar(fileType, fileIndex, character);
-		case AVAILABLE_DATA: return dataAvailable(fileType, fileIndex);
-		case FREE_SPACE: return hasFreeSpace(fileType, fileIndex);
+		case READ:
+			operationResult = readChar(fileType, fileIndex, character);
+			result = operationResult == -1 ? -1 : 0;
+			break;
+		case WRITE:
+			operationResult = writeChar(fileType, fileIndex, character);
+			result = operationResult == -1 ? -1 : 0;
+			break;
+		case IS_EMPTY:
+			operationResult = isEmpty(fileType, fileIndex);
+			result = operationResult ? 0 : -1;
+			break;
+		case IS_FULL:
+			operationResult = isFull(fileType, fileIndex);
+			result = operationResult ? 0 : -1;
+			break;
+		case CLOSE:
+			operationResult = close(fileType, fileIndex);
+			result = operationResult == -1 ? -1 : 0;
+		default:
+			result = -1;
+			break;
 	}
-	return -1;
+	return result;
 }
 
 
@@ -144,75 +143,61 @@ uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, 
  * Checks <fileType> parameter
  * Returns 0 if everything is OK, or -1 otherwise.
  */
-static uint64_t checkParameters(FileType fileType) {
-
-	if (((uint64_t)fileType) > MESSAGE_QUEUES - STDIN_) {
+static int8_t isValidFileType(FileType fileType) {
+	if (((uint64_t)fileType) > MESSAGE_QUEUE - STDIN_) {
 		return -1;
 	}
 	return 0;
 }
 
 static void initializeSTDIN() {
-
-	(fileManagerTable[STDIN_]).readCharFn = stdinReadChar;
-	(fileManagerTable[STDIN_]).writeCharFn = stdinWriteChar;
-	(fileManagerTable[STDIN_]).dataAvailableFn = stdinDataAvailable;
-	(fileManagerTable[STDIN_]).hasFreeSpaceFn = stdinHasFreeSpace;
+	(fileOperators[STDIN_]).readCharFn = stdinReadChar;
+	(fileOperators[STDIN_]).writeCharFn = stdinWriteChar;
+	(fileOperators[STDIN_]).isEmptyFn = stdinIsEmpty;
+	(fileOperators[STDIN_]).isFullFn = stdinIsFull;
+	(fileOperators[STDIN_]).closeFn = stdinClose;
 }
 
 static void initializeSTDOUT() {
-
-	(fileManagerTable[STDOUT_]).readCharFn = stdoutReadChar;
-	(fileManagerTable[STDOUT_]).writeCharFn = stdoutWriteChar;
-	(fileManagerTable[STDOUT_]).dataAvailableFn = stdoutDataAvailable;
-	(fileManagerTable[STDOUT_]).hasFreeSpaceFn = stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).readCharFn = stdoutReadChar;
+	(fileOperators[STDOUT_]).writeCharFn = stdoutWriteChar;
+	(fileOperators[STDOUT_]).isEmptyFn = stdoutDataAvailable;
+	(fileOperators[STDOUT_]).isFullFn = stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).closeFn = stdoutClose;
 }
 
 static void initializeSTDERR() {
-
-	(fileManagerTable[STDERR_]).readCharFn = stderrReadChar;
-	(fileManagerTable[STDERR_]).writeCharFn = stderrWriteChar;
-	(fileManagerTable[STDERR_]).dataAvailableFn = stderrDataAvailable;
-	(fileManagerTable[STDERR_]).hasFreeSpaceFn = stderrHasFreeSpace;
+	(fileOperators[STDERR_]).readCharFn = stderrReadChar;
+	(fileOperators[STDERR_]).writeCharFn = stderrWriteChar;
+	(fileOperators[STDERR_]).isEmptyFn = stderrDataAvailable;
+	(fileOperators[STDERR_]).isFullFn = stderrHasFreeSpace;
+	(fileOperators[STDERR_]).closeFn = stderrClose;
 }
 
 static void initializeMessageQueues() {
-
-	(fileManagerTable[MESSAGE_QUEUES]).readCharFn = msqsReadChar;
-	(fileManagerTable[MESSAGE_QUEUES]).writeCharFn = msqsWriteChar;
-	(fileManagerTable[MESSAGE_QUEUES]).dataAvailableFn = msqsDataAvailable;
-	(fileManagerTable[MESSAGE_QUEUES]).hasFreeSpaceFn = msqsHasFreeSpace;
+	(fileOperators[MESSAGE_QUEUE]).readCharFn = MQreadChar;
+	(fileOperators[MESSAGE_QUEUE]).writeCharFn = MQwriteChar;
+	(fileOperators[MESSAGE_QUEUE]).isEmptyFn = MQisEmpty;
+	(fileOperators[MESSAGE_QUEUE]).isFullFn = MQisFull;
+	(fileOperators[MESSAGE_QUEUE]).closeFn = MQclose;
 }
 
-static uint64_t readChar(FileType fileType, int32_t fileIndex, char *character) {
-	return (fileManagerTable[(uint64_t) fileType]).readCharFn(fileIndex, character);
+static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {
+	return (fileOperators[(uint64_t) fileType]).readCharFn(fileIndex, character);
 }
 
-static uint64_t writeChar(FileType fileType, int32_t fileIndex, char *character) {
-	return (fileManagerTable[(uint64_t) fileType]).writeCharFn(fileIndex, character);
+static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character) {
+	return (fileOperators[fileType]).writeCharFn(fileIndex, character);
 }
 
-static uint64_t dataAvailable(FileType fileType, int32_t fileIndex) {
-	return (fileManagerTable[(uint64_t) fileType]).dataAvailableFn(fileIndex);
+static int8_t isFull(FileType fileType, int32_t fileIndex) {
+	return (fileOperators[(uint64_t) fileType]).isFullFn(fileIndex);
 }
 
-static uint64_t hasFreeSpace(FileType fileType, int32_t fileIndex) {
-	return (fileManagerTable[(uint64_t) fileType]).hasFreeSpaceFn(fileIndex);
+static int8_t isEmpty(FileType fileType, int32_t fileIndex) {
+	return (fileOperators[(uint64_t) fileType]).isEmptyFn(fileIndex);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+static int8_t close(FileType fileType, int32_t fileIndex) {
+	return (fileOperators[(uint64_t) fileType]).closeFn(fileIndex);
+}

@@ -17,9 +17,33 @@
 #define MALLOC 10
 #define TIME 11
 #define CREATE_PROCESS 12
+
+// Scheduler
 #define SLEEP 13
-#define WAITPID 20
-#define YIELD 21
+#define WAITPID 14
+#define YIELD 15
+
+
+#define OPENDATAIMGMODULE 20
+#define EXIT 21
+#define PS 22
+#define IPCS 23
+
+
+//Video
+#define PAINT_PX 860			//Paint white pixel
+#define PAINT_PX_COLOR 861		//Paint color pixel
+#define PAINT_REKT 862			//Paint REKTangle
+#define FILL_REKT 863			//Fill REKTangle
+#define PAINT_IMG 864			//Paint image
+
+//Message queues
+#define MQ_OPEN 770
+#define MQ_CLOSE 771
+#define MQ_SEND 772
+#define MQ_RECEIVE 773
+#define MQ_IS_FULL 774
+#define MQ_IS_EMPTY 775
 
 
 struct createProcessParams_s {

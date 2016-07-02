@@ -12,6 +12,7 @@
 #include <process.h>
 #include <scheduler.h>
 #include <fileManager.h>
+#include <basicFile.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -29,12 +30,13 @@ void * initializeKernelBinary();
 static void finishKernel();
 
 int kernel_main(int argc, char *argv[]) {
-
 	int32_t ret = 0;
+	setGraphicMode();
+	ncPrint("Set graphic video mode\n");
+
 	ncClear();
 	ncPrint("Welcome to the kernel!\n");
 
-	/* Sets up IDT */
 	ncPrint("Setting up IDT...");
 	setInterrupt(0x20, (uint64_t)&int20Receiver);
 	setInterrupt(0x21, (uint64_t)&int21Receiver);
@@ -141,12 +143,11 @@ void * getStackBase() {
 void * initializeKernelBinary() {
 	void * moduleAddresses[] = {
 		CODE_MODULE_ADDR,
-		DATA_MODULE_ADDR
+		DATA_MODULE_ADDR,
+		DATA_MODULE_IMG_ADDR
 	};
 	loadModules(&endOfKernelBinary, moduleAddresses);
 	clearBSS(&bss, &endOfKernel - &bss);
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
-
-

@@ -5,6 +5,7 @@
 #include <scanCodes.h>
 #include <modules.h>
 #include <speaker.h>
+#include <video-common.h>
 #include <video.h>
 #include <scheduler.h>
 #include <fileManager.h>
@@ -12,20 +13,17 @@
 #include <interrupts.h>
 
 
-uint64_t read(uint64_t fd, char *buffer, uint64_t maxBytes) {
-
-	return fileOperation(fd, buffer, maxBytes, INPUT, 1);
+int64_t read(uint64_t fd, char *buffer, uint64_t maxBytes) {
+	return fileOperation(fd, buffer, maxBytes, INPUT, 1);		//TODO don't hardcode 1, get blocking flag from FD
 }
 
-
-
-uint64_t write(uint64_t fd, char *buffer, uint64_t maxBytes) {
-
-	return fileOperation(fd, buffer, maxBytes, OUTPUT, 1);
+int64_t write(uint64_t fd, char *buffer, uint64_t maxBytes) {
+	return fileOperation(fd, buffer, maxBytes, OUTPUT, 1);		//TODO don't hardcode 1, get blocking flag from FD
 }
 
 
 //Reads from different defined files: processed keyboard and unprocessed keyboard
+
 // int64_t sys_read(uint8_t fd, char *buff, uint32_t maxBytes) {
 // 	int64_t result;
 // 	if(fd < MIN_FD || fd > MAX_FD) return -1;
@@ -100,7 +98,7 @@ uint64_t write(uint64_t fd, char *buffer, uint64_t maxBytes) {
 
 //Writes notes and frequencies to the pc speaker
 void sys_sound(uint32_t freq, uint32_t time) {
-	offerSound(freq, time);
+	playSound(freq);
 }
 
 void * memset(void * destination, int32_t c, uint64_t length)
@@ -157,3 +155,6 @@ void *memcpy(void *destination, const void *source, uint64_t length)
 
 
 
+void printIPCS(){
+	ncPrint("IPCS");
+}
