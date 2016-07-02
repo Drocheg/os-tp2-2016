@@ -13,6 +13,7 @@
 #include <process.h>
 #include <interrupts.h>
 #include <scheduler.h>
+#include <mq.h>
 
 
 static void timerTick();

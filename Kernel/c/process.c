@@ -406,19 +406,27 @@ int64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation op
 		return -1;
 	}
 	if (!hasPermissions(PCBIndex, fileDescriptor, operation)) {
-		ncPrint("\nPermission denied");
-		while(1);
 		return -1; /* Permission denied */
 	}
 	process = &(pcb[PCBIndex]);
 	fileIndex = (int64_t) (process->fileDescriptors).entries[fileDescriptor].index;
 	fileType = (FileType) (process->fileDescriptors).entries[fileDescriptor].fileType;
+	ncPrint("Performing operation #");
+	ncPrintDec(operation);
+	ncPrint("on file type #");
+	ncPrintDec(fileType);
+	ncPrint(" in index #");
+	ncPrintDec(fileIndex);
+	ncPrint(" of PCB entry #");
+	ncPrintDec(PCBIndex);
+	
+	
 
-	operate(operation, fileType, fileIndex, character);
-	if (operation == READ) { 
-		// ncPrintDec(*character);
-	}
-	return 0;
+	int64_t la = operate(operation, fileType, fileIndex, character);
+	ncPrint("Operate returned ");
+	ncPrintDec(la);
+	return la;
+	// return operate(operation, fileType, fileIndex, character);
 }
 
 /*
@@ -618,6 +626,7 @@ static uint64_t initializeStack(void **userStackTop, char name[32], void *mainFu
 
 
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation) {
+	return 1; 	//Everyone can do everything. WOOOO!
 	uint32_t flags = getFileFlags(PCBIndex, fileDescriptor);
 	ncPrint("Flags: ");
 	ncPrintHex(flags);
@@ -636,7 +645,8 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
 			return (flags & F_READ);
 		case WRITE:
 			return (flags & F_WRITE);
-		default:
+		case IS_FULL:
+		case IS_EMPTY:
 			return 1;
 	}
 	return 0;

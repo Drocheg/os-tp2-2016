@@ -63,7 +63,7 @@ struct fileOperator_s {
 
 /* Static variables */
 static uint8_t initialized = 0;
-static struct fileOperator_s fileOperators[MESSAGE_QUEUE - STDIN_ + 1];
+static struct fileOperator_s fileOperators[RAW_KEYS - STDIN_ + 1];
 
 
 /* Static functions prototypes */
@@ -107,17 +107,22 @@ void initializeFileManager() {
  * Returns 0 on success, or -1 otherwise. 
  * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
-uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character) {
+int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character) {
 	if (isValidFileType(fileType)) {
 		return -1;
 	}
 	ncPrint("At operate");
 	switch(operation) {
-		case READ: return readChar(fileType, fileIndex, character);
-		case WRITE: return writeChar(fileType, fileIndex, character);
-		case IS_EMPTY: return isEmpty(fileType, fileIndex);
-		case IS_FULL: return isFull(fileType, fileIndex);
-		default: return -1;
+		case READ:
+			return readChar(fileType, fileIndex, character);
+		case WRITE:
+			return writeChar(fileType, fileIndex, character);
+		case IS_EMPTY:
+			return isEmpty(fileType, fileIndex);
+		case IS_FULL:
+			return isFull(fileType, fileIndex);
+		default:
+			return -1;
 	}
 }
 

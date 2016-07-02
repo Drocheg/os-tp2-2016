@@ -12,7 +12,7 @@
 */
 
 //Supported File types.
-typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE} FileType;
+typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE, RAW_KEYS} FileType;
 
 
 /*
@@ -83,7 +83,7 @@ void initializeFileManager();
  * Returns 0 on success, or -1 otherwise. 
  * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
-uint64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character);
+int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character);
 
 
 
