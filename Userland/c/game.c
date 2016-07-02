@@ -84,7 +84,7 @@ int64_t game_main(int argc, char* argv[]){
 	//music
 	gameData->mqFDMusicSend = MQopen("MQGameMusicSend", F_WRITE /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQGameMusicRead", "MQGameMusicSend"};
-	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
+	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
 	int64_t songNum = 2;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 
@@ -150,10 +150,7 @@ void update(GameData gameData){
 			playJumpFX(updateTime);
 			gameData->state=STATE_AIR;
 
-			print("Force: ");
-
-			printNum(gameData->jumpForce);
-			print(" ");
+			
 		}
 	}
 	if(isPlayerJumping(gameData)){
@@ -273,8 +270,7 @@ uint64_t isPlayerJumping(GameData gameData){
 		
 		if(msg==1) isJumping=1;
 	}
-	print("IsJumping?");
-	printNum(isJumping);
+	
 	return isJumping;
 
 }

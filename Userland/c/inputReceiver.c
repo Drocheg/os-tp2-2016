@@ -33,11 +33,7 @@ int64_t inputReceiver_main(int argc, char* argv[]){
 	int64_t mqFDRead;
 	mqFDSend = MQopen( argv[0], F_WRITE /*| F_NOBLOCK*/);
 	mqFDRead = MQopen(argv[1], F_READ | F_NOBLOCK);
-	print("\n");
-	print(argv[0]);
-	print("\n");
-	printNum(mqFDSend);
-	print("\n");
+	
 	int64_t input;
 	while(checkEnd(mqFDRead)){
 		//input=getScanCode();
