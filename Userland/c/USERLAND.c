@@ -42,7 +42,7 @@ void playMainSong();
 void playSongTwo();
 void bangBang();
 void sleepForTwoSeconds();
-void testMQ();
+// void testMQ();
 
 
 
@@ -64,7 +64,7 @@ static command commands[] = {
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
-	{"mq", testMQ, "Test MQs"},
+	// {"mq", testMQ, "Test MQs"},
 	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
@@ -91,7 +91,7 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process B", printProcessB, 1, argvB);
 	createProcess(0, "process A", printProcessA, 1, argvA);
-	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
@@ -101,12 +101,13 @@ int32_t init_d(int argc, char* argv[]) {
 
 
 uint64_t printProcessA() {
-	int64_t mqFD = MQopen("test", F_WRITE);
+	//Write, blockingly, every ~10 sec. If we somehow manage to fill 8KiB, this will block until there's room
+	int64_t mqFD = MQopen("test", F_WRITE /*| F_NOBLOCK*/);
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		print("\nA -> 'Hello'\n");
-		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		MQsend(mqFD, "sarasarasara", 12);
+		sleep(10000);
 		// if(aux >= 3) {
 		// 	if(aux == 3) {
 		// 		print("\nClosing MQ returned ");
@@ -118,22 +119,29 @@ uint64_t printProcessA() {
 		// 	print("\nA -> 'Hello'\n");
 		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
 		// }
-		sleep(1000);
 	}
 	return 0;
 }
 
 uint64_t printProcessB() {
-	int64_t mqFD = MQopen("test", F_READ);
+	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
+	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
 	char buff[17] = {0};
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		print("\nB <- '");
-		MQreceive(mqFD, buff, 16);
-		print(buff);
-		print("'\n");
-		sleep(2000);
+		int64_t bytesRead = MQreceive(mqFD, buff, 16);
+		if(bytesRead > 0) {
+			print("\nB <- '");
+			print(buff);
+			print("' - ");
+			printNum(bytesRead);
+			print("\n");
+		}
+		else {
+			print(".");
+		}
+		// sleep(2000);
 	}
 	return 0;
 }
@@ -312,8 +320,14 @@ void sleepForTwoSeconds() {
 	print("woke up\n");
 }
 
-void testMQ() {
-	int64_t read = MQopen("test", F_READ);
-	print("Read FD: ");
-	printNum(read);
-}
+// void testMQ() {
+// 	int64_t read = MQopen("test2", F_READ /*| F_NOBLOCK*/);
+// 	print("Read FD: ");
+// 	printNum(read);
+// 	print("Attempting to read, should block: ");
+// 	char buff[2] = {0};
+// 	MQreceive(read, buff, 1);
+// 	print("Read '");
+// 	print(buff);
+// 	print("'");
+// }

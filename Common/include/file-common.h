@@ -32,8 +32,8 @@
 /*
 * File creation/access flags
 */
-#define F_READ (uint32_t) 0x01
-#define F_WRITE (uint32_t) 0x02
-#define F_NOBLOCK (uint32_t) 0x04
+#define F_READ ((uint32_t) 0x01)
+#define F_WRITE ((uint32_t) 0x02)
+#define F_NOBLOCK ((uint32_t) 0x04)
 
 #endif
