@@ -60,17 +60,17 @@ void printNum(uint64_t num) {
 	print(buff);
 }
 
-uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+int64_t createProcess(char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
 	int i = 0;
 	struct createProcessParams_s params;
 	
-	params.parentPid = parentPid;
+	
 	params.name = name;
 	params.entryPoint = entryPoint;
 	params.argc = argc;
 	params.argv = argv;
-	uint64_t result;
+	int64_t result;
 	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
 	return result;
 }

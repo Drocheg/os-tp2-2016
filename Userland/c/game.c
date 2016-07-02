@@ -17,7 +17,7 @@
 #define VERTICAL_SIZE 10
 #define GAME_TICK 100
 #define JUMP_LAG 200
-#define OBSTACLE_LAG_MULTIPLIER 3
+#define OBSTACLE_LAG_MULTIPLIER 2
 #define NO_OBSTACLE_MULTIPLIER 5
 #define GAME_OVER_LAG 10000
 #define JUMP_FX_1 21
@@ -77,9 +77,9 @@ void initGame(){
 	}
 	//music
 	char* argvSongPlayer[] = {"1"};
-	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+	createProcess("SongPlayer", playSong_start, 1, argvSongPlayer);
 //	char* argvInputReceiver[] = {"inputReceiver"};
-//	createProcess(0, "InputReceiver", inputReceiver_main, 1, argvInputReceiver);
+//	createProcess("InputReceiver", inputReceiver_main, 1, argvInputReceiver);
 	
 	playGame();
 	return;

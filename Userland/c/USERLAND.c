@@ -83,15 +83,15 @@ int32_t init_d(int argc, char* argv[]) {
 //	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
 	
-//	createProcess(0, "process A", printProcessA, 1, argvA);
-//	createProcess(0, "process B", printProcessB, 1, argvB);
+//	createProcess("process A", printProcessA, 1, argvA);
+//	createProcess("process B", printProcessB, 1, argvB);
 
 
 	
 	char* argvTerminal[] = {"terminal"};
 
-	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
-	//	createProcess(0, "process C", printProcessC, 1, argvC);
+	createProcess( "Terminal", userland_main, 1, argvTerminal);
+	//	createProcess( "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
 
@@ -272,7 +272,7 @@ void getTime() {
 
 void playMainSong(){
 	char* argvSongPlayer[] = {"2"};
-	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+	printNum(createProcess( "SongPlayer", playSong_start, 1, argvSongPlayer));
 	return;
 }
 
@@ -282,7 +282,7 @@ void playSongTwo(){
 
 void game(){
 	char* argvGame[] = {"2"};
-	createProcess(0, "Game", game_start, 1, argvGame);
+	createProcess( "Game", game_start, 1, argvGame);
 	return;
 }
 
@@ -300,7 +300,8 @@ void bangBang() {
 
 void pianoMode(){
 	char* argvPiano[] = {"piano"};
-	createProcess(0, "Piano", piano_start, 1, argvPiano);
+	createProcess( "Piano", piano_start, 1, argvPiano);
+	
 	return;
 	
 }
