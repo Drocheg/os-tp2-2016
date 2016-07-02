@@ -3,55 +3,40 @@
 #include <fileManager.h>
 
 #include <keyboard.h>
+#include <tty.h>
 
 
 
 
-uint64_t stdoutReadChar(uint32_t index, char *character) {
+int64_t stderrReadChar(uint32_t index, char *character) {
 	return 0;
 }
 
-uint64_t stdoutWriteChar(uint32_t index, char *character) {
+int64_t stderrWriteChar(uint32_t index, char *character) {
 	return 0;
 }
 
-uint64_t stdoutDataAvailable(uint32_t index) {
+int64_t stderrDataAvailable(uint32_t index) {
 	return 0;
 }
 
-uint64_t stdoutHasFreeSpace(uint32_t index) {
+int64_t stderrHasFreeSpace(uint32_t index) {
 	return 0;
 }
 
-uint64_t stderrReadChar(uint32_t index, char *character) {
+int64_t msqsReadChar(uint32_t index, char *character) {
 	return 0;
 }
 
-uint64_t stderrWriteChar(uint32_t index, char *character) {
+int64_t msqsWriteChar(uint32_t index, char *character) {
 	return 0;
 }
 
-uint64_t stderrDataAvailable(uint32_t index) {
+int64_t msqsDataAvailable(uint32_t index) {
 	return 0;
 }
 
-uint64_t stderrHasFreeSpace(uint32_t index) {
-	return 0;
-}
-
-uint64_t msqsReadChar(uint32_t index, char *character) {
-	return 0;
-}
-
-uint64_t msqsWriteChar(uint32_t index, char *character) {
-	return 0;
-}
-
-uint64_t msqsDataAvailable(uint32_t index) {
-	return 0;
-}
-
-uint64_t msqsHasFreeSpace(uint32_t index) {
+int64_t msqsHasFreeSpace(uint32_t index) {
 	return 0;
 }
 
@@ -65,10 +50,10 @@ uint64_t msqsHasFreeSpace(uint32_t index) {
  * If a file is unique (for example, video memory or keyboard buffer),
  * a wrapper function must be implemented.
  */
-typedef uint64_t (*ReadCharFn)(int32_t, char*);
-typedef uint64_t (*WriteCharFn)(int32_t, char*);
-typedef uint64_t (*DataAvailableFn)(int32_t);
-typedef uint64_t (*HasFreeSpaceFn)(int32_t);
+typedef int64_t (*ReadCharFn)(int32_t, char*);
+typedef int64_t (*WriteCharFn)(int32_t, char*);
+typedef int64_t (*DataAvailableFn)(int32_t);
+typedef int64_t (*HasFreeSpaceFn)(int32_t);
 
 
 /* Structs */

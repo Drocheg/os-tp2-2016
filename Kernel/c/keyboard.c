@@ -1,8 +1,6 @@
 #include <keyboard.h>
 #include <libasm.h>
 #include <stdlib.h>
-// #include <scanCodes.h>
-// #include <video.h>
 #include <rawKeys.h>
 #include <tty.h>
 
@@ -26,7 +24,7 @@ static void actionToMake(uint8_t scanCode);
 
 void attendKeyboard() {
 
-	uint8_t scanCode = inb(0x60);;
+	uint8_t scanCode = inb(0x60);
 	processModifierKey(scanCode);
 	actionToMake(scanCode);
 }
@@ -83,35 +81,7 @@ static uint8_t processModifierKey(uint8_t scanCode) {
 
 
 
-uint64_t stdinReadChar(uint32_t index, char *character) {
-	// *character = (char) pollProcessedKey();
-	// return 0;
-	return 0;
-}
 
-
-uint64_t stdinWriteChar(uint32_t index, char *character) {
-	// return -1;  Unsupported operation 
-	return 0;
-}
-
-uint64_t stdinDataAvailable(uint32_t index) {
-	
-	// if (bufferIsEmpty()) {
-	// 	return -1;   Returns -1 when there is no data available 
-	// }
-	// return 0; /* Returns 0 when there is data available */
-	return 0;
-}
-
-
-uint64_t stdinHasFreeSpace(uint32_t index) {
-	// if (bufferIsFull()) {
-	// 	return -1;	 Returns -1 when file doesn't have space 
-	// }
-	// return 0; /* Returns 0 when it has free space */
-	return 0;
-}
 
 
 

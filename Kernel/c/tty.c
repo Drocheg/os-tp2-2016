@@ -14,7 +14,7 @@ typedef enum {OTHER = 0, NUMBER, LETTER, SYMBOL} charTypes;
 
 /* Misc */
 static char *prompt = "$>_";
-static backSpaceLimit = 0;
+static int64_t backSpaceLimit = 0;
 static void ttyKBDPrintChar(char c);
 static int64_t ttySTDOUTPrint(char c);
 static uint64_t analizeScanCode(uint64_t code); 
@@ -25,7 +25,8 @@ static char stdinBuffer[STDIN_BUFFER_SIZE];
 static uint64_t stdinBufferSize = 0;
 static uint64_t stdinEnqIdx = 0;
 static uint64_t stdinDeqIdx = 0;
-static void stdinEnqueueChar(int64_t value);
+
+static int64_t stdinEnqueueChar(int64_t value);
 static int64_t stdinDequeueChar();
 static uint64_t stdinIsFull();
 static uint64_t stdinIsEmpty();
@@ -39,11 +40,17 @@ static uint64_t stdoutBufferSize = 0;
 static uint64_t stdoutEnqIdx = 0;
 static uint64_t stdoutDeqIdx = 0;
 
+static uint64_t stdoutIsFull();
+static uint64_t stdoutIsEmpty();
+static int64_t stdoutEnqueueChar(int64_t value);
+static int64_t stdoutDequeueChar();
+static int64_t stdoutPopChar();
 
 
 
 
-static uint64_t stdinDataAvailable = 0;
+
+static uint64_t stdinHasData = 0;
 
 
 
@@ -198,7 +205,7 @@ void ttyPrintPrompt() {
 void fflush() {
 
     while(!stdoutIsEmpty()) {
-        ncPrintChar((char) stdoutDequeueChar);
+        ncPrintChar((char) stdoutDequeueChar());
     }
     backSpaceLimit = 0;
 }
@@ -212,10 +219,53 @@ int64_t stdoutReadChar(uint32_t index, char *character) {
 
 
 int64_t stdoutWriteChar(uint32_t index, char *character) {
-    ttySTDOUTPrint(&c);
+    return ttySTDOUTPrint(&character);
 }
 
 
+int64_t stdoutDataAvailable(uint32_t index) {
+    return 0;
+}
+
+
+int64_t stdoutHasFreeSpace(uint32_t index) {
+    return 0;
+}
+
+
+
+
+
+
+int64_t stdinReadChar(uint32_t index, char *character) {
+    // *character = (char) pollProcessedKey();
+    // return 0;
+    return 0;
+}
+
+
+int64_t stdinWriteChar(uint32_t index, char *character) {
+    // return -1;  Unsupported operation 
+    return 0;
+}
+
+int64_t stdinDataAvailable(uint32_t index) {
+    
+    // if (bufferIsEmpty()) {
+    //  return -1;   Returns -1 when there is no data available 
+    // }
+    // return 0; /* Returns 0 when there is data available */
+    return 0;
+}
+
+
+int64_t stdinHasFreeSpace(uint32_t index) {
+    // if (bufferIsFull()) {
+    //  return -1;   Returns -1 when file doesn't have space 
+    // }
+    // return 0; /* Returns 0 when it has free space */
+    return 0;
+}
 
 
 
@@ -301,7 +351,6 @@ static int64_t stdoutDequeueChar() {
 
 static int64_t stdoutPopChar() {
 
-    char c = 0;
     if (stdoutIsEmpty()) {
         return -1;
     }
@@ -328,7 +377,7 @@ static void ttyKBDPrintChar(char c) {
 
         case '\n':
             ncPrintChar(c);
-            ncPrintChar('_');
+            // ncPrintChar('_');
             backSpaceLimit = 0;
             break;
 
@@ -336,13 +385,13 @@ static void ttyKBDPrintChar(char c) {
             if (backSpaceLimit > 0) {
                 backSpaceLimit--;
                 ncPrintChar(c);
-                ncPrintChar('_');
+                // ncPrintChar('_');
             }
             break;
         default:
             backSpaceLimit++;
             ncPrintChar(c);
-            ncPrintChar('_');
+            // ncPrintChar('_');
     }
 }
 

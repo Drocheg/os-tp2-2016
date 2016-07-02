@@ -37,26 +37,24 @@ void ncPrintlnColor(const char * string, char color) {
 
 //Prints the scpecified char to screen. Handles special chars and
 //scrolls if necessary
-void ncPrintChar(char character)
-{
+void ncPrintChar(char character) {
 	if(character == '\n') {
 		ncNewline();
-	}
-	else if(character == '\b')	{
+	} else if(character == '\b')	{
 		ncBackspace();
-	}
-	else {
+	} else {
 		*currentVideo = character;
 		currentVideo += 2;
 	}
+
 	if(currentVideo >= endVideo) {
 		ncScroll();
 		currentVideo = video+(width*2*(height-1));
 	}
 }
 
-void ncPrintColorChar(char character, char color)
-{
+void ncPrintColorChar(char character, char color) {
+	
 	if(character == '\n') {
 		do 
 		{
@@ -75,10 +73,8 @@ void ncPrintColorChar(char character, char color)
 	}
 }
 
-void ncNewline()
-{
-	do 
-	{
+void ncNewline() {
+	do {
 		ncPrintChar(' ');
 	}
 	while((uint64_t)(currentVideo - video) % (width * 2) != 0);
@@ -91,29 +87,24 @@ void ncBackspace() {
 	*currentVideo = 0;			//Clears char
 }
 
-void ncPrintDec(uint64_t value)
-{
+void ncPrintDec(uint64_t value) {
 	ncPrintBase(value, 10);
 }
 
-void ncPrintHex(uint64_t value)
-{
+void ncPrintHex(uint64_t value) {
 	ncPrintBase(value, 16);
 }
 
-void ncPrintBin(uint64_t value)
-{
+void ncPrintBin(uint64_t value) {
 	ncPrintBase(value, 2);
 }
 
-void ncPrintBase(uint64_t value, uint32_t base)
-{
+void ncPrintBase(uint64_t value, uint32_t base) {
     intToStrBase(value, buffer, base);
     ncPrint(buffer);
 }
 
-void ncClear()
-{
+void ncClear() {
 	int i = 0;
 
 	while(i < height*width*2) {
