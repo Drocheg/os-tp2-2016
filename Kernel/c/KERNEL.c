@@ -83,14 +83,14 @@ int kernel_main(int argc, char *argv[]) {
 
 	ncPrint("Enabling interrupts...");
 	//masterPICmask(0x0);	//All interrupts
-	// masterPICmask(0xFC);	//Keyboard and timer tick
-	masterPICmask(0xFD);	//Keyboard only
+	masterPICmask(0xFC);	//Keyboard and timer tick
+	//masterPICmask(0xFD);	//Keyboard only
 	//masterPICmask(0xFE);	//Timer tick only
 	//masterPICmask(0xFF);	//No interrupts
 	ncPrint("Done.\n");
 
-	_sti();
-	while(1);
+	// _sti();
+	// while(1);
 
 	/* Add init.d process to the scheduler */
 	char *args[] = {"init.d"};

@@ -73,7 +73,7 @@ static void *mallocRecursive(void **current, uint64_t size);
 static uint64_t recursiveGetProcessMemoryAmount(void * currentPage);
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation);
 static void freePages(void ** current);
-
+static int64_t openSTDIOFiles(uint64_t PCBIndex);
 
 /* 
  * Returns a pointer to the next position with <size> bytes available in a page of the heap,
@@ -152,6 +152,7 @@ uint64_t initializePCB() {
  * Returns -2 if no space in PCB.
  * Returns -3 if no memory for the stack.
  * Returns -4 if there was a problem with parameters
+ * Returns -5 if STDIO files couldn't be opened
  */
 uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint64_t argc, char *argv[]) {
 
@@ -184,18 +185,22 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
 
 	//Open STDIN_ for the new process
-	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
-	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
-	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
-	((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
+	// ((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
+	// ((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
+	// ((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
+	// ((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
+	
+	if (openSTDIOFiles(index)) {
+		return -5;	/* Couldn't open STDIO Files */
+	}
 	newProcess->heapPage = NULL;
 	
 	return index;
 }
 
 
-/* Getters */
 
+/* Getters */
 uint64_t getCurrentPID() {
 	return getProcessPID(getCurrentPCBIndex());
 }
@@ -616,3 +621,24 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
 	}
 	return 0;
 }
+
+
+
+/*
+ * Opens basic IO files (i.e. STDIN, STDOUT, STDERR)
+ * Returns 0 on success, or -1 otherwise
+ */
+static int64_t openSTDIOFiles(uint64_t PCBIndex) {
+
+	int64_t flag = 0;
+
+
+	if ( (addFile(PCBIndex, 0, STDIN_, F_READ) < 0)
+		|| (addFile(PCBIndex, 0, STDOUT_, F_WRITE) < 0) 
+		|| (addFile(PCBIndex, 0, STDERR_, F_WRITE) < 0) ) {
+		return -1;
+	}
+	return 0;
+}
+
+
