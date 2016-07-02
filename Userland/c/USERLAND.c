@@ -90,11 +90,13 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
+
 	
-	createProcess("process B", printProcessB, 1, argvB);
-	createProcess("process A", printProcessA, 1, argvA);
+	//createProcess("process B", printProcessB, 1, argvB);
+	//createProcess("process A", printProcessA, 1, argvA);
 	createProcess("Terminal", userland_main, 1, argvTerminal);
 	//	createProcess("process C", printProcessC, 1, argvC);
+
 
 	while(1);
 	return 0;
@@ -105,11 +107,14 @@ int32_t init_d(int argc, char* argv[]) {
 
 uint64_t printProcessA() {
 	//Write, blockingly, every ~10 sec. If we somehow manage to fill 8KiB, this will block until there's room
-	int64_t mqFD = MQopen("test", F_WRITE /*| F_NOBLOCK*/);
+	int64_t mqFD = MQopen("test", F_WRITE | F_NOBLOCK);
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		MQsend(mqFD, "sarasarasara", 12);
+		while(!MQisFull(mqFD)) {
+			MQsend(mqFD, "12345678901234567890", 20);
+		}
+		print("MQ full, A taking a break");
 		sleep(10000);
 		// if(aux >= 3) {
 		// 	if(aux == 3) {
@@ -128,14 +133,32 @@ uint64_t printProcessA() {
 
 uint64_t printProcessB() {
 	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
+<<<<<<< HEAD
 	int64_t mqFD = MQopen("test", F_READ /*| F_NOBLOCK*/);
+=======
+	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
+	print("B opened MQ");
+>>>>>>> juanmsgQAndan
 	char buff[17] = {0};
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
+<<<<<<< HEAD
 		int64_t bytesRead = MQreceive(mqFD, buff, 6);
+=======
+			// print("\nB MQ:\n  Empty? ");
+			// printNum(MQisEmpty(mqFD));
+			// print("\n  Full? ");
+			// printNum(MQisFull(mqFD));
+		if(MQisEmpty(mqFD)) {
+			print("\nMQ empty, B taking a break\n");
+			sleep(1000);
+		}
+		int64_t bytesRead = MQreceive(mqFD, buff, 16);
+>>>>>>> juanmsgQAndan
 		if(bytesRead > 0) {
 			print("\nB <- '");
+			buff[bytesRead] = 0;
 			print(buff);
 			print("' - ");
 			printNum(bytesRead);
@@ -144,7 +167,7 @@ uint64_t printProcessB() {
 		else {
 			print(".");
 		}
-		// sleep(2000);
+		sleep(2000);
 	}
 	return 0;
 }
