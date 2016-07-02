@@ -20,11 +20,6 @@ int64_t read(uint64_t fd, char *buffer, uint64_t maxBytes) {
 
 
 int64_t write(uint64_t fd, char *buffer, uint64_t maxBytes) {
-// 	ncPrint("At write\n");
-// 	int64_t la = fileOperation(fd, buffer, maxBytes, OUTPUT, 1);		//TODO don't hardcode 1, get blocking flag from FD
-// 	ncPrint("fileOperation() returned ");
-// 	ncPrintDec(la);
-// 	return la;
 	return fileOperation(fd, buffer, maxBytes, OUTPUT, 1);		//TODO don't hardcode 1, get blocking flag from FD
 }
 

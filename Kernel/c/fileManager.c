@@ -111,19 +111,30 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 	if (isValidFileType(fileType)) {
 		return -1;
 	}
-	ncPrint("At operate");
+	int64_t result = -1;
+	int8_t operationResult;
 	switch(operation) {
 		case READ:
-			return (int64_t) readChar(fileType, fileIndex, character);
+			operationResult = readChar(fileType, fileIndex, character);
+			result = operationResult == -1 ? -1 : 0;
+			break;
 		case WRITE:
-			return (int64_t) writeChar(fileType, fileIndex, character);
+			operationResult = writeChar(fileType, fileIndex, character);
+			result = operationResult == -1 ? -1 : 0;
+			break;
 		case IS_EMPTY:
-			return (int64_t) isEmpty(fileType, fileIndex);
+			operationResult = isEmpty(fileType, fileIndex);
+			result = operationResult ? 0 : -1;
+			break;
 		case IS_FULL:
-			return (int64_t) isFull(fileType, fileIndex);
+			operationResult = isFull(fileType, fileIndex);
+			result = operationResult ? 0 : -1;
+			break;
 		default:
-			return -1;
+			operationResult = -1;
+			break;
 	}
+	return result;
 }
 
 
@@ -184,8 +195,7 @@ static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {
 }
 
 static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character) {
-	ncPrint("\nAt writeChar in fileManager\n");
-	return (fileOperators[(uint64_t) fileType]).writeCharFn(fileIndex, character);
+	return (fileOperators[fileType]).writeCharFn(fileIndex, character);
 }
 
 static int8_t isFull(FileType fileType, int32_t fileIndex) {

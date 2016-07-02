@@ -121,11 +121,6 @@ uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryP
  * Returns read/written bytes, or -1 if any error ocurred
  */
 int64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
-	// ncPrint("\nAt fileOperation");
-	// int64_t la = waitForIO(fileDescriptor, buffer, maxBytes, ioOperation, blocking);
-	// ncPrint("waitForIO returned ");
-	// ncPrintDec(la);
-	// return la;
 	return waitForIO(fileDescriptor, buffer, maxBytes, ioOperation, blocking);
 }
 
@@ -398,13 +393,10 @@ static uint64_t waitForTime(uint64_t miliseconds) {
 
 
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
-
-	
-
 	uint64_t readData = 0;
-	while (readData <= maxBytes) {
-
-		if (operateFile(PCBIndex, fd, IS_EMPTY, NULL) == 0) {
+	while (readData < maxBytes) {
+		int8_t fileIsEmpty = operateFile(PCBIndex, fd, IS_EMPTY, NULL) == 0;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
+		if (fileIsEmpty) {
 			if (blocking){
 				yield();
 			} else {
@@ -412,21 +404,20 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 			}
 		} else {
 			char c = 0;
-			if (operateFile(PCBIndex, fd, READ, &c)) {
+			if (operateFile(PCBIndex, fd, READ, &c) == -1) {
 				break;
 			}
 			buffer[readData] = c;
 			readData++;
 		}
 	}
-
 	return readData;
 }
 
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
 	uint64_t writtenData = 0;
-	while(writtenData <= maxBytes) {
-		int8_t fileIsFull = operateFile(PCBIndex, fd, IS_FULL, NULL) == -1;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
+	while(writtenData < maxBytes) {
+		int8_t fileIsFull = operateFile(PCBIndex, fd, IS_FULL, NULL) == 0;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
 		if (fileIsFull) {
 			if (blocking){
 				yield();
@@ -435,16 +426,10 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 			}
 		} else {
 			char c = buffer[writtenData];
-			int64_t la = operateFile(PCBIndex, fd, WRITE, &c);
-			ncPrint("\nOperateFile returned ");
-			ncPrintDec(la);
-			if (la/*operateFile(PCBIndex, fd, WRITE, &c)*/ == -1) {
-				while(1);
+			if (operateFile(PCBIndex, fd, WRITE, &c) == -1) {
 				break;
 			}
 			writtenData++;
-			ncPrint("Written data = ");
-			ncPrintDec(writtenData);
 		}
 	}
 	return writtenData;

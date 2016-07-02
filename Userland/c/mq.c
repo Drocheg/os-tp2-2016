@@ -60,15 +60,7 @@ int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
 */
 static int8_t MQsendChar(uint64_t descriptor, char *src) {
 	int8_t result;
-	print("\nSending '");
-	char la[2] = {*src, 0};
-	print(la);
-	print("' via MQ with descriptor ");
-	printNum(descriptor);
-	print("...\n");
 	_int80(MQ_SEND, descriptor, (uint64_t) src, (uint64_t) &result);
-	print("\nsent, returned ");
-	printNum(result);
 	return result;
 }
 

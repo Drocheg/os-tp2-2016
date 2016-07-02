@@ -156,14 +156,15 @@ int8_t MQreadChar(uint64_t tableIndex, char *dest) {
 // }
 
 int8_t MQwriteChar(uint64_t tableIndex, char *src) {
-	ncPrint("\nAt MQ write char");
 	if(tableIndex < 0 || tableIndex >= MAX_MQS || mqs[tableIndex].file == NULL || mqs[tableIndex].writePID != getCurrentPID()) {
-		ncPrint("\nInvalid params");
 		return -1;
 	}
-	while(1);
-	ncPrint("\nParams OK");
-	return basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
+	int8_t la = basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
+	if(!la) {
+		ncPrint("MQwriteChar failed");
+	}
+	return la;
+	// return basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
 }
 
 // int8_t MQsend(mqd_t descriptor, const char *msg, size_t mgsLen) {
