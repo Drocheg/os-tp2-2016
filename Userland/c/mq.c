@@ -7,9 +7,6 @@
 #include <stddef.h>
 #include <usrlib.h>
 
-static int8_t MQreceiveChar(uint64_t descriptor, char *dest);
-static int8_t MQsendChar(uint64_t descriptor, char *src);
-
 int64_t MQopen(const char* name, uint32_t accessFlags) {
 	int64_t result;
 	_int80(MQ_OPEN, (uint64_t) name, (uint64_t) accessFlags, (uint64_t)&result);
@@ -19,6 +16,24 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 int8_t MQclose(uint64_t descriptor) {
 	int64_t result;
 	_int80(MQ_OPEN, descriptor, (uint64_t)&result, 0);
+	return result;
+}
+
+int8_t MQisFull(uint64_t descriptor) {
+	int8_t result;
+	_int80(MQ_IS_FULL, descriptor, (uint64_t)&result, 0);
+	return result;
+}
+
+int8_t MQisEmpty(uint64_t descriptor) {
+	int8_t result;
+	_int80(MQ_IS_EMPTY, descriptor, (uint64_t)&result, 0);
+	return result;
+}
+
+int8_t MQreceiveChar(uint64_t descriptor, char *dest) {
+	int8_t result;
+	_int80(MQ_RECEIVE, descriptor, (uint64_t) dest, (uint64_t) &result);
 	return result;
 }
 
@@ -38,14 +53,9 @@ int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen) {
 	return result;
 }
 
-/**
-* Receives a single character from the specified message queue, storing it in dest.
-*
-* @return The number of characters read (1 or 0 on EOF), or -1 on error.
-*/
-static int8_t MQreceiveChar(uint64_t descriptor, char *dest) {
+int8_t MQsendChar(uint64_t descriptor, char *src) {
 	int8_t result;
-	_int80(MQ_RECEIVE, descriptor, (uint64_t) dest, (uint64_t) &result);
+	_int80(MQ_SEND, descriptor, (uint64_t) src, (uint64_t) &result);
 	return result;
 }
 
@@ -62,17 +72,6 @@ int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
 			return result == 0 ? -1 : result;
 		}
 	}
-	return result;
-}
-
-/**
-* Sends a single character to the specified message queue, reading it from dest.
-*
-* @return The number of characters sent (1 or 0 on EOF), or -1 on error.
-*/
-static int8_t MQsendChar(uint64_t descriptor, char *src) {
-	int8_t result;
-	_int80(MQ_SEND, descriptor, (uint64_t) src, (uint64_t) &result);
 	return result;
 }
 

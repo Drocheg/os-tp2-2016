@@ -27,7 +27,23 @@ int64_t MQopen(const char* name, uint32_t accessFlags);
 */
 int8_t MQclose(uint64_t descriptor);
 
-/*
+/**
+* Checks whether the specified message queue is full. If full, blocking writes will block and non-blocking
+* writes will write 0 characters.
+*
+* @return 1 if the MQ is full, 0 otherwise.
+*/
+int8_t MQisFull(uint64_t descriptor);
+
+/**
+* Checks whether the specified message queue is empty. If empty, blocking reads will block and non-blocking
+* reads will read 0 characters.
+*
+* @return 1 if the MQ is empty, 0 otherwise.
+*/
+int8_t MQisEmpty(uint64_t descriptor);
+
+/**
 * Receives a message from the specified message queue, of up to buffLen bytes, writing it to buff.
 * If the MQ was not opened non-blockingly and there is no data to read, the process will block until
 * there is enough data to fill buff. If it was opened non-blockingly, the function will return as soon
@@ -39,6 +55,15 @@ int8_t MQclose(uint64_t descriptor);
 int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
 
 /**
+* Receives a single character from the specified message queue, storing it in dest.
+* If the MQ was not opened non-blockingly and the MQ is empty, the process will block until the char
+* can be read from the MQ.
+*
+* @return The number of characters received (1 or 0 on EOF in non-block mode), or -1 on error.
+*/
+int8_t MQreceiveChar(uint64_t descriptor, char *dest);
+
+/**
 * Sends the specified message (of length msgLen) to the specified message queue.
 * If the MQ was not opened non-blockingly and the MQ is full, the process will block until all of msg
 * can be written into the MQ. If it was opened non-blockingly, the function will return as soon as
@@ -48,6 +73,15 @@ int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen);
 * @return The actual number of bytes sent, or -1 on error.
 */
 int64_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
+
+/**
+* Sends a single character to the specified message queue, reading it from src.
+* If the MQ was not opened non-blockingly and the MQ is full, the process will block until the char
+* can be written into the MQ.
+*
+* @return The number of characters sent (1 or 0 on EOF in non-block mode), or -1 on error.
+*/
+int8_t MQsendChar(uint64_t descriptor, char *src);
 
 
 #endif
