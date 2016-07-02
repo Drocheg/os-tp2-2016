@@ -17,8 +17,8 @@
 #define SPACE_OBSTACLE 1
 #define HORIZONTAL_SIZE 10
 #define VERTICAL_SIZE 10
-#define GAME_TICK 100
-#define JUMP_LAG 200
+#define GAME_TICK 200
+#define JUMP_LAG 400
 #define OBSTACLE_LAG_MULTIPLIER 2
 #define NO_OBSTACLE_MULTIPLIER 5
 #define GAME_OVER_LAG 10000
@@ -95,7 +95,7 @@ int64_t game_main(int argc, char* argv[]){
 void initGame(GameData gameData){
 	clearScreen();
 	gameData->state = STATE_GROUND;
-	gameData->jumpForce=0;
+	gameData->jumpForce=4;
 	gameData->jumpStartTime=time();
 	gameData->lastUpdateTime=time();
 	gameData->lastObstacleUpdate=time();
@@ -107,8 +107,8 @@ void initGame(GameData gameData){
 	}
 	gameData->isGameOver = 0;
 	
-	gameData->mqFDInputReceiverRead = MQopen("MQGameInputReceiverRead", F_READ /*| F_NOBLOCK*/);
-	char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
+	gameData->mqFDInputReceiverRead = MQopen("MQGIRRead", F_READ /*| F_NOBLOCK*/);
+	char* argvInputReceiver[] = {"MQGIRRead", "MQGIRSend"};
 	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
 	
 
@@ -134,7 +134,7 @@ void jump(GameData gameData){
 	gameData->jumpForce+=1;
 	if(gameData->state==STATE_GROUND){
 		
-		gameData->jumpForce=1;
+		gameData->jumpForce=4;
 		gameData->state=STATE_JUMPING;
 		gameData->jumpStartTime=time();
 	}
@@ -143,13 +143,17 @@ void jump(GameData gameData){
 
 void update(GameData gameData){
 	uint64_t updateTime=time(); //Make all updates with the same time.
-	
 	//Character Update
 	if(gameData->state==STATE_JUMPING){
 		
 		if(gameData->jumpStartTime+JUMP_LAG<updateTime){
 			playJumpFX(updateTime);
 			gameData->state=STATE_AIR;
+
+			print("Force: ");
+
+			printNum(gameData->jumpForce);
+			print(" ");
 		}
 	}
 	if(isPlayerJumping(gameData)){
@@ -266,10 +270,11 @@ uint64_t isPlayerJumping(GameData gameData){
 	//print("\n");
 	while(!MQisEmpty(gameData->mqFDInputReceiverRead)){
 		MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
-			printNum(msg);
+		
 		if(msg==1) isJumping=1;
 	}
-
+	print("IsJumping?");
+	printNum(isJumping);
 	return isJumping;
 
 }

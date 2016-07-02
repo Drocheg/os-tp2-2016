@@ -10,7 +10,7 @@
 #include <mq.h>
 #include <file-common.h>
 #include <game.h>
-
+#include <inputReceiver.h>
 extern char bss;
 extern char endOfBinary;
 static int bssCheck = 0;
@@ -91,7 +91,8 @@ int32_t init_d(int argc, char* argv[]) {
 //	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
 
-	
+	//char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
+	//createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
 	//createProcess("process B", printProcessB, 1, argvB);
 	//createProcess("process A", printProcessA, 1, argvA);
 	createProcess("Terminal", userland_main, 1, argvTerminal);

@@ -33,7 +33,11 @@ int64_t inputReceiver_main(int argc, char* argv[]){
 	int64_t mqFDRead;
 	mqFDSend = MQopen( argv[0], F_WRITE /*| F_NOBLOCK*/);
 	mqFDRead = MQopen(argv[1], F_READ | F_NOBLOCK);
-	
+	print("\n");
+	print(argv[0]);
+	print("\n");
+	printNum(mqFDSend);
+	print("\n");
 	int64_t input;
 	while(checkEnd(mqFDRead)){
 		//input=getScanCode();
@@ -76,8 +80,9 @@ int8_t validInput(int64_t inputProcessed){
 }
 
 void sendInput(int64_t inputProcessed, int64_t mqFDSend){
-	print("isEmptySender?");
-	printNum(MQsend(mqFDSend, (char *)&inputProcessed, sizeof(int64_t)));
-	printNum(MQisEmpty(mqFDSend));
-	for(int i=0; i<100000;i++);
+	//print("isEmptySender?");
+	//printNum(inputProcessed);
+	MQsend(mqFDSend, (char *)&inputProcessed, sizeof(int64_t));
+	//printNum(MQisEmpty(mqFDSend));
+	
 }
