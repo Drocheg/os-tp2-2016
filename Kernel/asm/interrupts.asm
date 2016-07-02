@@ -1,4 +1,5 @@
 EXTERN IRQHandler
+EXTERN keyboardHandler
 EXTERN timerTickHandler
 EXTERN int80Handler
 
@@ -115,7 +116,7 @@ int21Receiver:
 	saveState
 	;Executes interrupt handler
 	mov rdi, 1
-	call IRQHandler
+	call keyboardHandler
 
 	endOfInterrupt
 	loadState

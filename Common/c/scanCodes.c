@@ -1,6 +1,6 @@
 #include <scanCodes.h>
 
-static char scanCodes[256] = {0};		//Unknown scan codes are mapped to 0
+static char scanCodes[256] = {0};		/* Unknown scan codes are mapped to 0 */
 static uint8_t initialized = 0;
 
 void init();
@@ -78,9 +78,9 @@ void init() {
 	scanCodes[0x49] = '9';
 	scanCodes[0x52] = '0';
 	scanCodes[0x53] = '.';
-	scanCodes[0x0E] = '\b';		//backspace
-	scanCodes[0x1C] = '\n';		//enter
-	scanCodes[0x01] = '\e';		//escape
+	scanCodes[0x0E] = '\b';		/* backspace */
+	scanCodes[0x1C] = '\n';		/* enter */
+	scanCodes[0x01] = '\e';		/* escape */
 	// scanCodes[0xE01C] = '\n';	//keypad enter
 	/*scanCodes[0xE04D] = 0xE04D; //Right arrow
 	scanCodes[0xE04B] = 0xE04B; //Left arrow

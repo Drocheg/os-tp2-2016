@@ -172,7 +172,7 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 		return -4; /* Problems with parameters */
 	}
 	(newProcess->fileDescriptors).size = 0;
-	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorsMap_s));
+	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
 	((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
 	((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
 	((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;

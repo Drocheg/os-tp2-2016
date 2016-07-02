@@ -30,7 +30,8 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = read(p1, (char *) p2, p3);
 			break;
 		case SYSWRITE:
-			result = sys_write((uint8_t)p1, (char *)p2, p3);
+			// result = sys_write((uint8_t)p1, (char *)p2, p3);
+			result = write(p1, (char *) p2, p3);
 			break;
 		case SYSCLEAR:
 			ncClear();
@@ -89,23 +90,29 @@ uint64_t timerTickHandler(void *stack) {
 }
 
 
+void keyboardHandler() {
 
-void IRQHandler(uint8_t irq) {
-	uint64_t key;
-	switch(irq) {
-		case 0:					//Timer tick
-			tick();
-			
-			break;
-		case 1:					//Keyboard
-			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
-			offerKey((uint8_t) key);
-			break;
-		default:
-			break;
-	}
-	// outb(0x20, 0x20);			//EOI signal
+	attendKeyboard();
 }
+
+
+
+// void IRQHandler(uint8_t irq) {
+// 	uint64_t key;
+// 	switch(irq) {
+// 		case 0:					//Timer tick
+// 			tick();
+			
+// 			break;
+// 		case 1:					//Keyboard
+// 			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
+// 			offerKey((uint8_t) key);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	// outb(0x20, 0x20);			//EOI signal
+// }
 
 // static void timerTick() {  	
 //   	if(!noSound())				//NOT an else, both cases might need to be run

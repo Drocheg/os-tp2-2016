@@ -10,7 +10,7 @@
  * Must call initializePageStack!!
  * Returns 0 on sucess, or -1 otherwise
  */
-void initializeScheduler();
+uint64_t initializeScheduler();
 
 /*
  * Starts the scheduler

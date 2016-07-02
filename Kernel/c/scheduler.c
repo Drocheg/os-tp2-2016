@@ -8,6 +8,7 @@
 #include <time.h>
 #include <video.h>
 #include <keyboard.h>
+#include <scheduler.h>
 
 
 #ifndef MAX_PROCESSES
