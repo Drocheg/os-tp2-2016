@@ -5,6 +5,7 @@
 #include <syscalls.h>
 #include <interrupts.h>
 #include <songplayer.h>
+#include <inputReceiver.h>
 
 
 #define STATE_GROUND 0
@@ -16,7 +17,7 @@
 #define VERTICAL_SIZE 10
 #define GAME_TICK 100
 #define JUMP_LAG 200
-#define OBSTACLE_LAG_MULTIPLIER 6
+#define OBSTACLE_LAG_MULTIPLIER 3
 #define NO_OBSTACLE_MULTIPLIER 5
 #define GAME_OVER_LAG 10000
 #define JUMP_FX_1 21
@@ -24,14 +25,14 @@
 #define JUMP_FX_3 82
 
 
-static uint64_t state;
-static int64_t jumpForce;
-static uint64_t jumpStartTime;
-static uint64_t lastObstacleUpdate;
-static uint64_t lastUpdateTime;
-static int64_t posY; //Position of the center of the character
-static uint64_t obstacle[HORIZONTAL_SIZE][10]={SPACE_EMPTY}; 
-static int isGameOver = 0;
+uint64_t state;
+int64_t jumpForce;
+uint64_t jumpStartTime;
+uint64_t lastObstacleUpdate;
+uint64_t lastUpdateTime;
+int64_t posY; //Position of the center of the character
+uint64_t obstacle[HORIZONTAL_SIZE][10]={SPACE_EMPTY}; 
+int isGameOver = 0;
 
 /*There are n vertical spaces. Character can only jump vertical. In the air he can't jump. 
 If he touch an obstacle you lose. The character is 3 blocks tall, so he uses 3 of the n space 
@@ -62,6 +63,7 @@ int64_t game_main(int argc, char* argv[]){
 }
 
 void initGame(){
+	clearScreen();
 	state = STATE_GROUND;
 	jumpForce=0;
 	jumpStartTime=time();
@@ -97,10 +99,10 @@ void playGame(){
 void jump(){
 	if(state==STATE_AIR) return;
 	if(jumpForce>=VERTICAL_SIZE-3) return;
-	//print("F");
+	
 	jumpForce+=1;
 	if(state==STATE_GROUND){
-		//print("S");
+		
 		jumpForce=1;
 		state=STATE_JUMPING;
 		jumpStartTime=time();
@@ -113,7 +115,7 @@ void update(){
 	
 	//Character Update
 	if(state==STATE_JUMPING){
-		//print("J");
+		
 		if(jumpStartTime+JUMP_LAG<updateTime){
 			playJumpFX(updateTime);
 			state=STATE_AIR;
@@ -129,21 +131,21 @@ void update(){
 		if(gameTicksFromJump>0){
 			
 			if(gameTicksFromJump<=jumpForce){
-				print("C");
+				
 				posY=1+gameTicksFromJump;
 			}else{
 				
 				if(1+2*jumpForce<gameTicksFromJump){//TODO usar numero que acepten negativos
-					print("D");
+					
 					posY=1;
 				}else{
-					print("E");
+					
 					posY=1+2*jumpForce-gameTicksFromJump; //the max height from jump - fall (1+jumpForce<gameTicksFromJump-jumpForce)
 				}
 			}
 			if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
 			if(posY<=1){
-			//	print("G");
+			
 				posY=1;
 				state=STATE_GROUND;	
 				jumpForce=0;
@@ -151,26 +153,13 @@ void update(){
 		}
 	}
 
-	//TODO sacar esto y que la logica de antes ande bien.
-	//if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
-//	if(posY<=1){
-//		posY=1;
-//		state=STATE_GROUND;	
-//		jumpForce=0;
-//	} 
-
-
-	//printNum(posY);
-
+	
 	//Obstacle Update
 	uint64_t obstacleTicksFromLastUpdate = ((updateTime-lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
 	if(obstacleTicksFromLastUpdate>0 && obstacleTicksFromLastUpdate<HORIZONTAL_SIZE){
 		int64_t newObstaclePosY = ((updateTime/13)*7919)%(VERTICAL_SIZE*NO_OBSTACLE_MULTIPLIER);
 
-		//TODO borrar estas 3 lineas. Debugging. 
-		////printNum(newObstaclePosY);
-		//print("\n");
-		
+	
 		for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(int64_t j =0; j<VERTICAL_SIZE; j++){
 				int64_t oldI = i+obstacleTicksFromLastUpdate;
@@ -185,11 +174,11 @@ void update(){
 
 				if(i!=0){
 					if(newState==SPACE_OBSTACLE && obstacle[i][j]==SPACE_EMPTY){
-						paintFullRect(i*50+100, j*50, 50, 50, 0xFF0000);
+						paintFullRect(i*50+100,(VERTICAL_SIZE-j-1)*50, 50, 50, 0xFF0000);
 						
 					}
 					if(newState==SPACE_EMPTY && obstacle[i][j]==SPACE_OBSTACLE){
-						paintFullRect(i*50+100, j*50, 50, 50, 0x000000);	
+						paintFullRect(i*50+100, (VERTICAL_SIZE-j-1)*50, 50, 50, 0x000000);	
 						
 					}
 				}
@@ -211,33 +200,23 @@ void update(){
 				
 					Image * dinosaurio;
 					_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
-					paintImg(dinosaurio, 0, (posY-1)*50);
+					paintImg(dinosaurio, 0, (VERTICAL_SIZE-(posY-1)-3)*50);
 				
 				}
 				
 				
-				
-				//if(j==posY+1) print("O");
-				//if(j==posY  ) print("I");
-				//if(j==posY-1) print("N");
 			}
 		}else{
 			if(obstacle[0][j]==SPACE_OBSTACLE){
-				paintFullRect(0, j*50, 150, 50, 0xFF0000);
+				paintFullRect(0,  (VERTICAL_SIZE-j-1)*50, 150, 50, 0xFF0000);
 				
 			}else{
-				paintFullRect(0, j*50, 150, 50, 0x000000);	
+				paintFullRect(0,  (VERTICAL_SIZE-j-1)*50, 150, 50, 0x000000);	
 				
 			}
 		}
 	}
 	
-	
-	for(int i=0; i<10; i++){
-		paintFullRect(i*50+100,13*50,5,5,0x000000);
-	}
-	paintFullRect(jumpForce*50+100,13*50,5,5,0xFFFF00);
-
 
 
 

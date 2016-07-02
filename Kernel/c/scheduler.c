@@ -463,7 +463,6 @@ void printPS(){
 			ncPrint(" State:");
 			uint64_t newState = 	newNode->state;
 			ncPrint(staticChar[newNode->state]);
-			ncPrint("\n");
 			ncPrint(" Memory: ");
 			ncPrintDec(getProcessMemoryAmount(newPCBIndex));
 			ncPrint(" Next PBCindex: ");

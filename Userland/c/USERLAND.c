@@ -39,7 +39,7 @@ void getTime();
 void playMainSong();
 void playSongTwo();
 void bangBang();
-
+void pianoMode();
 
 
 void game();
@@ -54,7 +54,7 @@ static command commands[] = {
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
 	{"jalp", jalp, "Ai can't spik inglish"},
-	{"piano", piano, "Turns your keyboard into a piano!"},
+	{"piano", pianoMode, "Turns your keyboard into a piano!"},
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
@@ -296,4 +296,11 @@ void bangBang() {
 		runCommand(lastCommand);
 	}
 
+}
+
+void pianoMode(){
+	char* argvPiano[] = {"piano"};
+	createProcess(0, "Piano", piano_start, 1, argvPiano);
+	return;
+	
 }
