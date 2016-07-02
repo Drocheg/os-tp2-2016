@@ -39,7 +39,7 @@ static int64_t findFreeSlot();
 * Marks the specified message queue as opened in the specified mode.
 * @return 1 on success, -1 on error (e.g. already open in the specified mode)
 */
-static int8_t markAccess(MessageQueue mq, uint64_t pid, uint32_t accessFlags);
+static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags);
 
 /**
 * Destroys the specified message queue and its resources, if it exists.
@@ -70,7 +70,7 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 	//Existint MQ, check priviledges
 	else {
 		//Only 1 process can have the MQ open for reading/writing at the same time
-		if(markAccess(mqs[tableIndex], getCurrentPID(), accessFlags) == -1) {
+		if(markAccess(tableIndex, getCurrentPID(), accessFlags) == -1) {
 			return -1;
 		}
 	}
@@ -159,12 +159,12 @@ int8_t MQwriteChar(uint64_t tableIndex, char *src) {
 	if(tableIndex < 0 || tableIndex >= MAX_MQS || mqs[tableIndex].file == NULL || mqs[tableIndex].writePID != getCurrentPID()) {
 		return -1;
 	}
-	int8_t la = basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
-	if(!la) {
-		ncPrint("MQwriteChar failed");
-	}
-	return la;
-	// return basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
+	// int8_t la = basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
+	// if(!la) {
+	// 	ncPrint("MQwriteChar failed");
+	// }
+	// return la;
+	return basicFileWriteChar(*src, mqs[tableIndex].file) == EOF ? 0 : 1;
 }
 
 // int8_t MQsend(mqd_t descriptor, const char *msg, size_t mgsLen) {
@@ -223,7 +223,7 @@ static int64_t indexOfMQ(const char* name) {
 
 static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags) {
 	//TODO verify flags with &, not & and implement NOBLOCK flag
-	if(mqs[tableIndex].file != NULL || (accessFlags & F_READ == 0 && accessFlags & F_WRITE == 0)) {
+	if(mqs[tableIndex].file != NULL || ((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0)) {
 		return -1;
 	}
 	BasicFile file = createBasicFileWithName(name);
@@ -242,23 +242,26 @@ static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags)
 	return 1;
 }
 
-static int8_t markAccess(MessageQueue mq, uint64_t pid, uint32_t accessFlags) {
-	if(mq.file == NULL) {
+static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags) {
+	if(mqs[tableIndex].file == NULL) {
 		return -1;
 	}
-	if(accessFlags == F_READ) {
-		if(mq.readPID != -1) {
+	if(accessFlags & F_READ) {
+		if(mqs[tableIndex].readPID != -1) {
 			return -1;
 		}
-		mq.readPID = pid;
+		mqs[tableIndex].readPID = pid;
+		return 1;
+	}
+	else if(accessFlags & F_WRITE) {
+		if(mqs[tableIndex].writePID != -1) {
+			return -1;
+		}
+		mqs[tableIndex].writePID = pid;
 		return 1;
 	}
 	else {
-		if(mq.writePID != -1) {
-			return -1;
-		}
-		mq.writePID = pid;
-		return 1;
+		return -1;
 	}
 }
 

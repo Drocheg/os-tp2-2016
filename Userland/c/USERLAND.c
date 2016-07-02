@@ -89,8 +89,8 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "process A", printProcessA, 1, argvA);
 	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
@@ -105,8 +105,8 @@ uint64_t printProcessA() {
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		print("\nA sending 'hello'\n");
-		MQsend(mqFD, "Hello", 6);
+		print("\nA -> 'Hello'\n");
+		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
 		sleep(10000);
 	}
 	return 0;
@@ -114,14 +114,14 @@ uint64_t printProcessA() {
 
 uint64_t printProcessB() {
 	int64_t mqFD = MQopen("test", F_READ);
-	char buff[6] = {0};
+	char buff[17] = {0};
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-		print("\nB eceiving...");
-		MQreceive(mqFD, buff, 5);
+		print("\nB <- '");
+		MQreceive(mqFD, buff, 16);
 		print(buff);
-		print("\n");
+		print("'\n");
 		sleep(10000);
 	}
 	return 0;
