@@ -425,17 +425,8 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
 	uint64_t writtenData = 0;
-	ncPrint("\nWaiting for output of ");
-	ncPrintDec(maxBytes);
-	ncPrint(" bytes\n");
 	while(writtenData <= maxBytes) {
-		// int64_t la = operateFile(PCBIndex, fd, IS_FULL, NULL);
-		// ncPrint("operateFile returned ");
-		// ncPrintDec(la);
-		if(writtenData >= 1) {
-			while(1);
-		}
-		int8_t fileIsFull = operateFile(PCBIndex, fd, IS_FULL, NULL) == 0;
+		int8_t fileIsFull = operateFile(PCBIndex, fd, IS_FULL, NULL) == -1;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
 		if (fileIsFull) {
 			if (blocking){
 				yield();
@@ -448,6 +439,7 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 			ncPrint("\nOperateFile returned ");
 			ncPrintDec(la);
 			if (la/*operateFile(PCBIndex, fd, WRITE, &c)*/ == -1) {
+				while(1);
 				break;
 			}
 			writtenData++;

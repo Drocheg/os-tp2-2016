@@ -114,13 +114,13 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 	ncPrint("At operate");
 	switch(operation) {
 		case READ:
-			return readChar(fileType, fileIndex, character);
+			return (int64_t) readChar(fileType, fileIndex, character);
 		case WRITE:
-			return writeChar(fileType, fileIndex, character);
+			return (int64_t) writeChar(fileType, fileIndex, character);
 		case IS_EMPTY:
-			return isEmpty(fileType, fileIndex);
+			return (int64_t) isEmpty(fileType, fileIndex);
 		case IS_FULL:
-			return isFull(fileType, fileIndex);
+			return (int64_t) isFull(fileType, fileIndex);
 		default:
 			return -1;
 	}
@@ -148,35 +148,35 @@ static int8_t isValidFileType(FileType fileType) {
 }
 
 static void initializeSTDIN() {
-	(fileOperators[STDIN_]).readCharFn = &stdinReadChar;
-	(fileOperators[STDIN_]).writeCharFn = &stdinWriteChar;
-	(fileOperators[STDIN_]).isEmptyFn = &stdinIsEmpty;
-	(fileOperators[STDIN_]).isFullFn = &stdinIsFull;
-	(fileOperators[STDIN_]).closeFn = &stdinClose;
+	(fileOperators[STDIN_]).readCharFn = stdinReadChar;
+	(fileOperators[STDIN_]).writeCharFn = stdinWriteChar;
+	(fileOperators[STDIN_]).isEmptyFn = stdinIsEmpty;
+	(fileOperators[STDIN_]).isFullFn = stdinIsFull;
+	(fileOperators[STDIN_]).closeFn = stdinClose;
 }
 
 static void initializeSTDOUT() {
-	(fileOperators[STDOUT_]).readCharFn = &stdoutReadChar;
-	(fileOperators[STDOUT_]).writeCharFn = &stdoutWriteChar;
-	(fileOperators[STDOUT_]).isEmptyFn = &stdoutDataAvailable;
-	(fileOperators[STDOUT_]).isFullFn = &stdoutHasFreeSpace;
-	(fileOperators[STDOUT_]).closeFn = &stdoutClose;
+	(fileOperators[STDOUT_]).readCharFn = stdoutReadChar;
+	(fileOperators[STDOUT_]).writeCharFn = stdoutWriteChar;
+	(fileOperators[STDOUT_]).isEmptyFn = stdoutDataAvailable;
+	(fileOperators[STDOUT_]).isFullFn = stdoutHasFreeSpace;
+	(fileOperators[STDOUT_]).closeFn = stdoutClose;
 }
 
 static void initializeSTDERR() {
-	(fileOperators[STDERR_]).readCharFn = &stderrReadChar;
-	(fileOperators[STDERR_]).writeCharFn = &stderrWriteChar;
-	(fileOperators[STDERR_]).isEmptyFn = &stderrDataAvailable;
-	(fileOperators[STDERR_]).isFullFn = &stderrHasFreeSpace;
-	(fileOperators[STDERR_]).closeFn = &stderrClose;
+	(fileOperators[STDERR_]).readCharFn = stderrReadChar;
+	(fileOperators[STDERR_]).writeCharFn = stderrWriteChar;
+	(fileOperators[STDERR_]).isEmptyFn = stderrDataAvailable;
+	(fileOperators[STDERR_]).isFullFn = stderrHasFreeSpace;
+	(fileOperators[STDERR_]).closeFn = stderrClose;
 }
 
 static void initializeMessageQueues() {
-	(fileOperators[MESSAGE_QUEUE]).readCharFn = &MQreadChar;
-	(fileOperators[MESSAGE_QUEUE]).writeCharFn = &MQwriteChar;
-	(fileOperators[MESSAGE_QUEUE]).isEmptyFn = &MQisEmpty;
-	(fileOperators[MESSAGE_QUEUE]).isFullFn = &MQisFull;
-	(fileOperators[MESSAGE_QUEUE]).closeFn = &MQclose;
+	(fileOperators[MESSAGE_QUEUE]).readCharFn = MQreadChar;
+	(fileOperators[MESSAGE_QUEUE]).writeCharFn = MQwriteChar;
+	(fileOperators[MESSAGE_QUEUE]).isEmptyFn = MQisEmpty;
+	(fileOperators[MESSAGE_QUEUE]).isFullFn = MQisFull;
+	(fileOperators[MESSAGE_QUEUE]).closeFn = MQclose;
 }
 
 static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {
@@ -184,6 +184,7 @@ static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {
 }
 
 static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character) {
+	ncPrint("\nAt writeChar in fileManager\n");
 	return (fileOperators[(uint64_t) fileType]).writeCharFn(fileIndex, character);
 }
 
