@@ -1,41 +1,12 @@
 #include <memory.h>
 #include <kernel-lib.h>
 #include <fileManager.h>
-#include <keyboard.h>
+// #include <keyboard.h>
 #include <tty.h>
 #include <mq.h>
 #include <basicFile.h>
 
 
-
-//TODO implement these where appropriate and delete them from here
-int8_t stdinClose(uint64_t index) {
-	return -1;
-}
-
-int8_t stdoutClose(uint64_t index) {
-	return -1;
-}
-
-int8_t stderrReadChar(uint64_t index, char *character) {
-	return -1; //0;
-}
-
-int8_t stderrWriteChar(uint64_t index, char *character) {
-	return -1; //0;
-}
-
-int8_t stderrIsEmpty(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stderrIsFull(uint64_t index) {
-	return -1; //0;
-}
-
-int8_t stderrClose(uint64_t index) {
-	return -1;
-}
 
 
 

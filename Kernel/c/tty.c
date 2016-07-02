@@ -1,23 +1,16 @@
 #include <tty.h>
-#include <stdint.h>
 #include <keyboard.h>
 #include <video.h>
 
 
 #define STDIN_BUFFER_SIZE 1024
 #define STDOUT_BUFFER_SIZE 1024
+#define STDERR_BUFFER_SIZE 1024
 
 
 /* Typedefs */
 typedef enum {OTHER = 0, NUMBER, LETTER, SYMBOL} charTypes;
 
-
-/* Misc */
-static char *prompt = "$>_";
-static int64_t backSpaceLimit = 0;
-static void ttyKBDPrintChar(char c);
-static int64_t ttySTDOUTPrint(char c);
-static uint64_t analizeScanCode(uint64_t code); 
 
 
 /* STDIN */
@@ -25,12 +18,13 @@ static char stdinBuffer[STDIN_BUFFER_SIZE];
 static uint64_t stdinBufferSize = 0;
 static uint64_t stdinEnqIdx = 0;
 static uint64_t stdinDeqIdx = 0;
+static uint64_t stdinHasData = 0;   /* Each time an '\n' is enqueued, stdinHasData is incremented
+                                     * Each time an '\n' is dequeued, stdinHasData is decremented
+                                     * If no '\n' in the queue, stdin will asume there is no data to read
+                                     */ 
 
 static int64_t stdinEnqueueChar(int64_t value);
 static int64_t stdinDequeueChar();
-
-
-
 
 
 /* STDOUT */
@@ -39,17 +33,32 @@ static uint64_t stdoutBufferSize = 0;
 static uint64_t stdoutEnqIdx = 0;
 static uint64_t stdoutDeqIdx = 0;
 
-
 static int64_t stdoutEnqueueChar(int64_t value);
 static int64_t stdoutDequeueChar();
 static int64_t stdoutPopChar();
 
 
+/* STDERR */
+static char stderrBuffer[STDERR_BUFFER_SIZE];
+static uint64_t stderrBufferSize = 0;
+static uint64_t stderrEnqIdx = 0;
+static uint64_t stderrDeqIdx = 0;
+
+static int64_t stderrEnqueueChar(int64_t value);
+static int64_t stderrDequeueChar();
+static int64_t stderrPopChar();
 
 
 
-static uint64_t stdinHasData = 0;
 
+/* Misc */
+static char *prompt = "$>_";
+static int64_t backSpaceLimit = 0;
+
+static void ttyKBDPrintChar(char c);
+static int64_t ttySTDOUTPrint(char c);
+static int64_t ttySTDERRPrint(char c);
+static uint64_t analizeScanCode(uint64_t code); 
 
 
 
@@ -132,10 +141,20 @@ static char shiftedCharTable[128] = {
 
 
 
+/***********************************************
+ *            Exposed functions
+ ***********************************************/
 
 
 
-
+/*
+ * Adds an element into stdin buffer.
+ * A scancode is passed as an argument. 
+ * The function gets the keyboard state to decode the scancode into a characted
+ * If it doesn't correspond to a valid character, it's not enqueued
+ *
+ * Note: This routine is triggered by the keyboard ISR when it's on TTY mode
+ */
 int64_t ttySTDINAddElement(uint8_t scanCode) {
 
 	uint64_t flag = analizeScanCode(scanCode);
@@ -188,6 +207,8 @@ int64_t ttySTDINAddElement(uint8_t scanCode) {
 }
 
 
+
+
 void setPrompt(char *newPrompt) {
     prompt = newPrompt;
 }
@@ -200,10 +221,18 @@ void ttyPrintPrompt() {
 
 
 
-void fflush() {
 
+
+void stdoutFFlush() {
     while(!stdoutIsEmpty(0)) {
         ncPrintChar((char) stdoutDequeueChar());
+    }
+    backSpaceLimit = 0;
+}
+
+void stderrFFlush() {
+    while(!stderrIsEmpty(0)) {
+        ncPrintChar((char) stderrDequeueChar()); 
     }
     backSpaceLimit = 0;
 }
@@ -211,33 +240,23 @@ void fflush() {
 
 
 
-int8_t stdoutReadChar(uint64_t index, char *dest) {
-    return -1;  /* Unsupported operation */
+/***********************************************
+ *          FileManager implementations
+ ***********************************************/
+
+
+
+/* STDIN */
+int8_t stdinReadChar(uint64_t index, char *dest) {
+    int64_t result = stdinDequeueChar();
+    if (result == -1) {
+        return -1;
+    }
+    *dest = (char) result;
+    return ( (*dest) == '\n') ? -1 : 0;    /* Breaks write execution when an '\n' is read from stdin */
 }
 
-
-int8_t stdoutWriteChar(uint64_t index, char *src) {
-    return ttySTDOUTPrint(*src);
-}
-
-int8_t stdoutIsFull(uint64_t index) {
-    return (stdoutBufferSize == STDOUT_BUFFER_SIZE);
-}
-
-int8_t stdoutIsEmpty(uint64_t index) {
-    return (stdoutBufferSize == 0);
-}
-
-
-
-
-int8_t stdinReadChar(uint64_t index, char *src) {
-    // *character = (char) pollProcessedKey();
-    // return 0;
-    return 0;
-}
-
-int8_t stdinWriteChar(uint64_t index, char *dest) {
+int8_t stdinWriteChar(uint64_t index, char *src) {
     return -1;  /* Unsupported operation */
 }
 
@@ -249,12 +268,59 @@ int8_t stdinIsEmpty(uint64_t index) {
     return (stdinBufferSize == 0);
 }
 
+int8_t stdinClose(uint64_t index) {
+    return 0;
+}
+
+
+
+/* STDOUT */
+int8_t stdoutReadChar(uint64_t index, char *dest) {
+    return -1;  /* Unsupported operation */
+}
+int8_t stdoutWriteChar(uint64_t index, char *src) {
+    return ttySTDOUTPrint(*src);
+}
+int8_t stdoutIsFull(uint64_t index) {
+    return (stdoutBufferSize == STDOUT_BUFFER_SIZE);
+}
+int8_t stdoutIsEmpty(uint64_t index) {
+    return (stdoutBufferSize == 0);
+}
+int8_t stdoutClose(uint64_t index) {
+    return 0;
+}
+
+
+/* STDERR */
+int8_t stderrReadChar(uint64_t index, char *dest) {
+    return -1;  /* Unsupported operation */
+}
+int8_t stderrWriteChar(uint64_t index, char *src) {
+    return ttySTDERRPrint(*src);
+}
+int8_t stderrIsFull(uint64_t index) {
+    return (stderrBufferSize == STDERR_BUFFER_SIZE);
+}
+int8_t stderrIsEmpty(uint64_t index) {
+    return (stderrBufferSize == 0);
+}
+int8_t stderrClose(uint64_t index) {
+    return 0;
+}
 
 
 
 
 
 
+
+/***********************************************
+ *          Buffers Management
+ ***********************************************/
+
+
+/* STDIN */
 static int64_t stdinEnqueueChar(int64_t value) {
 
 	if (stdinIsFull(0)) {
@@ -266,9 +332,11 @@ static int64_t stdinEnqueueChar(int64_t value) {
 	if (stdinEnqIdx == STDIN_BUFFER_SIZE) {
 		stdinEnqIdx = 0;
 	}
+    if ( ((char) value) == '\n') {
+        stdinHasData++;
+    }
     return 0;
 }
-
 static int64_t stdinDequeueChar() {
 
 	char c = 0;
@@ -280,16 +348,13 @@ static int64_t stdinDequeueChar() {
 	if (stdinDeqIdx == STDIN_BUFFER_SIZE) {
 		stdinDeqIdx = 0;
 	}
+    if (c == '\n') {
+        stdinHasData--;
+    }
 	return c;
 }
 
-
-
-
-
-
-
-
+/* STDOUT */
 static int64_t stdoutEnqueueChar(int64_t value) {
 
     if (stdoutIsFull(0)) {
@@ -303,8 +368,6 @@ static int64_t stdoutEnqueueChar(int64_t value) {
     }
     return 0;
 }
-
-
 static int64_t stdoutDequeueChar() {
 
     char c = 0;
@@ -318,8 +381,6 @@ static int64_t stdoutDequeueChar() {
     }
     return c;
 }
-
-
 static int64_t stdoutPopChar() {
 
     if (stdoutIsEmpty(0)) {
@@ -332,16 +393,77 @@ static int64_t stdoutPopChar() {
     return (char) stdoutBuffer[stdoutEnqIdx];
 }
 
+/* STDERR */
+static int64_t stderrEnqueueChar(int64_t value) {
+
+    if (stderrIsFull(0)) {
+        return -1;
+    }
+
+    stderrBuffer[stderrEnqIdx++] = (char) value;
+    stderrBufferSize++;
+    if (stderrEnqIdx == STDERR_BUFFER_SIZE) {
+        stderrEnqIdx = 0;
+    }
+    return 0;
+}
+static int64_t stderrDequeueChar() {
+
+    char c = 0;
+    if (stderrIsEmpty(0)) {
+        return -1;
+    }
+    c = stderrBuffer[stderrDeqIdx++];
+    stderrBufferSize--;
+    if (stderrDeqIdx == STDERR_BUFFER_SIZE) {
+        stderrDeqIdx = 0;
+    }
+    return c;
+}
+static int64_t stderrPopChar() {
+
+    if (stderrIsEmpty(0)) {
+        return -1;
+    }
+    if (stderrEnqIdx == 0) {
+        stderrEnqIdx = STDERR_BUFFER_SIZE;
+    }
+    stderrEnqIdx--;
+    return (char) stderrBuffer[stderrEnqIdx];
+}
 
 
 
 
 
 
+/***********************************************
+ *              Misc Functions
+ ***********************************************/
 
 
+/*
+ * Analyzes a scancode and returns which type it is
+ */
+static uint64_t analizeScanCode(uint64_t code) {
+    
+    if (code >= 2 && code <= 11) {
+        return NUMBER;
+    }
+    if ( (code >= 16 && code <= 25) || (code >= 30 && code <= 38) || (code >= 44 && code <= 50) ) {
+        return LETTER;
+    }
+    if (code == 1 || code == 12 || code == 13 || code == 14 || code == 15
+        || code == 26 || code == 27 || code == 28 || code == 39 || code == 40
+        || code == 41 || code == 43 || code == 51 || code == 52 || code == 53 || code == 57) {
+        return SYMBOL;
+    }
+    return OTHER;
+}
 
-
+/*
+ * Prints a character when added into stdin buffer only if that character must be printed
+ */
 static void ttyKBDPrintChar(char c) {
 
     switch (c){
@@ -366,6 +488,10 @@ static void ttyKBDPrintChar(char c) {
     }
 }
 
+/*
+ * Prints a character into STDOUT
+ * If the character is '\n', an stdoutFFlush is executed
+ */
 static int64_t ttySTDOUTPrint(char c) {
 
     int64_t result = 0;
@@ -375,26 +501,27 @@ static int64_t ttySTDOUTPrint(char c) {
         result = stdoutEnqueueChar((int64_t) c);
     }
     if (c == '\n') {
-        fflush();
+        stdoutFFlush();
+    }
+    return result;
+}
+
+/*
+ * Prints a character into STDERR
+ * If the character is '\n', an stdoutFFlush is executed
+ */
+static int64_t ttySTDERRPrint(char c) {
+
+    int64_t result = 0;
+    if (c == '\b') {
+        result = stderrPopChar(); 
+    } else {
+        result = stderrEnqueueChar((int64_t) c); 
+    }
+    if (c == '\n') {
+        stderrFFlush();
     }
     return result;
 }
 
 
-
-
-static uint64_t analizeScanCode(uint64_t code) {
-    
-    if (code >= 2 && code <= 11) {
-        return NUMBER;
-    }
-    if ( (code >= 16 && code <= 25) || (code >= 30 && code <= 38) || (code >= 44 && code <= 50) ) {
-        return LETTER;
-    }
-    if (code == 1 || code == 12 || code == 13 || code == 14 || code == 15
-        || code == 26 || code == 27 || code == 28 || code == 39 || code == 40
-        || code == 41 || code == 43 || code == 51 || code == 52 || code == 53 || code == 57) {
-        return SYMBOL;
-    }
-    return OTHER;
-}
