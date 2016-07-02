@@ -74,6 +74,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case SLEEP:
 			sleep(p1);
 			break;
+		case WAITPID:
+			*((int64_t *) p2) = waitpid(p1);
+			break;
+		case YIELD:
+			yield();
+			break;
 		default:
 			result = -1;
 			break;

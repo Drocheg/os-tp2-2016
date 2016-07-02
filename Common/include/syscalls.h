@@ -18,6 +18,8 @@
 #define TIME 11
 #define CREATE_PROCESS 12
 #define SLEEP 13
+#define WAITPID 20
+#define YIELD 21
 
 
 struct createProcessParams_s {

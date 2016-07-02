@@ -45,6 +45,7 @@ static uint64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxByt
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForTime(uint64_t miliseconds);
+static uint64_t isProcessRunning(uint64_t pid);
 
 
 /* Static variables */
@@ -133,6 +134,31 @@ uint64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes,
 uint64_t sleep(uint64_t miliseconds) {
 
 	return waitForTime(miliseconds);
+}
+
+
+/*
+ * Stops execution of the running process till process with <pid> PID finishes its execution
+ * Returns <pid> when the process to be waited finishes, 
+ * or -1 if process didn't exist, scheduler wasn't initialized/running, or caller pid is <pid>
+ */
+int64_t waitpid(uint64_t pid) {
+
+	Node current = NULL;
+	uint64_t flag = 0;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+	if (pid == getProcessPID(current->PCBIndex)) {
+		return -1;
+	}
+
+	while(isProcessRunning(pid)) {
+		yield();
+	}
+	return pid;
+	
 }
 
 
@@ -434,6 +460,24 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 }
 
 
+static uint64_t isProcessRunning(uint64_t pid) {
+
+	Node current = NULL;
+	Node pointer = NULL;
+	uint64_t flag = 0;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+	pointer = current;
+
+	do {
+		flag = (pid == getProcessPID(pointer->PCBIndex));
+		pointer = pointer->next;
+	} while(pointer != current && !flag);
+	
+	return flag;
+}
 
 
 

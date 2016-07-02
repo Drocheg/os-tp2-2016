@@ -44,6 +44,13 @@ uint64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes,
 uint64_t sleep(uint64_t miliseconds);
 
 /*
+ * Stops execution of the running process till process with <pid> PID finishes its execution
+ * Returns <pid> when the process to be waited finishes, 
+ * or -1 if process didn't exist, scheduler wasn't initialized/running, or caller pid is <pid>
+ */
+int64_t waitpid(uint64_t pid);
+
+/*
  * Updates the process queue, changing to the next process
  * Returns the next process' stack, 
  * or NULL if scheduler is not running or if no process is scheduled
