@@ -85,6 +85,22 @@ int32_t init_d(int argc, char* argv[]) {
 	}
 
 	clearScreen();
+
+	char array[40];
+	char c;
+	uint64_t i = 0;
+	print("La puta que te pario\n");
+	do {
+		c = getchar();
+		array[i++] = (c == '\n') ? 0 : c;
+		putchar(c);
+	}
+	while (c != '\n' && i < 40);
+	print("Termine el ciclo\n");
+	print(array);
+	while(1);
+
+
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};

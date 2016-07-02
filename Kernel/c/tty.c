@@ -23,8 +23,9 @@ static uint64_t stdinHasData = 0;   /* Each time an '\n' is enqueued, stdinHasDa
                                      * If no '\n' in the queue, stdin will asume there is no data to read
                                      */ 
 
-static int64_t stdinEnqueueChar(int64_t value);
+static int64_t stdinEnqueueChar(char character);
 static int64_t stdinDequeueChar();
+static int8_t stdinBufferIsEmpty(uint64_t index);
 
 
 /* STDOUT */
@@ -33,7 +34,7 @@ static uint64_t stdoutBufferSize = 0;
 static uint64_t stdoutEnqIdx = 0;
 static uint64_t stdoutDeqIdx = 0;
 
-static int64_t stdoutEnqueueChar(int64_t value);
+static int64_t stdoutEnqueueChar(char character);
 static int64_t stdoutDequeueChar();
 static int64_t stdoutPopChar();
 
@@ -201,7 +202,7 @@ int64_t ttySTDINAddElement(uint8_t scanCode) {
     if (result) {
     	return -1;
     }
-    stdinEnqueueChar((char) result);
+    stdinEnqueueChar(character);
     ttyKBDPrintChar(character);
     return (int64_t) character;
 }
@@ -227,6 +228,7 @@ void stdoutFFlush() {
     while(!stdoutIsEmpty(0)) {
         ncPrintChar((char) stdoutDequeueChar());
     }
+    ncPrint("STDOUT Now Flushing\n");
     backSpaceLimit = 0;
 }
 
@@ -255,24 +257,18 @@ int8_t stdinReadChar(uint64_t index, char *dest) {
     *dest = (char) result;
     return ( (*dest) == '\n') ? -1 : 0;    /* Breaks write execution when an '\n' is read from stdin */
 }
-
 int8_t stdinWriteChar(uint64_t index, char *src) {
     return -1;  /* Unsupported operation */
 }
-
 int8_t stdinIsFull(uint64_t index) {
     return (stdinBufferSize == STDIN_BUFFER_SIZE);
 }
-
 int8_t stdinIsEmpty(uint64_t index) {
-    return (stdinBufferSize == 0);
+    return (stdinHasData <= 0);
 }
-
 int8_t stdinClose(uint64_t index) {
     return 0;
 }
-
-
 
 /* STDOUT */
 int8_t stdoutReadChar(uint64_t index, char *dest) {
@@ -290,7 +286,6 @@ int8_t stdoutIsEmpty(uint64_t index) {
 int8_t stdoutClose(uint64_t index) {
     return 0;
 }
-
 
 /* STDERR */
 int8_t stderrReadChar(uint64_t index, char *dest) {
@@ -321,18 +316,17 @@ int8_t stderrClose(uint64_t index) {
 
 
 /* STDIN */
-static int64_t stdinEnqueueChar(int64_t value) {
+static int64_t stdinEnqueueChar(char character) {
 
 	if (stdinIsFull(0)) {
 		return -1;
 	}
-
-	stdinBuffer[stdinEnqIdx++] = (char) value;
+	stdinBuffer[stdinEnqIdx++] = character;
     stdinBufferSize++;
 	if (stdinEnqIdx == STDIN_BUFFER_SIZE) {
 		stdinEnqIdx = 0;
 	}
-    if ( ((char) value) == '\n') {
+    if (character == '\n') {
         stdinHasData++;
     }
     return 0;
@@ -340,7 +334,7 @@ static int64_t stdinEnqueueChar(int64_t value) {
 static int64_t stdinDequeueChar() {
 
 	char c = 0;
-	if (stdinIsEmpty(0)) {
+	if (stdinBufferIsEmpty(0)) {
 		return -1; /* Same position of index can be achieved is full or if is empty */
 	}
 	c = stdinBuffer[stdinDeqIdx++];
@@ -353,15 +347,18 @@ static int64_t stdinDequeueChar() {
     }
 	return c;
 }
+static int8_t stdinBufferIsEmpty(uint64_t index) {
+    return (stdinBufferSize == 0);
+}
 
 /* STDOUT */
-static int64_t stdoutEnqueueChar(int64_t value) {
+static int64_t stdoutEnqueueChar(char character) {
 
     if (stdoutIsFull(0)) {
         return -1;
     }
 
-    stdoutBuffer[stdoutEnqIdx++] = (char) value;
+    stdoutBuffer[stdoutEnqIdx++] = character;
     stdoutBufferSize++;
     if (stdoutEnqIdx == STDOUT_BUFFER_SIZE) {
         stdoutEnqIdx = 0;
@@ -498,7 +495,7 @@ static int64_t ttySTDOUTPrint(char c) {
     if (c == '\b') {
         result = stdoutPopChar();
     } else {
-        result = stdoutEnqueueChar((int64_t) c);
+        result = stdoutEnqueueChar(c);
     }
     if (c == '\n') {
         stdoutFFlush();

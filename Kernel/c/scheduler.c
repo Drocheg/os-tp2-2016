@@ -378,7 +378,6 @@ static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxByte
 		return -1;
 	}
 	current = last->next;
-
 	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
 		return -1;
 	}
@@ -420,6 +419,7 @@ static uint64_t waitForTime(uint64_t miliseconds) {
 
 
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
+	
 	uint64_t readData = 0;
 	while (readData < maxBytes) {
 		int8_t fileIsEmpty = operateFile(PCBIndex, fd, IS_EMPTY, NULL) == 0;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
@@ -435,7 +435,6 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 				break;
 			}
 			buffer[readData] = c;
-			ncPrintChar(c);
 			readData++;
 		}
 	}

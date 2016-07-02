@@ -19,6 +19,10 @@
 * identified by its unique name, of limited length.
 */
 
+
+/* Supported File types. */
+typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE, RAW_KEYS} FileType;
+
 /*
 * End Of file - indicates that a File cannot be read from or written to, or
 * that there was an error carrying out an operation.
