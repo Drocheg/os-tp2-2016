@@ -335,8 +335,7 @@ uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t 
  * If no file in <fileDescriptor> entry, nothing happens.
  * Returns 0 on sucess, or -1 otherwise.
  */
-uint64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
+int64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || fileDescriptor >= MAX_FILES) {
 		return -1;
@@ -389,7 +388,16 @@ int64_t operateFile(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation op
 	process = &(pcb[PCBIndex]);
 	fileIndex = (int64_t) (process->fileDescriptors).entries[fileDescriptor].index;
 	fileType = (FileType) (process->fileDescriptors).entries[fileDescriptor].fileType;
-	return operate(operation, fileType, fileIndex, character);
+	int64_t operationResult = operate(operation, fileType, fileIndex, character);
+	if(operationResult == -1) {
+		return -1;
+	}
+	if(operation == CLOSE) {
+		return removeFile(PCBIndex, fileDescriptor);		//File was closed successfully, remove it from the process' PCB
+	}
+	else {
+		return operationResult;
+	}
 }
 
 /*
@@ -598,6 +606,11 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
 		case IS_FULL:
 		case IS_EMPTY:
 			return 1;
+		case CLOSE:
+			return 1;
+		default:
+			return 0;
+		//TODO include open?
 	}
 	return 0;
 }

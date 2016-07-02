@@ -11,19 +11,19 @@ int8_t stdinClose(uint64_t index) {
 }
 
 int8_t stdoutReadChar(uint64_t index, char *character) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stdoutWriteChar(uint64_t index, char *character) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stdoutDataAvailable(uint64_t index) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stdoutHasFreeSpace(uint64_t index) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stdoutClose(uint64_t index) {
@@ -31,19 +31,19 @@ int8_t stdoutClose(uint64_t index) {
 }
 
 int8_t stderrReadChar(uint64_t index, char *character) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stderrWriteChar(uint64_t index, char *character) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stderrDataAvailable(uint64_t index) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stderrHasFreeSpace(uint64_t index) {
-	return 0;
+	return -1; //0;
 }
 
 int8_t stderrClose(uint64_t index) {
@@ -76,6 +76,7 @@ static int8_t readChar(FileType fileType, int32_t fileIndex, char *character);
 static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character);
 static int8_t isEmpty(FileType fileType, int32_t fileIndex);
 static int8_t isFull(FileType fileType, int32_t fileIndex);
+static int8_t close(FileType fileType, int32_t fileIndex);
 
 
 
@@ -111,7 +112,7 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 	if (isValidFileType(fileType)) {
 		return -1;
 	}
-	int64_t result = -1;
+	int64_t result;
 	int8_t operationResult;
 	switch(operation) {
 		case READ:
@@ -130,8 +131,11 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 			operationResult = isFull(fileType, fileIndex);
 			result = operationResult ? 0 : -1;
 			break;
+		case CLOSE:
+			operationResult = close(fileType, fileIndex);
+			result = operationResult == -1 ? -1 : 0;
 		default:
-			operationResult = -1;
+			result = -1;
 			break;
 	}
 	return result;
@@ -204,4 +208,8 @@ static int8_t isFull(FileType fileType, int32_t fileIndex) {
 
 static int8_t isEmpty(FileType fileType, int32_t fileIndex) {
 	return (fileOperators[(uint64_t) fileType]).isEmptyFn(fileIndex);
+}
+
+static int8_t close(FileType fileType, int32_t fileIndex) {
+	return (fileOperators[(uint64_t) fileType]).closeFn(fileIndex);
 }

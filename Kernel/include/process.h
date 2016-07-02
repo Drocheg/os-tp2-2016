@@ -75,7 +75,7 @@ uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t 
  * If no file in <fileDescriptor> entry, nothing happens.
  * Returns 0 on sucess, or -1 otherwise.
  */
-uint64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor);
+int64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor);
 
 /*
  * Returns 1 if there is a file in the <fileDescriptor> position of process' file table, or 0 otherwise

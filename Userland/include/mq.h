@@ -17,8 +17,12 @@ int64_t MQopen(const char* name, uint32_t accessFlags);
 * Closes the message queue with the given descriptor.
 * NOTE: The queue itself will not be erased until all processes who have MQopen()ed it call MQclose() on it.
 *
+*-----------------------------------------------------------------------------------------------------------
 * @return 0 if the MQ was unlinked successfully but not destroyed, 1 if unlinked successfully and destroyed,
 * -1 on error.
+*				^^ NO, Kernel functions are limited to returning 0 on success and -1 on error
+*-----------------------------------------------------------------------------------------------------------
+* @return 0 on success, -1 on error.
 */
 int8_t MQclose(uint64_t descriptor);
 

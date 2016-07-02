@@ -107,7 +107,18 @@ uint64_t printProcessA() {
 		aux++;
 		print("\nA -> 'Hello'\n");
 		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
-		sleep(10000);
+		// if(aux >= 3) {
+		// 	if(aux == 3) {
+		// 		print("\nClosing MQ returned ");
+		// 		printNum(MQclose(mqFD));
+		// 		print("\n");
+		// 	}
+		// }
+		// else {
+		// 	print("\nA -> 'Hello'\n");
+		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		// }
+		sleep(1000);
 	}
 	return 0;
 }
@@ -122,7 +133,7 @@ uint64_t printProcessB() {
 		MQreceive(mqFD, buff, 16);
 		print(buff);
 		print("'\n");
-		sleep(10000);
+		sleep(2000);
 	}
 	return 0;
 }

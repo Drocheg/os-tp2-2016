@@ -44,7 +44,7 @@ static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags
 /**
 * Destroys the specified message queue and its resources, if it exists.
 *
-* @return 1 on success, -1 on error.
+* @return 1 on success, 0 on error.
 */
 static int8_t destroyMQ(uint64_t index);
 
@@ -98,13 +98,10 @@ int8_t MQclose(uint64_t tableIndex) {
 	else {
 		return -1;
 	}
-	//Unregister it from the current process' PCB
-	ncPrint("\nMQ closed - TODO fileManager tiene que llamar removeFile() con el FD, en MQclose no tengo el FD\n");
 	
 	mq.links--;
 	if(mq.links == 0) {		//No more links, destroy
-		destroyMQ(tableIndex);
-		return 1;
+		return destroyMQ(tableIndex) ? 1 : -1;
 	}
 	else {
 		return 0;
@@ -268,7 +265,7 @@ static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags
 static int8_t destroyMQ(uint64_t index) {
 	BasicFile f = mqs[index].file;
 	if(f == NULL) {
-		return -1;
+		return 0;
 	}
 	destroyBasicFile(f);
 	mqs[index].file = NULL;	//TODO consider clearing out the whole struct rather than just the File?

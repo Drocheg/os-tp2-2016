@@ -14,7 +14,8 @@
 #include <interrupts.h>
 #include <scheduler.h>
 #include <mq.h>
-
+#include <process.h>
+#include <file.h>
 
 static void timerTick();
 
@@ -128,8 +129,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			*((int64_t *)p3) = result;
 			break;
 		case MQ_CLOSE:
-			ncPrint("\nMQClose not handled implemented yet\n");
-			result = -1;
+			result = operateFile(getCurrentPCBIndex(), p1, CLOSE, 0);
 			*((int8_t *)p3) = (int8_t)result;
 			break;
 		case MQ_RECEIVE:
