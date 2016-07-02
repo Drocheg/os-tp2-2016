@@ -54,9 +54,13 @@ void print(const char *str) {
 	_int80(SYSWRITE, STDOUT, (uint64_t)str, strlen(str));
 }
 
-void printNum(uint64_t num) {
-	char buff[20];
-	intToStr(num, buff);
+void printNum(int64_t num) {
+	char buff[21];
+	int negative = num < 0;
+	if(negative) {
+		buff[0] = '-';
+	}
+	intToStr(num, negative ? buff+1 : buff);
 	print(buff);
 }
 
@@ -107,10 +111,11 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 	_int80(PAINT_IMG, (uint64_t) img, x, y);
 }
 
-void sleep(uint64_t sleepTime){
-	uint64_t startTime = time();
-	while(time()<startTime+sleepTime);
-	return;
+void sleep(uint64_t miliseconds) {
+	uint64_t loopTime=time();
+	while(time()<loopTime+miliseconds);
+		
+	//_int80(SLEEP, miliseconds, 0, 0);
 }
 
 void soundFX(uint32_t freq){

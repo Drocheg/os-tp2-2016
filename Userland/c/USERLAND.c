@@ -7,6 +7,8 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <mq.h>
+#include <file-common.h>
 #include <game.h>
 
 extern char bss;
@@ -40,6 +42,9 @@ void playMainSong();
 void playSongTwo();
 void bangBang();
 void pianoMode();
+void sleepForTwoSeconds();
+void testMQ();
+
 
 
 void game();
@@ -59,11 +64,12 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-	{"game", game, "Play Game"},
+	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
+	{"mq", testMQ, "Test MQs"},
 	{"1", bangBang, "Re-run your last valid command"},
+	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
 	{"ipcs", ipcs, "Print ipcs"}
-
 };
 
 uint64_t printProcessA();
@@ -79,19 +85,24 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-//	char* argvA[] = {"process A"};
-//	char* argvB[] = {"process B"};
+	clearScreen();
+	char* argvA[] = {"process A"};
+	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
-	
-//	createProcess("process A", printProcessA, 1, argvA);
-//	createProcess("process B", printProcessB, 1, argvB);
 
+	
 
 	
 	char* argvTerminal[] = {"terminal"};
 
 	createProcess( "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess( "process C", printProcessC, 1, argvC);
+
+	
+	createProcess("process B", printProcessB, 1, argvB);
+	createProcess("process A", printProcessA, 1, argvA);
+	
+
 	while(1);
 	return 0;
 
@@ -100,27 +111,39 @@ int32_t init_d(int argc, char* argv[]) {
 
 
 uint64_t printProcessA() {
-
+	int64_t mqFD = MQopen("test", F_WRITE);
 	uint64_t aux = 0;
 	while (1) {
-		if ( (aux % 500000) == 0) {
-			print("A ");
-		}
-		
 		aux++;
-		
+		print("\nA -> 'Hello'\n");
+		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		// if(aux >= 3) {
+		// 	if(aux == 3) {
+		// 		print("\nClosing MQ returned ");
+		// 		printNum(MQclose(mqFD));
+		// 		print("\n");
+		// 	}
+		// }
+		// else {
+		// 	print("\nA -> 'Hello'\n");
+		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		// }
+		sleep(1000);
 	}
 	return 0;
 }
 
 uint64_t printProcessB() {
-
+	int64_t mqFD = MQopen("test", F_READ);
+	char buff[17] = {0};
 	uint64_t aux = 0;
-	while ((uint64_t)-1) {
-		if ( (aux % 50000000) == 0) {
-			print("B ");
-		}
+	while (1) {
 		aux++;
+		print("\nB <- '");
+		MQreceive(mqFD, buff, 16);
+		print(buff);
+		print("'\n");
+		sleep(2000);
 	}
 	return 0;
 }
@@ -132,14 +155,10 @@ uint64_t printProcessC() {
 }
 
 int32_t userland_main(int argc, char* argv[]) {
-
-	//clearScreen();
-	
-
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
-
+	
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!isExit) {
 		uint8_t index = 0;
@@ -295,8 +314,9 @@ void bangBang() {
 		print("\n");
 		runCommand(lastCommand);
 	}
-
 }
+
+
 
 void pianoMode(){
 	char* argvPiano[] = {"piano"};
@@ -305,3 +325,16 @@ void pianoMode(){
 	return;
 	
 }
+
+void sleepForTwoSeconds() {
+	print("Sleeping...");
+	sleep(2000);
+	print("woke up\n");
+}
+
+void testMQ() {
+	int64_t read = MQopen("test", F_READ);
+	print("Read FD: ");
+	printNum(read);
+}
+

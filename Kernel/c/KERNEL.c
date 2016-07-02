@@ -11,6 +11,8 @@
 #include <time.h>
 #include <process.h>
 #include <scheduler.h>
+#include <fileManager.h>
+#include <basicFile.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -25,12 +27,9 @@ static const uint64_t PageSize = PAGE_SIZE;
 void clearBSS(void * bssAddress, uint64_t bssSize);
 void * initializeKernelBinary();
 
-
 static void finishKernel();
 
 int kernel_main(int argc, char *argv[]) {
-
-
 	int32_t ret = 0;
 	setGraphicMode();
 	ncPrint("Set graphic video mode\n");
@@ -54,9 +53,9 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
-	/* Initializes File System */
-	ncPrint("Initilzing File System...");
-	initializeFileSystem();
+	/* Initializes File Manager */
+	ncPrint("Initilzing File Manager...");
+	initializeFileManager();
 	ncPrint("Done\n");
 
 	/* Initializes PCB */
@@ -123,8 +122,6 @@ static void finishKernel() {
 	ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
 	_cli();
 	_halt();
-	return 0;
-
 }
 
 void clearBSS(void * bssAddress, uint64_t bssSize) {

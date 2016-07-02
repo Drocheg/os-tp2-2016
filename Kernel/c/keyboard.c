@@ -99,3 +99,39 @@ uint8_t processModifierKey(uint8_t scanCode) {
 	}
 	return 1;
 }
+
+
+
+int8_t stdinReadChar(uint64_t index, char *character) {
+	*character = (char) pollProcessedKey();
+	return *character == 0 ? 0 : 1;
+}
+
+
+int8_t stdinWriteChar(uint64_t index, char *character) {
+	return -1; /* Unsupported operation */
+}
+
+int8_t stdinIsEmpty(uint64_t index) {
+	
+	if (bufferIsEmpty()) {
+		return -1;  /* Returns -1 when there is no data available */
+	}
+	return 0; /* Returns 0 when there is data available */
+}
+
+
+int8_t stdinIsFull(uint64_t index) {
+	if (bufferIsFull()) {
+		return -1;	/* Returns -1 when file doesn't have space */
+	}
+	return 0; /* Returns 0 when it has free space */
+}
+
+
+
+
+
+
+
+

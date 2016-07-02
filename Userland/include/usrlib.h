@@ -28,7 +28,7 @@ void reboot();
 
 void print(const char *str);
 
-void printNum(uint64_t num);
+void printNum(int64_t num);
 
 void printf(const char *format, vargs *args);
 
@@ -72,6 +72,5 @@ void fillRect(REKTangle *rekt);
 
 //Paints the specified image with its top-left corner in the specified coordinates
 void paintImg(Image *img, uint64_t x, uint64_t y);
-
 
 #endif
