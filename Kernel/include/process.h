@@ -53,6 +53,10 @@ uint64_t getFilesQuantity(uint64_t PCBIndex);
 
 uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor);
 
+uint32_t getFileType(uint64_t PCBIndex, uint64_t fileDescriptor);
+
+uint64_t getProcessMemoryAmount(uint64_t PCBIndex);
+
 /* Setters */
 uint64_t setProcessStack(uint64_t PCBIndex, void *stack);
 

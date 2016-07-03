@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <interrupts.h>
 #include <process.h>
-// #include <file.h>
+#include <file-common.h>
 #include <fileManager.h>
 #include <stddef.h>
 #include <time.h>
@@ -436,6 +436,11 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 			}
 			buffer[readData] = c;
 			readData++;
+
+			if (c == '\n' && getFileType(PCBIndex, fd) == (uint32_t) STDIN_ ) {
+				
+				break;
+			}
 		}
 	}
 	return readData;

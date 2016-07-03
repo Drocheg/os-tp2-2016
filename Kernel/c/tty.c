@@ -255,7 +255,7 @@ int8_t stdinReadChar(uint64_t index, char *dest) {
         return -1;
     }
     *dest = (char) result;
-    return ( (*dest) == '\n') ? -1 : 0;    /* Breaks write execution when an '\n' is read from stdin */
+    return 1;    /* Breaks read execution when an '\n' is read from stdin */
 }
 int8_t stdinWriteChar(uint64_t index, char *src) {
     return -1;  /* Unsupported operation */
@@ -264,6 +264,9 @@ int8_t stdinIsFull(uint64_t index) {
     return (stdinBufferSize == STDIN_BUFFER_SIZE);
 }
 int8_t stdinIsEmpty(uint64_t index) {
+    if (stdinHasData) {
+        ncPrintChar(stdinBuffer[stdinDeqIdx]);
+    }
     return (stdinHasData <= 0);
 }
 int8_t stdinClose(uint64_t index) {

@@ -93,11 +93,11 @@ int32_t init_d(int argc, char* argv[]) {
 	do {
 		c = getchar();
 		array[i++] = (c == '\n') ? 0 : c;
-		putchar(c);
 	}
-	while (c != '\n' && i < 40);
-	print("Termine el ciclo\n");
+	while (c != '\n');
 	print(array);
+	print("Termine el ciclo\n");
+	
 	while(1);
 
 

@@ -269,6 +269,15 @@ uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
 }
 
+uint32_t getFileType(uint64_t PCBIndex, uint64_t fileDescriptor) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+	return (((process->fileDescriptors).entries)[fileDescriptor]).fileType;
+}
+
 uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
