@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <time.h>
 #include <video.h>
+#include <keyboard.h>
+#include <scheduler.h>
 
 
 #ifndef MAX_PROCESSES
@@ -18,7 +20,7 @@
 typedef struct node_t * Node;
 typedef enum {RUNNING = 0, SLEPT, FINISHED} State;
 typedef enum {SLEPT_IO = 0, SLEPT_TIME} SleptState;
-typedef uint64_t (*IOActions)(uint64_t, uint64_t, char **, uint64_t, uint64_t);
+typedef uint64_t (*IOActions)(uint64_t, uint64_t, char *, uint64_t, uint64_t);
 typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
@@ -44,6 +46,7 @@ static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxByte
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking);
 static uint64_t waitForTime(uint64_t miliseconds);
+static uint64_t isProcessRunning(uint64_t pid);
 
 
 /* Static variables */
@@ -131,6 +134,30 @@ int64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, 
 uint64_t sleep(uint64_t miliseconds) {
 
 	return waitForTime(miliseconds);
+}
+
+
+/*
+ * Stops execution of the running process till process with <pid> PID finishes its execution
+ * Returns <pid> when the process to be waited finishes, 
+ * or -1 if process didn't exist, scheduler wasn't initialized/running, or caller pid is <pid>
+ */
+int64_t waitpid(uint64_t pid) {
+
+	Node current = NULL;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+	if (pid == getProcessPID(current->PCBIndex)) {
+		return -1;
+	}
+
+	while(isProcessRunning(pid)) {
+		yield();
+	}
+	return pid;
+	
 }
 
 
@@ -294,7 +321,7 @@ static int getFreeNode() {
 }
 
 
-static int64_t contador=0;
+/* static int64_t contador=0; TODO: Deprecate this */
 
 static void *nextProcessRecursive() {
 
@@ -350,7 +377,6 @@ static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxByte
 		return -1;
 	}
 	current = last->next;
-
 	if (fileDescriptor < 0 || fileDescriptor > MAX_FILES || !existsFile(current->PCBIndex, fileDescriptor)) {
 		return -1;
 	}
@@ -392,6 +418,7 @@ static uint64_t waitForTime(uint64_t miliseconds) {
 
 
 static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint64_t maxBytes, uint64_t blocking) {
+	
 	uint64_t readData = 0;
 	while (readData < maxBytes) {
 		int8_t fileIsEmpty = operateFile(PCBIndex, fd, IS_EMPTY, NULL) == 0;	//;sodifhnas;vdiufhnasdlfiuhnvsd DAMMIT MERCA
@@ -461,8 +488,28 @@ void printPS() {
 		//	newNode->next = newNode; /* Helps when last is NULL */
 			ncPrint("\n");
 		}
-
 		i++;
-	}
-	
+	}	
 }
+
+
+static uint64_t isProcessRunning(uint64_t pid) {
+
+	Node current = NULL;
+	Node pointer = NULL;
+	uint64_t flag = 0;
+	if (checkScheduler()) {
+		return -1;
+	}
+	current = last->next;
+	pointer = current;
+
+	do {
+		flag = (pid == getProcessPID(pointer->PCBIndex));
+		pointer = pointer->next;
+	} while(pointer != current && !flag);
+	
+	return flag;
+}
+
+

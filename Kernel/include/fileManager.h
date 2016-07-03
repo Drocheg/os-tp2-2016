@@ -2,6 +2,7 @@
 #define FILE_MANAGER_H
 
 #include <file.h>
+#include <file-common.h>
 
 /*
 * The File manager is responsible for tracking all kinds of File types
@@ -11,8 +12,6 @@
 * based on the File type, the appropriate function is called.
 */
 
-//Supported File types.
-typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE, RAW_KEYS} FileType;
 
 
 /*
