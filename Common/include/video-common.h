@@ -20,7 +20,7 @@ typedef struct {
 typedef struct {
 	uint64_t width;
 	uint64_t height;
-	uint8_t *pixelData;			//NOTE: When accesing this, use uint8_t* myPxPointer = &myImgStruct->pixelData (the & is intentional)
+	uint8_t *pixelData;			//NOTE: When accesing this, use uint8_t* myPxPointer = (uint8_t *) &myImgStruct->pixelData (the & is intentional)
 } Image;
 #pragma pack(pop)
 
