@@ -74,6 +74,9 @@ static uint64_t recursiveGetProcessMemoryAmount(void * currentPage);
 static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileOperation operation);
 static void freePages(void ** current);
 static int64_t openSTDIOFiles(uint64_t PCBIndex);
+static int64_t openRawKeys(uint64_t PCBIndex);
+
+static void printFiles(uint64_t PCBIndex);
 
 /* 
  * Returns a pointer to the next position with <size> bytes available in a page of the heap,
@@ -147,6 +150,7 @@ uint64_t initializePCB() {
 
 
 
+
 /*
  * Creates a process and loads it into the PCB
  * Returns process PCB index on success.
@@ -155,6 +159,7 @@ uint64_t initializePCB() {
  * Returns -3 if no memory for the stack.
  * Returns -4 if there was a problem with parameters
  * Returns -5 if STDIO files couldn't be opened
+ * Returns -6 if RAW files couldn't be opened
  */
 uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint64_t argc, char *argv[]) {
 
@@ -195,8 +200,12 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	if (openSTDIOFiles(index)) {
 		return -5;	/* Couldn't open STDIO Files */
 	}
+	if (openRawKeys(index)) {
+		return -6;
+	}
 	newProcess->heapPage = NULL;
-	
+
+	printFiles(index);
 	return index;
 }
 
@@ -271,6 +280,15 @@ uint32_t getFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	return (((process->fileDescriptors).entries)[fileDescriptor]).flags;
 }
 
+uint32_t getFileType(uint64_t PCBIndex, uint64_t fileDescriptor) {
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+	return (((process->fileDescriptors).entries)[fileDescriptor]).fileType;
+}
+
 uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
@@ -332,7 +350,6 @@ uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t 
 	while ((entries[i]).occupied) {
 		i++;
 	}
-
 	((process->fileDescriptors).size)++;
 	(((process->fileDescriptors).entries)[i]).occupied = 1;
 	(((process->fileDescriptors).entries)[i]).index = index;
@@ -370,7 +387,7 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
-	return (uint64_t) (process->fileDescriptors).entries[fileDescriptor].occupied;
+	return (uint64_t) (((process->fileDescriptors).entries)[fileDescriptor]).occupied;
 }
 
 /*
@@ -635,9 +652,6 @@ static uint64_t hasPermissions(uint64_t PCBIndex, uint64_t fileDescriptor, FileO
  */
 static int64_t openSTDIOFiles(uint64_t PCBIndex) {
 
-	int64_t flag = 0;
-
-
 	if ( (addFile(PCBIndex, 0, STDIN_, F_READ) < 0)
 		|| (addFile(PCBIndex, 0, STDOUT_, F_WRITE) < 0) 
 		|| (addFile(PCBIndex, 0, STDERR_, F_WRITE) < 0) ) {
@@ -646,4 +660,48 @@ static int64_t openSTDIOFiles(uint64_t PCBIndex) {
 	return 0;
 }
 
+static int64_t openRawKeys(uint64_t PCBIndex) {
+	if (addFile(PCBIndex, 0, RAW_KEYS, F_READ) < 0) {
+		return -1;
+	}
+	return 0;
+}
 
+
+
+
+
+
+/*
+ * Debugging function
+ */
+static void printFiles(uint64_t PCBIndex) {
+
+	uint64_t i = 0;
+	struct pcbEntry_s *process = NULL;
+	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
+		return -1;
+	}
+	process = &(pcb[PCBIndex]);
+
+	ncPrint("File in PCB index: ");
+	ncPrintDec(PCBIndex);
+	ncPrint(" has the following files: ");
+	while (i < MAX_FILES) {
+		ncPrint("\n  File with fd: ");
+		ncPrintDec(i);
+		ncPrint("\n   Occupied: ");
+		ncPrintDec( (((process->fileDescriptors).entries)[i]).occupied);
+		ncPrint("\n   Index: ");
+		ncPrintDec( (((process->fileDescriptors).entries)[i]).index);
+		ncPrint("\n   File type: ");
+		ncPrintDec( (((process->fileDescriptors).entries)[i]).fileType ) ;
+		ncPrint("\n   Flags: ");
+		ncPrintDec( (((process->fileDescriptors).entries)[i]).flags);
+		i++;
+	}
+	ncPrint("\n");
+}
+
+
+	

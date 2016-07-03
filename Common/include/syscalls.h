@@ -3,6 +3,10 @@
 
 #include <processCommon.h>
 
+typedef enum {TTY = 0, RAW} KeyboardMode;
+
+
+
 #define SYSREAD 1
 #define SYSWRITE 2
 #define SYSCLEAR 3
@@ -44,6 +48,12 @@
 #define MQ_RECEIVE 773
 #define MQ_IS_FULL 774
 #define MQ_IS_EMPTY 775
+
+
+//Others
+#define CHANGE_KBD_MODE 900
+
+
 
 
 struct createProcessParams_s {

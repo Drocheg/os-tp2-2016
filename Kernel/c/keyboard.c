@@ -30,6 +30,9 @@ void attendKeyboard() {
 }
 
 void changeMode(KeyboardMode mode) {
+	if (mode != TTY && mode != RAW) {
+		return;
+	}
 	keyboardMode = mode;
 }
 

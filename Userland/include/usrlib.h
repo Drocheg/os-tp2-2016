@@ -14,7 +14,7 @@ void putchar(char c);
 
 char getchar();
 
-uint8_t getscancode();
+uint8_t getScanCode();
 
 void scroll();
 
@@ -41,6 +41,12 @@ void soundFX(uint32_t freq);
 void sleep(uint64_t sleepTime);
 
 void exit(int64_t result);
+
+void changeToScanCodes();
+
+void changeToKeys();
+
+
 
 void * malloc(uint64_t size);
 

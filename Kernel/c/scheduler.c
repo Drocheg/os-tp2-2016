@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <interrupts.h>
 #include <process.h>
-// #include <file.h>
+#include <file-common.h>
 #include <fileManager.h>
 #include <stddef.h>
 #include <time.h>
@@ -370,7 +370,6 @@ static uint64_t checkScheduler() {
  */
 static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
 
-	
 	Node current = (Node) NULL;
 	uint64_t result = 0;
 	if (checkScheduler()) {
@@ -425,8 +424,9 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 		if (fileIsEmpty) {
 			if (blocking){
 				yield();
-			} else {
-				sleep(1000);
+
+			} else {			
+
 				break;
 			}
 		} else {
@@ -436,6 +436,11 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 			}
 			buffer[readData] = c;
 			readData++;
+
+			if (c == '\n' && getFileType(PCBIndex, fd) == (uint32_t) STDIN_ ) {
+				
+				break;
+			}
 		}
 	}
 	return readData;
