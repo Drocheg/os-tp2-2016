@@ -400,7 +400,6 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 			if (blocking){
 				yield();
 			} else {
-				sleep(1000);
 				break;
 			}
 		} else {
