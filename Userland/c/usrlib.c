@@ -5,7 +5,12 @@
 #include <fileDescriptors.h>
 #include <scanCodes.h>
 #include <video-common.h>
+#include <stdint.h>
 #include <file-common.h>
+#include <stdint.h>
+#include <fileDescriptors.h>
+#include <mq.h>
+
 
 void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
@@ -152,7 +157,7 @@ char* concat(char *s1, char *s2)
     int64_t len1 = strlen(s1);
     int64_t len2 = strlen(s2);
     char *result = malloc(len1+len2+1);//+1 for the zero-terminator
-    //in real code you would check for errors in malloc here
+    if(result==NULL) return NULL;
     memcpy(result, s1, len1);
     memcpy(result+len1, s2, len2+1);//+1 to copy the null-terminator
     return result;
