@@ -21,7 +21,7 @@
 
 
 /* Supported File types. */
-typedef enum {STDIN_ = 0, STDOUT_, STDERR_, MESSAGE_QUEUE, RAW_KEYS} FileType;
+typedef enum {STDIN_ = 0, STDOUT_, STDERR_, RAW_KEYS, MESSAGE_QUEUE} FileType;
 
 /*
 * End Of file - indicates that a File cannot be read from or written to, or

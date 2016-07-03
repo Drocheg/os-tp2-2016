@@ -84,29 +84,6 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-	changeToScanCodes();
-	while(1) {
-		uint8_t aux = getScanCode();
-		// putchar(aux);
-		// putchar('\n');
-	}
-	while(1);
-
-	char array[40];
-	char c;
-	uint64_t i = 0;
-	print("La puta que te pario\n");
-	do {
-		c = getchar();
-		array[i++] = (c == '\n') ? 0 : c;
-	}
-	while (c != '\n');
-	print(array);
-	print("Termine el ciclo\n");
-	
-	while(1);
-
-
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
