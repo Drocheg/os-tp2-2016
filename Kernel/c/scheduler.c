@@ -108,8 +108,6 @@ void stopScheduler() {
 uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
 	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
-		ncPrint("Can't enqueue process");
-		for(int i=0; i<100000000;i++);	
 		return -1;
 	}
 	return 0;
@@ -168,11 +166,8 @@ int64_t waitpid(uint64_t pid) {
  * or NULL if scheduler is not running or if no process is scheduled
  */
 void *nextProcess(void *currentRSP) {
-	// ncPrint("I'm here");
 	Node current = NULL;
 	if (checkScheduler()) {	
-		ncPrint("No scheduler");
-		for(int i=0; i<100000000;i++);
 		return getKernelStack();
 	}
 	current = last->next;

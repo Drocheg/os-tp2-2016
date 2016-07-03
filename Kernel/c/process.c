@@ -188,12 +188,6 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 	
 	(newProcess->fileDescriptors).size = 0;
 	memset((void *)((newProcess->fileDescriptors).entries), 0, MAX_FILES * sizeof(struct fileDescriptorMapEntry_s));
-
-	//Open STDIN_ for the new process
-	// ((newProcess->fileDescriptors.entries)[STDIN]).occupied = 1;
-	// ((newProcess->fileDescriptors.entries)[STDIN]).index = 0;
-	// ((newProcess->fileDescriptors.entries)[STDIN]).fileType = (uint32_t) STDIN_;
-	// ((newProcess->fileDescriptors.entries)[STDIN]).flags = F_READ;
 	
 	if (openSTDIOFiles(index)) {
 		return -5;	/* Couldn't open STDIO Files */
@@ -202,8 +196,6 @@ uint64_t createProcess(uint64_t parentPid, char name[32], void *entryPoint, uint
 		return -6;
 	}
 	newProcess->heapPage = NULL;
-
-	printFiles(index);
 	return index;
 }
 
@@ -378,15 +370,6 @@ int64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || fileDescriptor >= MAX_FILES) {
-
-
-		ncPrint("Process with PCB Index: ");
-		ncPrintDec(PCBIndex);
-		ncPrint(" doesn't have a file opened with fd: ");
-		ncPrintDec(fileDescriptor);
-		ncPrint("\n");
-
-
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
@@ -440,10 +423,7 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
-		ncPrint("processDestructionNull");
-		for(int i=0; i<100000; i++);
-	
-		return -1;
+			return -1;
 	}
 
 	process = &(pcb[PCBIndex]);

@@ -84,6 +84,7 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
+	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
@@ -105,7 +106,7 @@ uint64_t printProcessA() {
 	while (1) {
 		aux++;
 		print("\nA -> 'Hello'\n");
-		MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
+		MQsend(mqFD, "WHAZZAAAAAAAAA\n", 16);
 		// if(aux >= 3) {
 		// 	if(aux == 3) {
 		// 		print("\nClosing MQ returned ");
