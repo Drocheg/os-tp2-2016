@@ -5,6 +5,9 @@
 #include <syscalls.h>
 #include <interrupts.h>
 #include <songplayer.h>
+#include <inputReceiver.h>
+#include <mq.h>
+#include <file-common.h>
 
 
 #define STATE_GROUND 0
@@ -14,9 +17,9 @@
 #define SPACE_OBSTACLE 1
 #define HORIZONTAL_SIZE 10
 #define VERTICAL_SIZE 10
-#define GAME_TICK 100
-#define JUMP_LAG 200
-#define OBSTACLE_LAG_MULTIPLIER 6
+#define GAME_TICK 200
+#define JUMP_LAG 400
+#define OBSTACLE_LAG_MULTIPLIER 2
 #define NO_OBSTACLE_MULTIPLIER 5
 #define GAME_OVER_LAG 10000
 #define JUMP_FX_1 21
@@ -24,29 +27,45 @@
 #define JUMP_FX_3 82
 
 
-static uint64_t state;
-static int64_t jumpForce;
-static uint64_t jumpStartTime;
-static uint64_t lastObstacleUpdate;
-static uint64_t lastUpdateTime;
-static int64_t posY; //Position of the center of the character
-static uint64_t obstacle[HORIZONTAL_SIZE][10]={SPACE_EMPTY}; 
-static int isGameOver = 0;
+
+
+
+/* Structs */
+typedef struct{
+	uint64_t state;
+	int64_t jumpForce;
+	uint64_t jumpStartTime;
+	uint64_t lastObstacleUpdate;
+	uint64_t lastUpdateTime;
+	int64_t posY; //Position of the center of the character
+	uint64_t obstacle[HORIZONTAL_SIZE][VERTICAL_SIZE]; 
+	int isGameOver;
+	int64_t mqFDMusicSend;
+	int64_t mqFDMusicRead;
+	int64_t mqFDInputReceiverSend;
+	int64_t mqFDInputReceiverRead;
+}gameData_t;
+
+typedef gameData_t * GameData;
 
 /*There are n vertical spaces. Character can only jump vertical. In the air he can't jump. 
 If he touch an obstacle you lose. The character is 3 blocks tall, so he uses 3 of the n space 
 at any given time, his center can be in any of the block from 1 to (n-2). 
 Example: If Vertical_size=10, center can only be in any block from 1 to 8 and can't be in 0 or 9.
 */
-void playGame();
-void jump();
-void update();
-uint64_t isPlayerJumping();
-void gameOver();
+void playGame(GameData gameData);
+void jump(GameData gameData);
+void update(GameData gameData);
+uint64_t isPlayerJumping(GameData gameData);
+void gameOver(GameData gameData);
 void playJumpFX(uint64_t seed);
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
-void initGame();
+void initGame(GameData gameData);
 int64_t game_main(int argc, char* argv[]);
+
+
+
+
 
 
 void game_start(int argc, char* argv[]){
@@ -57,120 +76,128 @@ void game_start(int argc, char* argv[]){
 
 
 int64_t game_main(int argc, char* argv[]){
-	initGame();
+
+
+	//gameData_t gameData1;
+	GameData gameData = malloc(sizeof(*gameData));
+
+	//music
+	gameData->mqFDMusicSend = MQopen("MQGameMusicSend", F_WRITE /*| F_NOBLOCK*/);
+	gameData->mqFDMusicRead = MQopen("MQGameMusicRead", F_READ /*| F_NOBLOCK*/);
+	char* argvSongPlayer[] = {"MQGameMusicRead", "MQGameMusicSend"};
+	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
+	int64_t songNum = 2;
+	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
+
+	initGame(gameData);
 	return 0;
 }
 
-void initGame(){
-	state = STATE_GROUND;
-	jumpForce=0;
-	jumpStartTime=time();
-	lastUpdateTime=time();
-	lastObstacleUpdate=time();
-	posY=1;
+void initGame(GameData gameData){
+	clearScreen();
+	gameData->state = STATE_GROUND;
+	gameData->jumpForce=4;
+	gameData->jumpStartTime=time();
+	gameData->lastUpdateTime=time();
+	gameData->lastObstacleUpdate=time();
+	gameData->posY=1;
 	for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
 		for(int64_t j =0; j<VERTICAL_SIZE; j++){
-			obstacle[i][j]=SPACE_EMPTY;
+			gameData->obstacle[i][j]=SPACE_EMPTY;
 		}
 	}
-	//music
-	char* argvSongPlayer[] = {"1"};
-	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
-//	char* argvInputReceiver[] = {"inputReceiver"};
-//	createProcess(0, "InputReceiver", inputReceiver_main, 1, argvInputReceiver);
+	gameData->isGameOver = 0;
 	
-	playGame();
+	gameData->mqFDInputReceiverRead = MQopen("MQGIRRead", F_READ /*| F_NOBLOCK*/);
+	gameData->mqFDInputReceiverSend = MQopen("MQGIRSend", F_WRITE /*| F_NOBLOCK*/);
+	char* argvInputReceiver[] = {"MQGIRRead", "MQGIRSend"};
+	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
+	
+
+	playGame(gameData);
 	return;
 }
-void playGame(){
-	uint64_t loopTime=time();
+void playGame(GameData gameData){
+	//uint64_t loopTime=time();
 	
-	while(!isGameOver){
-		while(time()<loopTime+GAME_TICK/2);
-		loopTime=time();
-		update();
-	//	yield();
+	while(!gameData->isGameOver){
+	//	while(time()<loopTime+GAME_TICK/2);
+	//	loopTime=time();
+		update(gameData);
+		yield();
 	}
+	MQclose(gameData->mqFDMusicSend);
+	MQclose(gameData->mqFDMusicRead);
+	MQclose(gameData->mqFDInputReceiverRead);
+	MQclose(gameData->mqFDInputReceiverSend);
 	return;
 }
 
-void jump(){
-	if(state==STATE_AIR) return;
-	if(jumpForce>=VERTICAL_SIZE-3) return;
-	//print("F");
-	jumpForce+=1;
-	if(state==STATE_GROUND){
-		//print("S");
-		jumpForce=1;
-		state=STATE_JUMPING;
-		jumpStartTime=time();
-	}
-	return;
-}
-
-void update(){
-	uint64_t updateTime=time(); //Make all updates with the same time.
+void jump(GameData gameData){
+	if(gameData->state==STATE_AIR) return;
+	if(gameData->jumpForce>=VERTICAL_SIZE-3) return;
 	
-	//Character Update
-	if(state==STATE_JUMPING){
-		//print("J");
-		if(jumpStartTime+JUMP_LAG<updateTime){
-			playJumpFX(updateTime);
-			state=STATE_AIR;
-		}
-	}
-	if(isPlayerJumping()){
-		jump();
-	}
-	if(state==STATE_AIR){
+	gameData->jumpForce+=1;
+	if(gameData->state==STATE_GROUND){
 		
-		uint64_t timeFromJump = updateTime-(jumpStartTime+JUMP_LAG);
+		gameData->jumpForce=4;
+		gameData->state=STATE_JUMPING;
+		gameData->jumpStartTime=time();
+	}
+	return;
+}
+
+void update(GameData gameData){
+	uint64_t updateTime=time(); //Make all updates with the same time.
+	//Character Update
+	if(gameData->state==STATE_JUMPING){
+		
+		if(gameData->jumpStartTime+JUMP_LAG<updateTime){
+			playJumpFX(updateTime);
+			gameData->state=STATE_AIR;
+
+			
+		}
+	}
+	if(isPlayerJumping(gameData)){
+		jump(gameData);
+	}
+	if(gameData->state==STATE_AIR){
+		
+		uint64_t timeFromJump = updateTime-(gameData->jumpStartTime+JUMP_LAG);
 		int64_t gameTicksFromJump = (timeFromJump/GAME_TICK);
 		if(gameTicksFromJump>0){
 			
-			if(gameTicksFromJump<=jumpForce){
-				print("C");
-				posY=1+gameTicksFromJump;
+			if(gameTicksFromJump<=gameData->jumpForce){
+				
+				gameData->posY=1+gameTicksFromJump;
 			}else{
 				
-				if(1+2*jumpForce<gameTicksFromJump){//TODO usar numero que acepten negativos
-					print("D");
-					posY=1;
+				if(1+2*gameData->jumpForce<gameTicksFromJump){
+					
+					gameData->posY=1;
 				}else{
-					print("E");
-					posY=1+2*jumpForce-gameTicksFromJump; //the max height from jump - fall (1+jumpForce<gameTicksFromJump-jumpForce)
+					
+					gameData->posY=1+2*gameData->jumpForce-gameTicksFromJump; //the max height from jump - fall (1+jumpForce<gameTicksFromJump-jumpForce)
 				}
 			}
-			if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
-			if(posY<=1){
-			//	print("G");
-				posY=1;
-				state=STATE_GROUND;	
-				jumpForce=0;
+			if(gameData->posY>VERTICAL_SIZE-3) gameData->posY=VERTICAL_SIZE-2;
+			if(gameData->posY<=1){
+			
+				gameData->posY=1;
+				gameData->state=STATE_GROUND;	
+				gameData->jumpForce=0;
 			} 
 		}
 	}
 
-	//TODO sacar esto y que la logica de antes ande bien.
-	//if(posY>VERTICAL_SIZE-3) posY=VERTICAL_SIZE-2;
-//	if(posY<=1){
-//		posY=1;
-//		state=STATE_GROUND;	
-//		jumpForce=0;
-//	} 
-
-
-	//printNum(posY);
-
+	
 	//Obstacle Update
-	uint64_t obstacleTicksFromLastUpdate = ((updateTime-lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
+	uint64_t obstacleTicksFromLastUpdate = ((updateTime-gameData->lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
 	if(obstacleTicksFromLastUpdate>0 && obstacleTicksFromLastUpdate<HORIZONTAL_SIZE){
 		int64_t newObstaclePosY = ((updateTime/13)*7919)%(VERTICAL_SIZE*NO_OBSTACLE_MULTIPLIER);
 
-		//TODO borrar estas 3 lineas. Debugging. 
-		////printNum(newObstaclePosY);
-		//print("\n");
-		
+	
 		for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(int64_t j =0; j<VERTICAL_SIZE; j++){
 				int64_t oldI = i+obstacleTicksFromLastUpdate;
@@ -179,85 +206,90 @@ void update(){
 					if(j==newObstaclePosY) newState=SPACE_OBSTACLE;
 					else newState=SPACE_EMPTY;	
 				}else{
-					newState=obstacle[oldI][j];
+					newState=gameData->obstacle[oldI][j];
 				}
 				
 
 				if(i!=0){
-					if(newState==SPACE_OBSTACLE && obstacle[i][j]==SPACE_EMPTY){
-						paintFullRect(i*50+100, j*50, 50, 50, 0xFF0000);
+					if(newState==SPACE_OBSTACLE && gameData->obstacle[i][j]==SPACE_EMPTY){
+						paintFullRect(i*50+100,(VERTICAL_SIZE-j-1)*50, 50, 50, 0xFF0000);
 						
 					}
-					if(newState==SPACE_EMPTY && obstacle[i][j]==SPACE_OBSTACLE){
-						paintFullRect(i*50+100, j*50, 50, 50, 0x000000);	
+					if(newState==SPACE_EMPTY && gameData->obstacle[i][j]==SPACE_OBSTACLE){
+						paintFullRect(i*50+100, (VERTICAL_SIZE-j-1)*50, 50, 50, 0x000000);	
 						
 					}
 				}
-				obstacle[i][j]=newState;
+				gameData->obstacle[i][j]=newState;
 			
 			}
 			
 		}
-		lastObstacleUpdate=updateTime; //TODO trabajar por bloques desde inicio
+		gameData->lastObstacleUpdate=updateTime; //TODO trabajar por bloques desde inicio
 	}
 
 	for(int j=0; j<VERTICAL_SIZE; j++){
-		if(j==posY || j==posY+1 || j==posY-1){
-			if(obstacle[0][j]==SPACE_OBSTACLE){
-				gameOver();
+		if(j==gameData->posY || j==gameData->posY+1 || j==gameData->posY-1){
+			if(gameData->obstacle[0][j]==SPACE_OBSTACLE){
+				gameOver(gameData);
 				return;
 			}else{
-				if(j==posY-1){
+				if(j==gameData->posY-1){
 				
 					Image * dinosaurio;
 					_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
-					paintImg(dinosaurio, 0, (posY-1)*50);
+					paintImg(dinosaurio, 0, (VERTICAL_SIZE-(gameData->posY-1)-3)*50);
 				
 				}
 				
 				
-				
-				//if(j==posY+1) print("O");
-				//if(j==posY  ) print("I");
-				//if(j==posY-1) print("N");
 			}
 		}else{
-			if(obstacle[0][j]==SPACE_OBSTACLE){
-				paintFullRect(0, j*50, 150, 50, 0xFF0000);
+			if(gameData->obstacle[0][j]==SPACE_OBSTACLE){
+				paintFullRect(0,  (VERTICAL_SIZE-j-1)*50, 150, 50, 0xFF0000);
 				
 			}else{
-				paintFullRect(0, j*50, 150, 50, 0x000000);	
+				paintFullRect(0,  (VERTICAL_SIZE-j-1)*50, 150, 50, 0x000000);	
 				
 			}
 		}
 	}
 	
-	
-	for(int i=0; i<10; i++){
-		paintFullRect(i*50+100,13*50,5,5,0x000000);
-	}
-	paintFullRect(jumpForce*50+100,13*50,5,5,0xFFFF00);
 
 
 
-
-	lastUpdateTime=updateTime;
+	gameData->lastUpdateTime=updateTime;
 	return;
 }
 
-//TODO use msgQ
-uint64_t isPlayerJumping(){
+//TODO hacer una etapa en donde checkea input y tener un variable que sea isPlayerJumping. Para el exit.
+uint64_t isPlayerJumping(GameData gameData){
 	
-	char c = ((lastUpdateTime/13)*7919)%2;
-	if(c==1) return 1;
-	else return 0;
+	//char c = ((gameData->lastUpdateTime/13)*7919)%2;
+	int8_t isJumping = 0;
+	int64_t msg=0;
+	//print("isEmpty?");
+	//printNum(MQisEmpty(gameData->mqFDInputReceiverRead));
+	//print("\n");
+	while(!MQisEmpty(gameData->mqFDInputReceiverRead)){
+		MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
+		
+		if(msg==1) isJumping=1;
+	}
+	
+	return isJumping;
 
 }
 
-void gameOver(){
-	isGameOver=1;
+void gameOver(GameData gameData){
+	gameData->isGameOver=1;
+	int64_t songNum = 3;
+	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	clearScreen(); 
 	print("\n\n\n Game Over ");
+	sleep(3400);
+	songNum = -1;
+	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	
 }
 

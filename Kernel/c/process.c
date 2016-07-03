@@ -11,6 +11,7 @@
 
 
 
+
 /* Structs */
 struct fileDescriptorMapEntry_s {
 	uint32_t occupied;
@@ -118,8 +119,10 @@ static void *mallocRecursive(void **current, uint64_t size) {
 }
 
 static uint64_t recursiveGetProcessMemoryAmount(void * currentPage){
+	ncPrint("\n");
+	ncPrintHex(currentPage);
 	if(currentPage==NULL) return 0;
-	return PAGE_SIZE + recursiveGetProcessMemoryAmount( *((void **) currentPage) );
+	return 1 + recursiveGetProcessMemoryAmount( *((void **) currentPage));
 }
 
 
@@ -285,7 +288,10 @@ uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
 		return NULL;
 	}
 	process = &(pcb[PCBIndex]);
-	return PAGE_SIZE + recursiveGetProcessMemoryAmount(process->heapPage);
+	uint64_t numPages = 1 + recursiveGetProcessMemoryAmount(process->heapPage);
+	ncPrintDec(numPages);
+	ncPrint("  ");
+	return PAGE_SIZE * numPages;
 }
 
 /* Setters */
@@ -432,7 +438,7 @@ uint64_t destroyProcess(uint64_t PCBIndex) {
 	pageManager(PUSH_PAGE, &(process->stackPage)); /* Returns stack memory page */
 
 	//Free heap
-	//freePages(process->heapPage);
+	freePages(process->heapPage);
 
 	memset(process, 0, sizeof(*process)); /* Clears the process' pcb entry */
 	return 0;

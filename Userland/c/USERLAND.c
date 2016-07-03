@@ -10,7 +10,7 @@
 #include <mq.h>
 #include <file-common.h>
 #include <game.h>
-
+#include <inputReceiver.h>
 extern char bss;
 extern char endOfBinary;
 static int bssCheck = 0;
@@ -34,13 +34,13 @@ void sayHello();
 uint8_t runCommand(char *cmd);
 void dumpDataModule();
 void rainbow();
-void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
 
 void playMainSong();
 void playSongTwo();
 void bangBang();
+void pianoMode();
 void sleepForTwoSeconds();
 void testMQ();
 
@@ -59,7 +59,7 @@ static command commands[] = {
 	{"help", help, "Shows this help"},
 	{"hello", sayHello, "Greets the user"},
 	{"jalp", jalp, "Ai can't spik inglish"},
-	{"piano", piano, "Turns your keyboard into a piano!"},
+	{"piano", pianoMode, "Turns your keyboard into a piano!"},
 	{"reboot", reboot, "Reboots the system"},
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
@@ -76,6 +76,7 @@ static command commands[] = {
 uint64_t printProcessA();
 uint64_t printProcessB();
 uint64_t printProcessC();
+uint64_t printProcessD();
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -86,15 +87,27 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-	clearScreen();
+
+	// clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
-//	char* argvC[] = {"process C"};
+	char* argvC[] = {"process C"};
+	char* argvD[] = {"process D"};
 	char* argvTerminal[] = {"terminal"};
 	createProcess(0, "process B", printProcessB, 1, argvB);
 	createProcess(0, "process A", printProcessA, 1, argvA);
-	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	
+	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
+
+	char* argvInputReceiver[] = {"MQReceive", "MQSend"};
+	//createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
+	
+	
+//	createProcess("TestMallocSend", printProcessC, 1, argvC);
+//	createProcess("TestMallocReceive", printProcessD, 1, argvD);
+
 	while(1);
 	return 0;
 
@@ -114,23 +127,37 @@ uint64_t printProcessA() {
 		// print("MQ full, A taking a break");
 		sleep(10000);
 	}
+	MQclose(mqFD);
 	return 0;
 }
 
 uint64_t printProcessB() {
 	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
+
 	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
-	// print("B opened MQ");
+	print("B opened MQ");
+
 	char buff[17] = {0};
 	uint64_t aux = 0;
-	
 	while (1) {
 		aux++;
+
+
+// <<<<<<< HEAD
+// =======
+
+// 			// print("\nB MQ:\n  Empty? ");
+// 			// printNum(MQisEmpty(mqFD));
+// 			// print("\n  Full? ");
+// 			// printNum(MQisFull(mqFD));
+// >>>>>>> gameMsgQ
+
 		if(MQisEmpty(mqFD)) {
 			// print("\nMQ empty, B taking a break\n");
 			sleep(1000);
 		}
 		int64_t bytesRead = MQreceive(mqFD, buff, 16);
+
 		if(bytesRead > 0) {
 			// print("\nB <- '");
 			buff[bytesRead] = 0;
@@ -144,15 +171,40 @@ uint64_t printProcessB() {
 		}
 		sleep(2000);
 	}
+	MQclose(mqFD);
+
 	return 0;
 }
 
 uint64_t printProcessC() {
-	print("CCCC");
+	print("I'm C");
+	void * malloc1 = malloc(0x2000);
+	//* (int64_t*) malloc1 = 42; 
+	printNum(malloc1);
 	exit(0);
 	return 0;
 }
 
+uint64_t printProcessD() {
+	print("I'm D");
+
+	sleep(100);
+	print("Woke Up!");
+	for(uint64_t i=0; i<100; i++){
+		void * malloc2 = malloc(8000);
+		if(i%10==0){
+
+		ps();
+		sleep(200);	
+		}
+		//printNum(* (int64_t*) malloc2); 
+	}
+	
+	
+	
+	exit(0);
+	return 0;
+}
 
 int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
@@ -209,15 +261,7 @@ int32_t userland_main(int argc, char* argv[]) {
 	return 0;
 }
 
-void * memset(void * dest, int32_t c, uint64_t length) {
-	uint8_t chr = (uint8_t)c;
-	char * dst = (char*)dest;
 
-	while(length--)
-		dst[length] = chr;
-
-	return dest;
-}
 
 void printVer(const char *str) {
 	print("Terminal V");
@@ -290,18 +334,37 @@ void getTime() {
 }
 
 void playMainSong(){
-	char* argvSongPlayer[] = {"2"};
-	createProcess(0, "SongPlayer", playSong_start, 1, argvSongPlayer);
+	int64_t mqFD = MQopen("MQReceive", F_WRITE /*| F_NOBLOCK*/);
+	char* argvSongPlayer[] = {"MQSend", "MQReceive"};
+	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
+	int64_t songNum = 2;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+	sleep(10000);
+	songNum = -1;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+		
+	MQclose(mqFD);
+		
+	
 	return;
 }
 
-void playSongTwo(){
-	playSong(1);
+void playSongTwo(){ //TODO hacer que playSong ande sin esos sleep y sin el loop. Hacer un end song? Tener un solo songPlayer?
+	int64_t mqFD = MQopen("MQReceive2", F_WRITE /*| F_NOBLOCK*/);
+	char* argvSongPlayer[] = {"MQSend2", "MQReceive2"};
+	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
+	int64_t songNum = 2;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+	sleep(10000);
+	songNum = -1;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+	MQclose(mqFD);
+	
 }
 
 void game(){
 	char* argvGame[] = {"2"};
-	createProcess(0, "Game", game_start, 1, argvGame);
+	createProcess( "Game", game_start, 1, argvGame);
 	return;
 }
 
@@ -317,6 +380,13 @@ void bangBang() {
 }
 
 
+void pianoMode(){
+	char* argvPiano[] = {"piano"};
+	createProcess( "Piano", piano_start, 1, argvPiano);
+	
+	return;
+	
+}
 void sleepForTwoSeconds() {
 	print("Sleeping...");
 	sleep(2000);

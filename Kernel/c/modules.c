@@ -1,6 +1,7 @@
 #include <modules.h>
 #include <kernel-lib.h>
 #include <fileDescriptors.h>
+#include <stdlib.h>
 
 typedef int32_t (*EntryPoint)();
 static uint8_t running = 0;

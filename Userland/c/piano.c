@@ -21,13 +21,21 @@ static int notes[][8] = {
 	{31,62,23,245,494,988,1975,3951}};
 
 void offerNote(uint8_t note, uint8_t octave, uint32_t time);
+int64_t piano_main(int argc, char* argv[]);
+
+void piano_start(int argc, char* argv[]){
+	int64_t result = piano_main(argc, argv);
+	exit(result);
+	while(1); //TODO borrar el while(1);
+}
+
 
 /**
 Funcion que entra en el "estado" piano. Reproduce sonidos precargados en una matriz,
 que son 3 octavas enteras, al apretar ciertas teclas.
 Espera hasta que se toque la tecla de codigo 'e' (Esc). 
 */
-void piano() {
+int64_t piano_main(int argc, char* argv[]) {
 	clearScreen();
 	print("                                 PIANO v1.0\n");
 	print("                              Press ESC to exit");

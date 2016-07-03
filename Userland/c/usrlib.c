@@ -65,17 +65,17 @@ void printNum(int64_t num) {
 	print(buff);
 }
 
-uint64_t createProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+int64_t createProcess(char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
 	int i = 0;
 	struct createProcessParams_s params;
 	
-	params.parentPid = parentPid;
+	
 	params.name = name;
 	params.entryPoint = entryPoint;
 	params.argc = argc;
 	params.argv = argv;
-	uint64_t result;
+	int64_t result;
 	_int80(CREATE_PROCESS, (uint64_t) &params, (uint64_t) &result, 0);
 	return result;
 }
@@ -123,6 +123,9 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 }
 
 void sleep(uint64_t miliseconds) {
+	//uint64_t loopTime=time();
+	//while(time()<loopTime+miliseconds);
+		
 	_int80(SLEEP, miliseconds, 0, 0);
 }
 
@@ -144,6 +147,16 @@ void changeToKeys() {
 	_int80(CHANGE_KBD_MODE, TTY, 0, 0);
 }
 
+char* concat(char *s1, char *s2)
+{
+    int64_t len1 = strlen(s1);
+    int64_t len2 = strlen(s2);
+    char *result = malloc(len1+len2+1);//+1 for the zero-terminator
+    //in real code you would check for errors in malloc here
+    memcpy(result, s1, len1);
+    memcpy(result+len1, s2, len2+1);//+1 to copy the null-terminator
+    return result;
+}
 
 /*
 void printf(const char *format, vargs *args) {

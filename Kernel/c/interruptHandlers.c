@@ -4,6 +4,7 @@
 #include <syscalls.h>
 #include <fileDescriptors.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <modules.h>
 #include <speaker.h>
 #include <keyboard.h>
@@ -64,12 +65,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = 1;
 			break;
 		case CREATE_PROCESS: {
-				_cli();
-				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
-				*((uint64_t *) p2) = (uint64_t) result;
-				_sti();
-			}
+			_cli();
+			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+			result = addProcess(-1, params->name, params->entryPoint, params->argc, params->argv);//TODO getCurrentPid
+			*((int64_t *) p2) = (int64_t) result; 
+			_sti();
+		}
 			break;
 		case TIME:
 			*((uint64_t *) p1) = time();
@@ -87,7 +88,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case EXIT: //TODO hacer algo con el codigo de error en p1.
 			
 			terminateProcess();
-			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess.
+			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess(?.
 			uint64_t aux = 0;
 			while (1) {
 				if ( (aux % 500000) == 0) {
@@ -105,8 +106,8 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			printMQs();
 			break;
 
-		case MALLOC: //TODO descomentar esto
-			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
+		case MALLOC: 
+			*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
 			break;
 		/* *********
 		*	Video

@@ -39,7 +39,7 @@ struct node_t {
 /* Static functions prototypes */
 static int getFreeNode();
 static uint64_t dequeueProcess();
-static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
+static int64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 static void *nextProcessRecursive();
 static uint64_t checkScheduler();
 static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blockings);
@@ -105,12 +105,17 @@ void stopScheduler() {
  * Adds a process into the queue
  * Returns 0 on success, or -1 otherwise
  */
-uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+// <<<<<<< HEAD
+// uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 
-	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+// 	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
+// =======
+int64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
+	int64_t pid = enqueueProcess(parentPid, name, entryPoint, argc, argv);
+	if (pid < 0) {
 		return -1;
 	}
-	return 0;
+	return pid;
 }
 
 
@@ -229,7 +234,7 @@ uint64_t finishProcess() {
  * Returns -1 if no space for the process in the processes list
  * Returns -2 if process couldn't be created
  */
-static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
+static int64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], 
 	void *entryPoint, uint64_t argc, char *argv[]) {
 
 	
@@ -267,7 +272,7 @@ static uint64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	last = newNode;
 	newNode->next = aux->next;
 	aux->next = newNode;
-	return 0;
+	return getProcessPID(PCBIndex);
 
 }
 
@@ -474,7 +479,6 @@ void printPS() {
 			ncPrint(" State:");
 			uint64_t newState = 	newNode->state;
 			ncPrint(staticChar[newNode->state]);
-			ncPrint("\n");
 			ncPrint(" Memory: ");
 			ncPrintDec(getProcessMemoryAmount(newPCBIndex));
 			ncPrint(" Next PBCindex: ");
