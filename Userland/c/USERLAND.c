@@ -343,5 +343,14 @@ void testMQ() {
 	}
 	print("Sending message...sent ");
 	printNum(MQsend(fd, "1234567890", 10));
-	print(" bytes\n");
+	print(" bytes.\nClosing MQ returned ");
+	int8_t closeResult = MQclose(fd);
+	printNum(closeResult);
+	if(closeResult >= 0) {
+		print(" (success)\n");
+		fd = 0;
+	}
+	else {
+		print(" (error)\n");
+	}
 }

@@ -90,24 +90,24 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 }
 
 int8_t MQclose(uint64_t tableIndex) {
-	MessageQueue mq = mqs[tableIndex];
-	if(mq.file == NULL) {
+	if(mqs[tableIndex].file == NULL) {
 		return -1;
 	}
 	uint64_t pid = getCurrentPID();
-	if(mq.readPID == pid) {
-		mq.readPID = -1;
+	if(mqs[tableIndex].readPID == pid) {
+		mqs[tableIndex].readPID = -1;
 	}
-	else if(mq.writePID == pid) {
-		mq.writePID = -1;
+	else if(mqs[tableIndex].writePID == pid) {
+		mqs[tableIndex].writePID = -1;
 	}
 	else {
 		return -1;
 	}
 	
-	mq.links--;
-	if(mq.links == 0) {		//No more links, destroy
-		return destroyMQ(tableIndex) ? 1 : -1;
+	mqs[tableIndex].links--;
+	if(mqs[tableIndex].links == 0) {		//No more links, destroy
+		int8_t destroyResult = destroyMQ(tableIndex);
+		return destroyResult == 0 ? -1 : destroyResult;
 	}
 	else {
 		return 0;
@@ -281,7 +281,7 @@ static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags)
 	uint64_t pid = getCurrentPID();
 	mqs[tableIndex] = (MessageQueue) {
 		file,
-		1,
+		0,		//Not setting links, openMQ increments them
 		-1,		//Not setting access PIDs here, delegating to markAccess() below
 		-1
 	};

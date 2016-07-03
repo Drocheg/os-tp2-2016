@@ -23,7 +23,7 @@ int64_t MQopen(const char* name, uint32_t accessFlags);
 *				^^ NO, Kernel functions are limited to returning 0 on success and -1 on error
 *				\/ Use this for now (-1 will always be error and >= 0 will be success)
 *-----------------------------------------------------------------------------------------------------------
-* @return 0 on success, -1 on error.
+* @return 1 on success, -1 on error.
 */
 int8_t MQclose(uint64_t descriptor);
 

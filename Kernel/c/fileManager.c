@@ -134,6 +134,7 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 		case CLOSE:
 			operationResult = close(fileType, fileIndex);
 			result = operationResult == -1 ? -1 : 0;
+			break;
 		default:
 			result = -1;
 			break;
