@@ -256,6 +256,30 @@ int main(int argc, char *argv[]) {
 	
 	};
 
+	note notesTrack3[] = {
+		{NOTE_C5, 110},
+		{0, 220},
+		{NOTE_G4, 110},
+
+		{0, 220},
+		{NOTE_E4, 220},
+
+		{NOTE_A4, 220},
+		{NOTE_B4, 220},
+		{NOTE_A4, 220},
+
+		{NOTE_GS4, 220},
+		{NOTE_AS4, 220}, //S?
+
+		{NOTE_GS4, 220},
+		{NOTE_G4, 110},
+		{NOTE_F4, 110},
+
+		{NOTE_G4, 660},
+		{0, 880},
+
+	};
+
 	uint32_t n = sizeof(notesTrack1) / sizeof(note);
 
 	printf("Writing %d notes:\n", n);
@@ -266,7 +290,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Write
-	uint32_t songNum = 2; //TODO cambiar magicNum
+	uint32_t songNum = 3; //TODO cambiar magicNum
 	fwrite(&songNum, 4, 1, f);
 	//MainSong
 	fwrite(&n, 4, 1, f);
@@ -275,9 +299,11 @@ int main(int argc, char *argv[]) {
 		fwrite(&(notesTrack1[i].duration), 4, 1, f);
 	}
 
+
+	//ExtraSong
 	uint32_t n2 = sizeof(notesTrack2) / sizeof(note);
 
-	printf("Writing %d notes:\n", n);
+	printf("Writing %d notes:\n", n2);
 	
 	for(i = 0; i < n2; i++) {
 		printf("freq = %d (0x%x) ", notesTrack2[i].freq, notesTrack2[i].freq);
@@ -285,12 +311,33 @@ int main(int argc, char *argv[]) {
 	}
 
 		
-	//ExtraSong
+	
 	fwrite(&n2, 4, 1, f);
 	for(i = 0; i < n2; i++) {
 		fwrite(&(notesTrack2[i].freq), 4, 1, f);
 		fwrite(&(notesTrack2[i].duration), 4, 1, f);
 	}
+
+
+	//ExtraSong
+	uint32_t n3 = sizeof(notesTrack3) / sizeof(note);
+
+	printf("Writing %d notes:\n", n3);
+	
+	for(i = 0; i < n3; i++) {
+		printf("freq = %d (0x%x) ", notesTrack3[i].freq, notesTrack3[i].freq);
+		printf("duration = %d (0x%x)\n", notesTrack3[i].duration, notesTrack3[i].duration);
+	}
+
+		
+	
+	fwrite(&n3, 4, 1, f);
+	for(i = 0; i < n3; i++) {
+		fwrite(&(notesTrack3[i].freq), 4, 1, f);
+		fwrite(&(notesTrack3[i].duration), 4, 1, f);
+	}
+
+
 
 	fclose(f);
 	printf("Song write complete. File is %s", fname);

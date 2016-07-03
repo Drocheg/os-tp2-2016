@@ -75,6 +75,7 @@ static command commands[] = {
 uint64_t printProcessA();
 uint64_t printProcessB();
 uint64_t printProcessC();
+uint64_t printProcessD();
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -88,7 +89,8 @@ int32_t init_d(int argc, char* argv[]) {
 	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
-//	char* argvC[] = {"process C"};
+	char* argvC[] = {"process C"};
+	char* argvD[] = {"process D"};
 	char* argvTerminal[] = {"terminal"};
 
 	//char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
@@ -96,7 +98,8 @@ int32_t init_d(int argc, char* argv[]) {
 	//createProcess("process B", printProcessB, 1, argvB);
 	//createProcess("process A", printProcessA, 1, argvA);
 	createProcess("Terminal", userland_main, 1, argvTerminal);
-	//	createProcess("process C", printProcessC, 1, argvC);
+//	createProcess("TestMallocSend", printProcessC, 1, argvC);
+//	createProcess("TestMallocReceive", printProcessD, 1, argvD);
 
 
 	while(1);
@@ -170,7 +173,31 @@ uint64_t printProcessB() {
 }
 
 uint64_t printProcessC() {
-	print("CCCC");
+	print("I'm C");
+	void * malloc1 = malloc(0x2000);
+	//* (int64_t*) malloc1 = 42; 
+	printNum(malloc1);
+	exit(0);
+	return 0;
+}
+
+uint64_t printProcessD() {
+	print("I'm D");
+
+	sleep(100);
+	print("Woke Up!");
+	for(uint64_t i=0; i<100; i++){
+		void * malloc2 = malloc(8000);
+		if(i%10==0){
+
+		ps();
+		sleep(200);	
+		}
+		//printNum(* (int64_t*) malloc2); 
+	}
+	
+	
+	
 	exit(0);
 	return 0;
 }
@@ -314,9 +341,11 @@ void playMainSong(){
 	int64_t mqFD = MQopen("MQReceive", F_WRITE /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQSend", "MQReceive"};
 	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
-	int64_t songNum = 1;
+	int64_t songNum = 2;
 	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
-	
+	sleep(10000);
+	songNum = -1;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
 		
 		
 	

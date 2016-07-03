@@ -80,7 +80,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case EXIT: //TODO hacer algo con el codigo de error en p1.
 			
 			terminateProcess();
-			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess.
+			//yield(); //TODO yield no esta hecho todavia. Y moverlo a terminateProcess(?.
 			uint64_t aux = 0;
 			while (1) {
 				if ( (aux % 500000) == 0) {
@@ -98,8 +98,8 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			printIPCS();
 			break;
 
-		case MALLOC: //TODO descomentar esto
-			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
+		case MALLOC: 
+			*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
 			break;
 		/* *********
 		*	Video

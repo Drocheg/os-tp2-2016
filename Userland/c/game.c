@@ -78,11 +78,12 @@ void game_start(int argc, char* argv[]){
 int64_t game_main(int argc, char* argv[]){
 
 
-	gameData_t gameData1;
-	GameData gameData = &gameData1;
+	//gameData_t gameData1;
+	GameData gameData = malloc(sizeof(*gameData));
 
 	//music
 	gameData->mqFDMusicSend = MQopen("MQGameMusicSend", F_WRITE /*| F_NOBLOCK*/);
+	gameData->mqFDMusicRead = MQopen("MQGameMusicRead", F_READ /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQGameMusicRead", "MQGameMusicSend"};
 	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
 	int64_t songNum = 2;
@@ -108,6 +109,7 @@ void initGame(GameData gameData){
 	gameData->isGameOver = 0;
 	
 	gameData->mqFDInputReceiverRead = MQopen("MQGIRRead", F_READ /*| F_NOBLOCK*/);
+	gameData->mqFDInputReceiverSend = MQopen("MQGIRSend", F_WRITE /*| F_NOBLOCK*/);
 	char* argvInputReceiver[] = {"MQGIRRead", "MQGIRSend"};
 	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
 	
@@ -277,8 +279,13 @@ uint64_t isPlayerJumping(GameData gameData){
 
 void gameOver(GameData gameData){
 	gameData->isGameOver=1;
+	int64_t songNum = 3;
+	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	clearScreen(); 
 	print("\n\n\n Game Over ");
+	sleep(3400);
+	songNum = -1;
+	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	
 }
 

@@ -46,11 +46,11 @@ void playSong_start(int argc, char* argv[]){
 
 int64_t playSong_main(int argc, char* argv[]){
 	
-	songPlayerData_s songPlayerDataAux;
-	SongPlayerData songPlayerData = &songPlayerDataAux;
+	
+	SongPlayerData songPlayerData = malloc(sizeof(*songPlayerData));
 
 	if(argc<2) return -1;
-	print( argv[0]);
+	songPlayerData->isEnd=0;
 	songPlayerData->mqFDSend = MQopen( argv[0], F_WRITE /*| F_NOBLOCK*/);
 	songPlayerData->mqFDRead = MQopen(argv[1], F_READ /*| F_BLOCK*/);
 	int64_t songNumber;
@@ -59,7 +59,7 @@ int64_t playSong_main(int argc, char* argv[]){
 		MQreceive(songPlayerData->mqFDRead, (char *)&songNumber, sizeof(int64_t));
 		playSong(songNumber,songPlayerData);
 	}while(!songPlayerData->isEnd);
-	
+	_int80(SPEAKER, 0, 0, 0);
 	return 0;
 }
 
@@ -97,8 +97,9 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 	//print("                   I shall now play you the song of my people\n");
 	char * songDataAux = songData;
 	int32_t m = n;
-	//while(1){
+	while(1){
 		while(n > 0) {
+			if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
 			freq = *((uint32_t *)songData);
 			songData = songData+4;
 			time = (*((uint32_t *)songData));  
@@ -110,6 +111,6 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 		n=m;
 		songData = songDataAux ;
 		_int80(SPEAKER, 0, 0, 0);	
-	//}
+	}
 	
 }
