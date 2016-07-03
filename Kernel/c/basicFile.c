@@ -185,7 +185,7 @@ uint64_t getBasicFileSize(BasicFile f) {
 }
 
 uint64_t getBasicFileFreeSpace(BasicFile f) {
-	return (f->writeIndex > f->readIndex)
+	return (f->writeIndex >= f->readIndex)
                 ? f->size - f->writeIndex
                 : f->readIndex - f->writeIndex;
 }

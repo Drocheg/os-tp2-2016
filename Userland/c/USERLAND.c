@@ -89,8 +89,8 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
-	// createProcess(0, "process B", printProcessB, 1, argvB);
-	// createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
@@ -109,19 +109,8 @@ uint64_t printProcessA() {
 		while(!MQisFull(mqFD)) {
 			MQsend(mqFD, "12345678901234567890", 20);
 		}
-		print("MQ full, A taking a break");
+		// print("MQ full, A taking a break");
 		sleep(10000);
-		// if(aux >= 3) {
-		// 	if(aux == 3) {
-		// 		print("\nClosing MQ returned ");
-		// 		printNum(MQclose(mqFD));
-		// 		print("\n");
-		// 	}
-		// }
-		// else {
-		// 	print("\nA -> 'Hello'\n");
-		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
-		// }
 	}
 	return 0;
 }
@@ -129,30 +118,26 @@ uint64_t printProcessA() {
 uint64_t printProcessB() {
 	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
 	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
-	print("B opened MQ");
+	// print("B opened MQ");
 	char buff[17] = {0};
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-			// print("\nB MQ:\n  Empty? ");
-			// printNum(MQisEmpty(mqFD));
-			// print("\n  Full? ");
-			// printNum(MQisFull(mqFD));
 		if(MQisEmpty(mqFD)) {
-			print("\nMQ empty, B taking a break\n");
+			// print("\nMQ empty, B taking a break\n");
 			sleep(1000);
 		}
 		int64_t bytesRead = MQreceive(mqFD, buff, 16);
 		if(bytesRead > 0) {
-			print("\nB <- '");
+			// print("\nB <- '");
 			buff[bytesRead] = 0;
-			print(buff);
-			print("' - ");
-			printNum(bytesRead);
-			print("\n");
+			// print(buff);
+			// print("' - ");
+			// printNum(bytesRead);
+			// print("\n");
 		}
 		else {
-			print(".");
+			// print(".");
 		}
 		sleep(2000);
 	}
@@ -341,16 +326,16 @@ void testMQ() {
 		printNum(fd);
 		print("\n");
 	}
-	print("Sending message...sent ");
-	printNum(MQsend(fd, "1234567890", 10));
-	print(" bytes.\nClosing MQ returned ");
-	int8_t closeResult = MQclose(fd);
-	printNum(closeResult);
-	if(closeResult >= 0) {
-		print(" (success)\n");
-		fd = 0;
-	}
-	else {
-		print(" (error)\n");
-	}
+	// print("Sending message...sent ");
+	// printNum(MQsend(fd, "1234567890", 10));
+	// print(" bytes.\nClosing MQ returned ");
+	// int8_t closeResult = MQclose(fd);
+	// printNum(closeResult);
+	// if(closeResult >= 0) {
+	// 	print(" (success)\n");
+	// 	fd = 0;
+	// }
+	// else {
+	// 	print(" (error)\n");
+	// }
 }
