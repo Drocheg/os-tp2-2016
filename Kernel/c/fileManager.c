@@ -3,6 +3,7 @@
 #include <fileManager.h>
 // #include <keyboard.h>
 #include <tty.h>
+#include <rawKeys.h>
 #include <mq.h>
 #include <basicFile.h>
 
@@ -31,6 +32,7 @@ static void initializeSTDIN();
 static void initializeSTDOUT();
 static void initializeSTDERR();
 static void initializeMessageQueues();
+static void initializeRawKeys();
 static int8_t readChar(FileType fileType, int32_t fileIndex, char *character);
 static int8_t writeChar(FileType fileType, int32_t fileIndex, char *character);
 static int8_t isEmpty(FileType fileType, int32_t fileIndex);
@@ -54,6 +56,7 @@ void initializeFileManager() {
 	initializeSTDOUT();
 	initializeSTDERR();
 	initializeMessageQueues();
+	initializeRawKeys();
 	initialized = 1;
 }
 
@@ -152,6 +155,16 @@ static void initializeMessageQueues() {
 	(fileOperators[MESSAGE_QUEUE]).isFullFn = MQisFull;
 	(fileOperators[MESSAGE_QUEUE]).closeFn = MQclose;
 }
+
+static void initializeRawKeys() {
+	(fileOperators[RAW_KEYS]).readCharFn = rawReadChar;
+	(fileOperators[RAW_KEYS]).writeCharFn = rawWriteChar;
+	(fileOperators[RAW_KEYS]).isEmptyFn = rawIsEmpty;
+	(fileOperators[RAW_KEYS]).isFullFn = rawIsFull;
+	(fileOperators[RAW_KEYS]).closeFn = rawClose;
+}
+
+
 
 static int8_t readChar(FileType fileType, int32_t fileIndex, char *character) {
 	return (fileOperators[(uint64_t) fileType]).readCharFn(fileIndex, character);

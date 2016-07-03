@@ -228,7 +228,6 @@ void stdoutFFlush() {
     while(!stdoutIsEmpty(0)) {
         ncPrintChar((char) stdoutDequeueChar());
     }
-    ncPrint("STDOUT Now Flushing\n");
     backSpaceLimit = 0;
 }
 
@@ -255,18 +254,15 @@ int8_t stdinReadChar(uint64_t index, char *dest) {
         return -1;
     }
     *dest = (char) result;
-    return 1;    /* Breaks read execution when an '\n' is read from stdin */
+    return 1;
 }
 int8_t stdinWriteChar(uint64_t index, char *src) {
     return -1;  /* Unsupported operation */
 }
 int8_t stdinIsFull(uint64_t index) {
-    return (stdinBufferSize == STDIN_BUFFER_SIZE);
+    return (stdinBufferSize != STDIN_BUFFER_SIZE);
 }
 int8_t stdinIsEmpty(uint64_t index) {
-    if (stdinHasData) {
-        ncPrintChar(stdinBuffer[stdinDeqIdx]);
-    }
     return (stdinHasData <= 0);
 }
 int8_t stdinClose(uint64_t index) {

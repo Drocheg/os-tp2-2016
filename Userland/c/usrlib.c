@@ -33,9 +33,9 @@ void ipcs(){
 	_int80(IPCS, 0, 0, 0);
 }
 
-uint8_t getscancode() {
-	char result;
-	_int80(SYSREAD, STDIN_RAW, (uint64_t)&result, 1);
+uint8_t getScanCode() {
+	uint8_t result;
+	fread(RAW_KEYS, (uint64_t) &result, 1);
 	return result;
 }
 
@@ -135,6 +135,15 @@ void soundFX(uint32_t freq){
 void exit(int64_t result){
 	_int80(EXIT, result,0,0);
 }
+
+void changeToScanCodes() {
+	_int80(CHANGE_KBD_MODE, RAW, 0, 0);
+}
+
+void changeToKeys() {
+	_int80(CHANGE_KBD_MODE, TTY, 0, 0);
+}
+
 
 /*
 void printf(const char *format, vargs *args) {

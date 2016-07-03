@@ -2,9 +2,9 @@
 #define KEYBOARD_H
 
 #include <stdint.h>
+#include <syscalls.h>
 
 
-typedef enum {TTY = 0, RAW} KeyboardMode;
 
 void changeMode(KeyboardMode mode);
 void attendKeyboard();

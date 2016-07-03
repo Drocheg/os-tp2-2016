@@ -371,7 +371,6 @@ static uint64_t checkScheduler() {
  */
 static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking) {
 
-	
 	Node current = (Node) NULL;
 	uint64_t result = 0;
 	if (checkScheduler()) {
@@ -426,7 +425,7 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 		if (fileIsEmpty) {
 			if (blocking){
 				yield();
-			} else {
+			} else {			
 				break;
 			}
 		} else {
