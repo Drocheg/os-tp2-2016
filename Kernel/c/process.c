@@ -382,7 +382,7 @@ uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
-	return (uint64_t) (process->fileDescriptors).entries[fileDescriptor].occupied;
+	return (uint64_t) (((process->fileDescriptors).entries)[fileDescriptor]).occupied;
 }
 
 /*
