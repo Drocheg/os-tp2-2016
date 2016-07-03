@@ -123,10 +123,10 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 }
 
 void sleep(uint64_t miliseconds) {
-	uint64_t loopTime=time();
-	while(time()<loopTime+miliseconds);
+	//uint64_t loopTime=time();
+	//while(time()<loopTime+miliseconds);
 		
-	//_int80(SLEEP, miliseconds, 0, 0);
+	_int80(SLEEP, miliseconds, 0, 0);
 }
 
 void soundFX(uint32_t freq){

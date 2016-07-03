@@ -23,7 +23,7 @@ struct fileOperator_s {
 
 /* Static variables */
 static uint8_t initialized = 0;
-static struct fileOperator_s fileOperators[RAW_KEYS - STDIN_ + 1];
+static struct fileOperator_s fileOperators[MESSAGE_QUEUE - STDIN_ + 1];
 
 
 /* Static functions prototypes */

@@ -118,13 +118,13 @@ void initGame(GameData gameData){
 	return;
 }
 void playGame(GameData gameData){
-	uint64_t loopTime=time();
+	//uint64_t loopTime=time();
 	
 	while(!gameData->isGameOver){
-		while(time()<loopTime+GAME_TICK/2);
-		loopTime=time();
+	//	while(time()<loopTime+GAME_TICK/2);
+	//	loopTime=time();
 		update(gameData);
-	//	yield();
+		yield();
 	}
 	MQclose(gameData->mqFDMusicSend);
 	MQclose(gameData->mqFDMusicRead);
@@ -173,7 +173,7 @@ void update(GameData gameData){
 				gameData->posY=1+gameTicksFromJump;
 			}else{
 				
-				if(1+2*gameData->jumpForce<gameTicksFromJump){//TODO usar numero que acepten negativos
+				if(1+2*gameData->jumpForce<gameTicksFromJump){
 					
 					gameData->posY=1;
 				}else{
@@ -262,7 +262,7 @@ void update(GameData gameData){
 	return;
 }
 
-//TODO hacer una estapa en donde checkea input y tener un variable que sea isPlayerJumping. Para el exit.
+//TODO hacer una etapa en donde checkea input y tener un variable que sea isPlayerJumping. Para el exit.
 uint64_t isPlayerJumping(GameData gameData){
 	
 	//char c = ((gameData->lastUpdateTime/13)*7919)%2;

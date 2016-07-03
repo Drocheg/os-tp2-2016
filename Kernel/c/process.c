@@ -381,9 +381,17 @@ int64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
  * Returns 1 if there is a file in the <fileDescriptor> position of process' file table, or 0 otherwise
  */
 uint64_t existsFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
-
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses || fileDescriptor >= MAX_FILES) {
+
+
+		ncPrint("Process with PCB Index: ");
+		ncPrintDec(PCBIndex);
+		ncPrint(" doesn't have a file opened with fd: ");
+		ncPrintDec(fileDescriptor);
+		ncPrint("\n");
+
+
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
@@ -688,16 +696,20 @@ static void printFiles(uint64_t PCBIndex) {
 	ncPrintDec(PCBIndex);
 	ncPrint(" has the following files: ");
 	while (i < MAX_FILES) {
-		ncPrint("\n  File with fd: ");
-		ncPrintDec(i);
-		ncPrint("\n   Occupied: ");
-		ncPrintDec( (((process->fileDescriptors).entries)[i]).occupied);
-		ncPrint("\n   Index: ");
-		ncPrintDec( (((process->fileDescriptors).entries)[i]).index);
-		ncPrint("\n   File type: ");
-		ncPrintDec( (((process->fileDescriptors).entries)[i]).fileType ) ;
-		ncPrint("\n   Flags: ");
-		ncPrintDec( (((process->fileDescriptors).entries)[i]).flags);
+
+		if ((((process->fileDescriptors).entries)[i]).occupied) {
+			ncPrint("\n  File with fd: ");
+			ncPrintDec(i);
+			ncPrint("   Occupied: ");
+			ncPrintDec( (((process->fileDescriptors).entries)[i]).occupied);
+			ncPrint("   Index: ");
+			ncPrintDec( (((process->fileDescriptors).entries)[i]).index);
+			ncPrint("   File type: ");
+			ncPrintDec( (((process->fileDescriptors).entries)[i]).fileType ) ;
+			ncPrint("   Flags: ");
+			ncPrintDec( (((process->fileDescriptors).entries)[i]).flags);
+			
+		}
 		i++;
 	}
 	ncPrint("\n");

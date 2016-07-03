@@ -260,7 +260,7 @@ int8_t stdinWriteChar(uint64_t index, char *src) {
     return -1;  /* Unsupported operation */
 }
 int8_t stdinIsFull(uint64_t index) {
-    return (stdinBufferSize != STDIN_BUFFER_SIZE);
+    return (stdinBufferSize == STDIN_BUFFER_SIZE);
 }
 int8_t stdinIsEmpty(uint64_t index) {
     return (stdinHasData <= 0);

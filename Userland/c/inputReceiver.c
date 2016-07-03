@@ -40,6 +40,7 @@ int64_t inputReceiver_main(int argc, char* argv[]){
 		input=((time()/13)*7919)%2;
 		//processInput(&input);
 		if(validInput(input)) sendInput(input, mqFDSend);
+		yield();
 	}
 	MQclose(mqFDSend);
 	MQclose(mqFDRead);
@@ -70,6 +71,7 @@ void processInput(int64_t * input){
 		default:*input=0;
 			break;
 	}
+
 	
 }
 

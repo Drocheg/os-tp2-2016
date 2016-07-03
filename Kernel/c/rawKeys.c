@@ -50,7 +50,7 @@ int8_t rawIsFull(uint64_t index) {
     return !isFull();
 }
 int8_t rawIsEmpty(uint64_t index) {
-    return !isEmpty();
+    return isEmpty();
 }
 int8_t rawClose(uint64_t index) {
     return 0;
