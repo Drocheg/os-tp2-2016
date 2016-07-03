@@ -35,6 +35,7 @@ void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
 void bangBang();
+void imgTest();
 
 
 static command commands[] = {
@@ -50,6 +51,7 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
+	{"img", imgTest, "Paints an image stored at 0x500000"},
 	{"1", bangBang, "Re-run your last valid command"},
 };
 
@@ -251,4 +253,10 @@ void bangBang() {
 		print("\n");
 		runCommand(lastCommand);
 	}
+}
+
+void imgTest() {
+	clearScreen();
+	Image *img = (Image *) 0x500000;
+	paintImg(img, 100, 100);
 }

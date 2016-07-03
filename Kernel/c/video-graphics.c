@@ -174,31 +174,21 @@ void shiftDown(uint64_t pixels) {
 }
 
 void paintImg(Image *img, uint64_t x, uint64_t y) {
-    uint8_t *pixel = findPixel(x, y);
+    uint8_t *pixel;
     uint64_t offset = 0;
     if(pixel == 0) {
         return;
     }
-    uint8_t *la = &(img->height) + sizeof(uint64_t);
+    uint8_t *la = &img->pixelData; //Simply using img->pixelData won't work, will dereference the first pixel color and take it as an address. Hence the &
     for(uint64_t row = 0; row < img->height; row++) {
         for(uint64_t col = 0; col < img->width; col++) {
             pixel = findPixel(x+col, y+row);
-            pixel[0] = *(la++);
             pixel[2] = *(la++);
             pixel[1] = *(la++);
+            pixel[0] = *(la++);
             // pixel += 4;    //Skip the 4th pixel, ignored
         }
     }
-
-
-
-    // for(uint64_t row = 0; row < img->height; row++) {
-    //     for(uint64_t col = 0; col < img->width; col++) {
-    //         for(uint64_t i = 0; i < 3; i++) {
-    //             pixel[BPL*height + col*BPP + i] = la[offset++];
-    //         }
-    //     }
-    // }
 }
 
 // void shiftLeft(uint64_t pixels) {
