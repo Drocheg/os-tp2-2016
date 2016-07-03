@@ -94,10 +94,10 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvC[] = {"process C"};
 	char* argvD[] = {"process D"};
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process B", printProcessB, 1, argvB);
-	createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess("process B", printProcessB, 1, argvB);
+	createProcess("process A", printProcessA, 1, argvA);
 	
-	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	createProcess("Terminal", userland_main, 1, argvTerminal);
 	
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 
