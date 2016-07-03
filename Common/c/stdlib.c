@@ -37,6 +37,7 @@ uint32_t intToStrBase(uint64_t value, char * buffer, uint32_t base) {
 	return digits;
 }
 
+
 //Compares string equality
 uint8_t streql(const char *s1, const char *s2) {
 	while(*s1 != 0 && *s2 != 0) {

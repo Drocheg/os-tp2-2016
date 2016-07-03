@@ -99,11 +99,11 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvD[] = {"process D"};
 	char* argvTerminal[] = {"terminal"};
 
-	//char* argvInputReceiver[] = {"MQGameInputReceiverRead", "MQGameInputReceiverSend"};
-	//createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
+	char* argvInputReceiver[] = {"MQReceive", "MQSend"};
+	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
 	//createProcess("process B", printProcessB, 1, argvB);
 	//createProcess("process A", printProcessA, 1, argvA);
-	createProcess("Terminal", userland_main, 1, argvTerminal);
+	//createProcess("Terminal", userland_main, 1, argvTerminal);
 //	createProcess("TestMallocSend", printProcessC, 1, argvC);
 //	createProcess("TestMallocReceive", printProcessD, 1, argvD);
 
