@@ -41,12 +41,16 @@ void getTime();
 void playMainSong();
 void playSongTwo();
 void bangBang();
+<<<<<<< HEAD
 void sleepForTwoSeconds();
 void testMQ();
 
 
 
 void game();
+=======
+void imgTest();
+>>>>>>> video
 
 
 static command commands[] = {
@@ -63,8 +67,12 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
+<<<<<<< HEAD
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
 	{"mq", testMQ, "Test MQs"},
+=======
+	{"img", imgTest, "Paints an image stored at 0x500000"},
+>>>>>>> video
 	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
@@ -314,6 +322,7 @@ void bangBang() {
 	}
 }
 
+
 void sleepForTwoSeconds() {
 	print("Sleeping...");
 	sleep(2000);
@@ -340,4 +349,9 @@ void testMQ() {
 	// else {
 	// 	print(" (error)\n");
 	// }
+}
+void imgTest() {
+	clearScreen();
+	Image *img = (Image *) 0x500000;
+	paintImg(img, 100, 100);
 }
