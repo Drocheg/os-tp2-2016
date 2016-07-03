@@ -41,6 +41,8 @@ int64_t inputReceiver_main(int argc, char* argv[]){
 		//processInput(&input);
 		if(validInput(input)) sendInput(input, mqFDSend);
 	}
+	MQclose(mqFDSend);
+	MQclose(mqFDRead);
 	return 0;
 }
 

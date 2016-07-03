@@ -87,22 +87,6 @@ int32_t init_d(int argc, char* argv[]) {
 	}
 
 	clearScreen();
-
-	char array[40];
-	char c;
-	uint64_t i = 0;
-	print("La puta que te pario\n");
-	do {
-		c = getchar();
-		array[i++] = (c == '\n') ? 0 : c;
-		putchar(c);
-	}
-	while (c != '\n' && i < 40);
-	print("Termine el ciclo\n");
-	print(array);
-	while(1);
-
-
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 	char* argvC[] = {"process C"};
@@ -148,6 +132,7 @@ uint64_t printProcessA() {
 		// 	MQsend(mqFD, "WHAZZAAAAAAAAAAA", 16);
 		// }
 	}
+	MQclose(mqFD);
 	return 0;
 }
 
@@ -159,7 +144,6 @@ uint64_t printProcessB() {
 
 	char buff[17] = {0};
 	uint64_t aux = 0;
-	
 	while (1) {
 		aux++;
 
@@ -186,6 +170,8 @@ uint64_t printProcessB() {
 		}
 		sleep(2000);
 	}
+	MQclose(mqFD);
+
 	return 0;
 }
 
@@ -218,7 +204,6 @@ uint64_t printProcessD() {
 	exit(0);
 	return 0;
 }
-
 
 int32_t userland_main(int argc, char* argv[]) {
 	char buffer[100];
@@ -365,17 +350,22 @@ void playMainSong(){
 	songNum = -1;
 	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
 		
+	MQclose(mqFD);
 		
 	
 	return;
 }
 
-void playSongTwo(){
+void playSongTwo(){ //TODO hacer que playSong ande sin esos sleep y sin el loop. Hacer un end song? Tener un solo songPlayer?
 	int64_t mqFD = MQopen("MQReceive2", F_WRITE /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQSend2", "MQReceive2"};
 	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
 	int64_t songNum = 2;
 	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+	sleep(10000);
+	songNum = -1;
+	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
+	MQclose(mqFD);
 	
 }
 
@@ -422,5 +412,6 @@ void sleepForTwoSeconds() {
 // 	print("Read '");
 // 	print(buff);
 // 	print("'");
+//MQclose(read);
 // }
 

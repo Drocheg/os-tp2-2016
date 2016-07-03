@@ -60,6 +60,8 @@ int64_t playSong_main(int argc, char* argv[]){
 		playSong(songNumber,songPlayerData);
 	}while(!songPlayerData->isEnd);
 	_int80(SPEAKER, 0, 0, 0);
+	MQclose(songPlayerData->mqFDSend);
+	MQclose(songPlayerData->mqFDRead);
 	return 0;
 }
 

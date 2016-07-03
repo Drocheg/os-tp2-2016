@@ -126,6 +126,10 @@ void playGame(GameData gameData){
 		update(gameData);
 	//	yield();
 	}
+	MQclose(gameData->mqFDMusicSend);
+	MQclose(gameData->mqFDMusicRead);
+	MQclose(gameData->mqFDInputReceiverRead);
+	MQclose(gameData->mqFDInputReceiverSend);
 	return;
 }
 
