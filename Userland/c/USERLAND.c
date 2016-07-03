@@ -41,7 +41,6 @@ void getTime();
 void playMainSong();
 void playSongTwo();
 void bangBang();
-<<<<<<< HEAD
 void sleepForTwoSeconds();
 void testMQ();
 
