@@ -31,6 +31,7 @@ void piano() {
 	clearScreen();
 	print("                                 PIANO v1.0\n");
 	print("                              Press ESC to exit");
+	putchar('\n');
 	while(1){
 		int number = getScanCode();
 		if(decodeScanCode(number) == '\e') {	//Exit with escape
