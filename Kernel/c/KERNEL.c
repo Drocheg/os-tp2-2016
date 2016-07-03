@@ -90,9 +90,9 @@ int kernel_main(int argc, char *argv[]) {
 
 	/* Add init.d process to the scheduler */
 	char *args[] = {"init.d"};
+	ncPrint("Starting init.d\n");
 	addProcess(0, "init.d", runCodeModule, 1, args);
 
-	ncPrint("Starting init.d\n");
 	_sti();		/* Turns on interruptions (will call scheduler' next process function, to start running processes) */
 	_halt();	/* Waits till the timer tick interruption comes */
 	

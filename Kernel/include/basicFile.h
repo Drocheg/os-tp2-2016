@@ -90,11 +90,23 @@ int basicFileIsEmpty(BasicFile file);
 /**
 * Gets the specified File's name, which identifies it.
 *
-* @return A char[MAX_FILE] with the specified File's name.
+* @return A string of length <= MAX_FILE with the specified File's name.
 */
 char* getBasicFileName(BasicFile f);
 
+/**
+* Gets the size of the specified BasicFile in bytes.
+*
+* @return The size of the specified BasicFile, in bytes.
+*/
 uint64_t getBasicFileSize(BasicFile f);
+
+/**
+* Gets the remaining free space of the specified BasicFile in bytes.
+*
+* @return How many bytes can still be used in the specified BasicFile before it becomes full.
+*/
+uint64_t getBasicFileFreeSpace(BasicFile f);
 
 /**
 * Finds a File with the specified name.

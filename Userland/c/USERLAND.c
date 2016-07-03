@@ -42,7 +42,7 @@ void playMainSong();
 void playSongTwo();
 void bangBang();
 void sleepForTwoSeconds();
-// void testMQ();
+void testMQ();
 
 
 
@@ -64,7 +64,7 @@ static command commands[] = {
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
-	// {"mq", testMQ, "Test MQs"},
+	{"mq", testMQ, "Test MQs"},
 	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
@@ -89,9 +89,9 @@ int32_t init_d(int argc, char* argv[]) {
 	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
 	char* argvTerminal[] = {"terminal"};
-	createProcess(0, "process B", printProcessB, 1, argvB);
-	createProcess(0, "process A", printProcessA, 1, argvA);
-	// createProcess(0, "Terminal", userland_main, 1, argvTerminal);
+	// createProcess(0, "process B", printProcessB, 1, argvB);
+	// createProcess(0, "process A", printProcessA, 1, argvA);
+	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
 	return 0;
@@ -333,14 +333,15 @@ void sleepForTwoSeconds() {
 	print("woke up\n");
 }
 
-// void testMQ() {
-// 	int64_t read = MQopen("test2", F_READ /*| F_NOBLOCK*/);
-// 	print("Read FD: ");
-// 	printNum(read);
-// 	print("Attempting to read, should block: ");
-// 	char buff[2] = {0};
-// 	MQreceive(read, buff, 1);
-// 	print("Read '");
-// 	print(buff);
-// 	print("'");
-// }
+void testMQ() {
+	static uint8_t fd = 0;
+	if(fd == 0) {
+		fd = MQopen("test2", F_WRITE /*| F_NOBLOCK*/);
+		print("MQ opened with FD ");
+		printNum(fd);
+		print("\n");
+	}
+	print("Sending message...sent ");
+	printNum(MQsend(fd, "1234567890", 10));
+	print(" bytes\n");
+}
