@@ -49,6 +49,8 @@ void sleepForTwoSeconds();
 
 void game();
 
+void imgTest();
+
 
 static command commands[] = {
 	{"beep", beep, "Makes a beep using the PC speaker"},
@@ -64,8 +66,12 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
+
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
 	// {"mq", testMQ, "Test MQs"},
+
+	{"img", imgTest, "Paints an image stored at 0x500000"},
+
 	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
@@ -388,6 +394,7 @@ void bangBang() {
 
 
 
+
 void pianoMode(){
 	char* argvPiano[] = {"piano"};
 	createProcess( "Piano", piano_start, 1, argvPiano);
@@ -414,4 +421,11 @@ void sleepForTwoSeconds() {
 // 	print("'");
 //MQclose(read);
 // }
+
+
+void imgTest() {
+	clearScreen();
+	Image *img = (Image *) 0x500000;
+	paintImg(img, 100, 100);
+}
 
