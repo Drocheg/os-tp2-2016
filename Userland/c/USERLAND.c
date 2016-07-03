@@ -48,9 +48,7 @@ void testMQ();
 
 
 void game();
-=======
 void imgTest();
->>>>>>> video
 
 
 static command commands[] = {
@@ -67,12 +65,9 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-<<<<<<< HEAD
 	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
 	{"mq", testMQ, "Test MQs"},
-=======
 	{"img", imgTest, "Paints an image stored at 0x500000"},
->>>>>>> video
 	{"1", bangBang, "Re-run your last valid command"},
 	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
