@@ -1,6 +1,7 @@
 #include <interrupts.h>
 #include <stddef.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <memory.h>
 #include <video.h>
 

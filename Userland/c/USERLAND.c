@@ -34,7 +34,6 @@ void sayHello();
 uint8_t runCommand(char *cmd);
 void dumpDataModule();
 void rainbow();
-void * memset(void * destiny, int32_t c, uint64_t length);
 void printVer();
 void getTime();
 
@@ -266,15 +265,7 @@ int32_t userland_main(int argc, char* argv[]) {
 	return 0;
 }
 
-void * memset(void * dest, int32_t c, uint64_t length) {
-	uint8_t chr = (uint8_t)c;
-	char * dst = (char*)dest;
 
-	while(length--)
-		dst[length] = chr;
-
-	return dest;
-}
 
 void printVer(const char *str) {
 	print("Terminal V");

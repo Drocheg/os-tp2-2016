@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <fileManager.h>
 // #include <keyboard.h>
 #include <tty.h>

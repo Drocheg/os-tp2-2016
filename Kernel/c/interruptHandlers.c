@@ -4,6 +4,7 @@
 #include <syscalls.h>
 #include <fileDescriptors.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <modules.h>
 #include <speaker.h>
 #include <keyboard.h>

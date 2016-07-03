@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <moduleLoader.h>
 #include <video.h>
 #include <interrupts.h>
