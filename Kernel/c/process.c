@@ -356,7 +356,7 @@ int64_t removeFile(uint64_t PCBIndex, uint64_t fileDescriptor) {
 		return -1;
 	}
 	process = &(pcb[PCBIndex]);
-	((process->fileDescriptors).size)--;
+	process->fileDescriptors.size--;
 	(process->fileDescriptors).entries[fileDescriptor].occupied = 0;
 	(process->fileDescriptors).entries[fileDescriptor].index = 0;
 	(process->fileDescriptors).entries[fileDescriptor].fileType = 0;

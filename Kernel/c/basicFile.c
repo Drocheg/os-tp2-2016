@@ -76,7 +76,7 @@ BasicFile createBasicFileWithName(const char* name) {
 	if (stream == NULL) {
 		return NULL;
 	}
-	newFile = createBasicFile(name, stream, PAGE_SIZE, HEAP);	//TODO SET BACK TO NORMAL SIZE!!
+	newFile = createBasicFile(name, stream, PAGE_SIZE, HEAP);
 	if (newFile == NULL) {	//Failed, put the page back as available
 		pageManager(PUSH_PAGE, &stream);
 	}
@@ -184,7 +184,11 @@ uint64_t getBasicFileSize(BasicFile f) {
 	return f->size;
 }
 
-
+uint64_t getBasicFileFreeSpace(BasicFile f) {
+	return (f->writeIndex >= f->readIndex)
+                ? f->size - f->writeIndex
+                : f->readIndex - f->writeIndex;
+}
 
 static int8_t validateParams(const char* name, void *memory, uint64_t size, Place place) {
 	if(name[0] == 0 || strlen(name) >= MAX_NAME) {

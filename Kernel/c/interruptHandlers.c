@@ -102,14 +102,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			break;
 
 		case IPCS:
-			printIPCS();
+			printMQs();
 			break;
 
 		case MALLOC: //TODO descomentar esto
 			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
-
 			break;
-
 		/* *********
 		*	Video
 		* *********/
@@ -135,10 +133,6 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = MQopen((char *)p1, (uint32_t)p2);
 			*((int64_t *)p3) = result;
 			break;
-		case MQ_CLOSE:
-			result = operateFile(getCurrentPCBIndex(), p1, CLOSE, 0);
-			*((int8_t *)p3) = (int8_t)result;
-			break;
 		case MQ_RECEIVE:
 			result = read(p1, (char *)p2, 1);
 			*((int8_t *)p3) = (int8_t)result;
@@ -147,13 +141,24 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = write(p1, (char *)p2, 1);
 			*((int8_t *)p3) = (int8_t)result;
 			break;
-		
+		case MQ_CLOSE:
+			result = operateFile(getCurrentPCBIndex(), p1, CLOSE, 0);
+			*((int8_t *)p2) = (int8_t)result;
+			break;
+		case MQ_IS_FULL:
+			result = operateFile(getCurrentPCBIndex(), p1, IS_FULL, 0) == 0;
+			*((int8_t *)p2) = (int8_t)result;
+			break;
+		case MQ_IS_EMPTY:
+			result = operateFile(getCurrentPCBIndex(), p1, IS_EMPTY, 0) == 0;
+			*((int8_t *)p2) = (int8_t)result;
+			break;
 
 		/* Others */
 		case CHANGE_KBD_MODE:
 			changeMode((KeyboardMode) p1);
 			break;
-
+			
 		/* *********
 		*	Default
 		* *********/	

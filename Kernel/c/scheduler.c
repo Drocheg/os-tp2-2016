@@ -376,7 +376,7 @@ static int64_t waitForIO(uint64_t fileDescriptor, char *buffer, uint64_t maxByte
 		return -1;
 	}
 	current->state = SLEPT;
-
+	
 	result = ((ioActions[(uint64_t) ioOperation])(current->PCBIndex, fileDescriptor, buffer, maxBytes, blocking));
 	current->state = RUNNING;
 	return result;
@@ -431,8 +431,7 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 			buffer[readData] = c;
 			readData++;
 
-			if (c == '\n' && getFileType(PCBIndex, fd) == (uint32_t) STDIN_ ) {
-				
+			if (c == '\n' && getFileType(PCBIndex, fd) == (uint32_t) STDIN_) {				
 				break;
 			}
 		}

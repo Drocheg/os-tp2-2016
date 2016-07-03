@@ -6,6 +6,7 @@
 #include <process.h>
 #include <scheduler.h>
 #include <fileManager.h>
+#include <stdlib.h>
 
 #define MAX_MQS 256
 
@@ -48,6 +49,11 @@ static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags
 */
 static int8_t destroyMQ(uint64_t index);
 
+/**
+* Prints the specified number of spaces. Used for aligning printMQs() output.
+*/
+static void pad(uint64_t spaces);
+
 
 /* **********************************************
 *			FileManager implementations
@@ -84,24 +90,24 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 }
 
 int8_t MQclose(uint64_t tableIndex) {
-	MessageQueue mq = mqs[tableIndex];
-	if(mq.file == NULL) {
+	if(mqs[tableIndex].file == NULL) {
 		return -1;
 	}
 	uint64_t pid = getCurrentPID();
-	if(mq.readPID == pid) {
-		mq.readPID = -1;
+	if(mqs[tableIndex].readPID == pid) {
+		mqs[tableIndex].readPID = -1;
 	}
-	else if(mq.writePID == pid) {
-		mq.writePID = -1;
+	else if(mqs[tableIndex].writePID == pid) {
+		mqs[tableIndex].writePID = -1;
 	}
 	else {
 		return -1;
 	}
 	
-	mq.links--;
-	if(mq.links == 0) {		//No more links, destroy
-		return destroyMQ(tableIndex) ? 1 : -1;
+	mqs[tableIndex].links--;
+	if(mqs[tableIndex].links == 0) {		//No more links, destroy
+		int8_t destroyResult = destroyMQ(tableIndex);
+		return destroyResult == 0 ? -1 : destroyResult;
 	}
 	else {
 		return 0;
@@ -205,6 +211,50 @@ int8_t MQisFull(uint64_t index) {
 	return basicFileIsFull(mqs[index].file);
 }
 
+void printMQs(void) {
+	ncPrint("\n------ Message Queues ------");
+	ncPrint("\nname             reader PID    writer PID    size(B)    free space(B)\n");
+	for(uint64_t i = 0, printedMQs = 0; i < MAX_MQS && printedMQs < numMQs; i++) {
+		if(mqs[i].file != NULL) {
+			//Name
+			char *name = getBasicFileName(mqs[i].file);
+			ncPrint(name);
+			pad(MAX_NAME + 1 - strlen(name));
+			//Reader PID
+			char buff[22];
+			if(mqs[i].readPID == -1) {
+				buff[0] = '-';
+				buff[1] = 0;
+			}
+			else {
+				intToStr(mqs[i].readPID, buff);
+			}
+			ncPrint(buff);
+			pad(14-strlen(buff));
+			//Writer PID
+			if(mqs[i].writePID == -1) {
+				buff[0] = '-';
+				buff[1] = 0;
+			}
+			else {
+				intToStr(mqs[i].writePID, buff);
+			}
+			ncPrint(buff);
+			pad(14-strlen(buff));
+			//Size
+			intToStr(getBasicFileSize(mqs[i].file), buff);
+			ncPrint(buff);
+			pad(11-strlen(buff));
+			//Free space
+			intToStr(getBasicFileFreeSpace(mqs[i].file), buff);
+			ncPrint(buff);
+			ncPrintChar('\n');
+			printedMQs++;
+		}
+	}
+	ncPrintChar('\n');
+}
+
 
 /* **********************************************
 *				Static functions
@@ -231,10 +281,15 @@ static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags)
 	uint64_t pid = getCurrentPID();
 	mqs[tableIndex] = (MessageQueue) {
 		file,
-		1,
-		accessFlags == F_READ ? pid : -1,
-		accessFlags == F_WRITE ? pid : -1
+		0,		//Not setting links, openMQ increments them
+		-1,		//Not setting access PIDs here, delegating to markAccess() below
+		-1
 	};
+	if(markAccess(tableIndex, pid, accessFlags) == -1) {
+		destroyBasicFile(file);
+		mqs[tableIndex].file = NULL;
+		return -1;
+	}
 	numMQs++;
 	return 1;
 }
@@ -280,4 +335,11 @@ static int64_t findFreeSlot() {
 		}
 	}
 	return -1;
+}
+
+static void pad(uint64_t spaces) {
+	while(spaces > 0) {
+		ncPrintChar(' ');
+		spaces--;
+	}
 }

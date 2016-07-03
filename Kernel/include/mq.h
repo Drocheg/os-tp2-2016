@@ -56,4 +56,9 @@ int8_t MQisFull(uint64_t index);
 */
 int8_t MQclose(uint64_t index);
 
+/**
+* Prints a formatted list of currently opened message queues.
+*/
+void printMQs(void);
+
 #endif
