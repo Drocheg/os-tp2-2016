@@ -15,7 +15,7 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 
 int8_t MQclose(uint64_t descriptor) {
 	int8_t result;
-	_int80(MQ_CLOSE, descriptor, (uint8_t)&result, 0);
+	_int80(MQ_CLOSE, descriptor, (uint64_t)&result, 0);
 	return result;
 }
 
@@ -59,7 +59,7 @@ int8_t MQsendChar(uint64_t descriptor, char *src) {
 	return result;
 }
 
-int64_t MQsend(uint64_t descriptor, const char *msg, size_t msgLen) {
+int64_t MQsend(uint64_t descriptor, char *msg, size_t msgLen) {
 	int64_t result;
 	for(result = 0; result < msgLen; result++) {
 		int64_t sendResult = MQsendChar(descriptor, &msg[result]);

@@ -420,7 +420,7 @@ static uint64_t waitForInput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint6
 		if (fileIsEmpty) {
 			if (blocking){
 				yield();
-			} else {			
+			} else {
 				break;
 			}
 		} else {

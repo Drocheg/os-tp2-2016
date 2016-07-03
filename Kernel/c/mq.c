@@ -7,6 +7,7 @@
 #include <scheduler.h>
 #include <fileManager.h>
 #include <stdlib.h>
+#include <video.h>
 
 #define MAX_MQS 256
 

@@ -72,7 +72,7 @@ int8_t MQreceiveChar(uint64_t descriptor, char *dest);
 *
 * @return The actual number of bytes sent, or -1 on error.
 */
-int64_t MQsend(uint64_t descriptor, const char *msg, size_t mgsLen);
+int64_t MQsend(uint64_t descriptor, char *msg, size_t mgsLen);
 
 /**
 * Sends a single character to the specified message queue, reading it from src.
