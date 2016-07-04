@@ -1,10 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-//#include "firanofaurio.c"
 #include "dinosaurio.c"
-
-//#include "image.c"
 
 
 int main(int argc, char *argv[]) {

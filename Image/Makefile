@@ -12,10 +12,6 @@ IMG=$(OSIMAGENAME).img
 KERNEL=../Kernel/kernel.bin
 
 USERLAND=../Userland/userland.bin ../Userland/Songmaker/song1.bin ../Userland/img/dinosaurio.img
-# USERLAND=../Userland/userland.bin ../Userland/img/firanofaurio.img
-
-#USERLAND=../Userland/userland.bin ../Userland/Songmaker/song1.bin
-#USERLAND=../Userland/userland.bin ../Userland/img/img1.img
 
 
 PACKEDKERNEL=packedKernel.bin
