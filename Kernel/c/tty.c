@@ -202,7 +202,11 @@ int64_t ttySTDINAddElement(uint8_t scanCode) {
     if (result) {
     	return -1;
     }
-    stdinEnqueueChar(character);
+	if (character == '\b') {
+		stdinDequeueChar();
+	} else {
+	    stdinEnqueueChar(character);
+	}
     ttyKBDPrintChar(character);
     return (int64_t) character;
 }
@@ -395,6 +399,18 @@ static int64_t stdoutPopChar() {
     }
     stdoutEnqIdx--;
     return (char) stdoutBuffer[stdoutEnqIdx];
+}
+
+static int64_t stdinPopChar() {
+
+    if (stdinIsEmpty(0)) {
+        return -1;
+    }
+    if (stdinEnqIdx == 0) {
+        stdinEnqIdx = STDIN_BUFFER_SIZE;
+    }
+    stdinEnqIdx--;
+    return (char) stdinBuffer[stdinEnqIdx];
 }
 
 /* STDERR */
