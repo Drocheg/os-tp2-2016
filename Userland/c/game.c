@@ -85,15 +85,20 @@ int64_t game_main(uint64_t argc, char* argv[]){
 	GameData gameData = malloc(sizeof(*gameData));
 
 	//music
-	gameData->mqFDMusicSend = MQopen("MQGameMusicSend", F_WRITE /*| F_NOBLOCK*/);
-	gameData->mqFDMusicRead = MQopen("MQGameMusicRead", F_READ /*| F_NOBLOCK*/);
-	char* argvSongPlayer[] = {"MQGameMusicRead", "MQGameMusicSend"};
+	char * mqFDMusicSendName = malloc(18);
+	if(MQuniq(mqFDMusicSendName)!=0) return -1;
+	gameData->mqFDMusicSend = MQopen(mqFDMusicSendName, F_WRITE /*| F_NOBLOCK*/);
+
+	char * mqFDMusicReadName = malloc(18);
+	if(MQuniq(mqFDMusicReadName)!=0) return -1;
+	gameData->mqFDMusicRead = MQopen(mqFDMusicReadName, F_READ /*| F_NOBLOCK*/);
+	char* argvSongPlayer[] = {mqFDMusicReadName, mqFDMusicSendName};
 	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
 	int64_t songNum = 2;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 
 	initGame(gameData);
-	changeToKeys();
+	
 	return 0;
 }
 
@@ -113,10 +118,15 @@ void initGame(GameData gameData){
 	}
 	gameData->isGameOver = 0;
 	
-	gameData->mqFDInputReceiverRead = MQopen("MQGIRRead", F_READ /*| F_NOBLOCK*/);
-	gameData->mqFDInputReceiverSend = MQopen("MQGIRSend", F_WRITE /*| F_NOBLOCK*/);
-	char* argvInputReceiver[] = {"MQGIRRead", "MQGIRSend"};
-	createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
+	char * mqFDInputReceiverReadName = malloc(18);
+	if(MQuniq(mqFDInputReceiverReadName)!=0) return -1;
+	gameData->mqFDInputReceiverRead = MQopen(mqFDInputReceiverReadName, F_READ /*| F_NOBLOCK*/);
+
+	char * mqFDInputReceiverSendName = malloc(18);
+	if(MQuniq(mqFDInputReceiverSendName)!=0) return -1;
+	gameData->mqFDInputReceiverSend = MQopen(mqFDInputReceiverSendName, F_WRITE /*| F_NOBLOCK*/);
+	char* argvInputReceiver[] = {mqFDInputReceiverReadName, mqFDInputReceiverSendName};
+	createProcess("InputReceiver", inputReceiver_start, 2, argvInputReceiver);
 	
 
 	playGame(gameData);
@@ -200,8 +210,8 @@ void update(GameData gameData){
 	//Obstacle Update
 	uint64_t obstacleTicksFromLastUpdate = ((updateTime-gameData->lastObstacleUpdate)/(GAME_TICK*OBSTACLE_LAG_MULTIPLIER))%HORIZONTAL_SIZE;
 	if(obstacleTicksFromLastUpdate>0 && obstacleTicksFromLastUpdate<HORIZONTAL_SIZE){
-		int64_t newObstaclePosY = ((updateTime/13)*7919)%(VERTICAL_SIZE*NO_OBSTACLE_MULTIPLIER);
-
+		int64_t newObstaclePosY = ((updateTime/13)*7919)%((VERTICAL_SIZE-2)*NO_OBSTACLE_MULTIPLIER);
+		if(newObstaclePosY>=VERTICAL_SIZE-2) newObstaclePosY=-1;
 	
 		for(int64_t i=0; i<HORIZONTAL_SIZE; i++){
 			for(int64_t j =0; j<VERTICAL_SIZE; j++){
@@ -295,6 +305,8 @@ void gameOver(GameData gameData){
 	sleep_sys(3400);
 	songNum = -1;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
+	int64_t msgClose=0;
+	MQsend(gameData->mqFDInputReceiverSend, (char *)&msgClose, sizeof(int64_t));
 	
 }
 
