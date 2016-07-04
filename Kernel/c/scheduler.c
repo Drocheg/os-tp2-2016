@@ -449,7 +449,7 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 void printPS() {
 	int i = 0;
 	ncPrint("\n------ Processes ------");
-	ncPrint("\nPID                 name                            state    memory(B)           stack page          stack top         \n");
+	ncPrint("\nPID                 name                            state    memory(B)\n");
 	char buff[21] = {0};
 	while(i < MAX_PROCESSES) {
 		if(usedNodes[i] == 1) {
@@ -469,16 +469,7 @@ void printPS() {
 			//Memory
 			intToStr(getProcessMemoryAmount(newPCBIndex), buff);
 			ncPrint(buff);
-			pad(20 - strlen(buff));
-				// //Next PCB index
-				// ncPrint(" Next PCB index: ");
-				// ncPrintDec(newNode->next->PCBIndex);
-			// Stack page
-			ncPrintHex(getProcessStackPage(newPCBIndex));
-			pad(12);
-			// Stack top
-			ncPrintHex(getProcessStack(newPCBIndex));
-			
+			pad(20 - strlen(buff));			
 		//	newNode->next = newNode; /* Helps when last is NULL */
 			ncPrint("\n");
 		}
