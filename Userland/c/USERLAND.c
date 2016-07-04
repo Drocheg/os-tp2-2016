@@ -87,8 +87,7 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-
-	// clearScreen();
+	clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
 	char* argvC[] = {"process C"};
@@ -141,17 +140,6 @@ uint64_t printProcessB() {
 	uint64_t aux = 0;
 	while (1) {
 		aux++;
-
-
-// <<<<<<< HEAD
-// =======
-
-// 			// print("\nB MQ:\n  Empty? ");
-// 			// printNum(MQisEmpty(mqFD));
-// 			// print("\n  Full? ");
-// 			// printNum(MQisFull(mqFD));
-// >>>>>>> gameMsgQ
-
 		if(MQisEmpty(mqFD)) {
 			// print("\nMQ empty, B taking a break\n");
 			sleep(1000);
@@ -216,7 +204,7 @@ int32_t userland_main(int argc, char* argv[]) {
 		uint8_t index = 0;
 		uint8_t c;
 		print(">_");
-
+		stdoutFFlush();
 		while((c = getchar()) != '\n') {
 			if(c != 0) {					//Recognized key, print it and save it
 				if(c == '\b') {				//Entered backspace

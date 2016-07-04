@@ -33,6 +33,10 @@ typedef enum {TTY = 0, RAW} KeyboardMode;
 #define PS 22
 #define IPCS 23
 
+//TTY
+#define STDOUT_FFLUSH 201
+#define STDERR_FFLUSH 202
+
 
 //Video
 #define PAINT_PX 860			//Paint white pixel

@@ -163,6 +163,14 @@ char* concat(char *s1, char *s2)
     return result;
 }
 
+void stdoutFFlush() {
+	_int80(STDOUT_FFLUSH, 0, 0, 0);
+}
+
+void stderrFFlush() {
+	_int80(STDERR_FFLUSH, 0, 0, 0);
+}
+
 /*
 void printf(const char *format, vargs *args) {
 	int c;

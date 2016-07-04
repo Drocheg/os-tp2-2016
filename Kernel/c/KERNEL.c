@@ -49,7 +49,7 @@ int kernel_main(int argc, char *argv[]) {
 	/* Sets PIT frequency to 1000 Hz (one interruption every 1 ms.) */
 	ncPrint("Increasing PIT frequency...");
 
-	setPITfrequency(50);	/* Any higher and PC speaker stops responding */
+	setPITfrequency(200);	/* Any higher and PC speaker stops responding */
 
 	ncPrint("Done.\n");
 

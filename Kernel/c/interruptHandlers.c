@@ -17,6 +17,7 @@
 #include <mq.h>
 #include <process.h>
 #include <file.h>
+#include <tty.h>
 
 static void timerTick();
 
@@ -109,6 +110,20 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MALLOC: 
 			*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
 			break;
+
+		/* *********
+		*	TTY
+		* *********/
+		case STDOUT_FFLUSH:
+			stdoutFFlush();
+			break;
+
+		case STDERR_FFLUSH:
+			stderrFFlush();
+			break;
+
+
+
 		/* *********
 		*	Video
 		* *********/
