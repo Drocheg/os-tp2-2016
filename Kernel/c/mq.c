@@ -303,7 +303,6 @@ static int64_t indexOfMQ(const char* name) {
 }
 
 static int8_t newMQ(const char* name, uint64_t tableIndex, uint32_t accessFlags) {
-	//TODO verify flags with &, not & and implement NOBLOCK flag
 	if(mqs[tableIndex].file != NULL || ((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0)) {
 		return -1;
 	}
@@ -357,7 +356,7 @@ static int8_t destroyMQ(uint64_t index) {
 		return 0;
 	}
 	destroyBasicFile(f);
-	mqs[index].file = NULL;	//TODO consider clearing out the whole struct rather than just the File?
+	mqs[index].file = NULL;
 	numMQs--;
 	return 1;
 }

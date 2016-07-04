@@ -28,7 +28,7 @@ static struct fileOperator_s fileOperators[MESSAGE_QUEUE - STDIN_ + 1];
 
 
 /* Static functions prototypes */
-static int8_t isValidFileType(FileType fileType);
+static uint8_t isValidFileType(FileType fileType);
 static void initializeSTDIN();
 static void initializeSTDOUT();
 static void initializeSTDERR();
@@ -72,7 +72,7 @@ void initializeFileManager() {
  * Note: for IS_EMPTY and IS_FULL, 0 is returned when true, and -1 when false
  */
 int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, char *character) {
-	if (isValidFileType(fileType)) {
+	if (!isValidFileType(fileType)) {
 		return -1;
 	}
 	int64_t result;
@@ -117,13 +117,13 @@ int64_t operate(FileOperation operation, FileType fileType, int64_t fileIndex, c
 
 /*
  * Checks <fileType> parameter
- * Returns 0 if everything is OK, or -1 otherwise.
+ * Returns 1 if everything is OK, or 0 otherwise.
  */
-static int8_t isValidFileType(FileType fileType) {
+static uint8_t isValidFileType(FileType fileType) {
 	if (((uint64_t)fileType) > MESSAGE_QUEUE - STDIN_) {
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 static void initializeSTDIN() {

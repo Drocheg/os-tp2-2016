@@ -97,7 +97,7 @@ BasicFile createBasicFile(const char* name, void *stream, uint64_t size, Place p
 		index++;
 	}
 	
-	memcpy((void *) filesTable[index].name, name, strlen(name)+1);	//TODO validateParams already does strlen, consider not doing it twice
+	memcpy((void *) filesTable[index].name, name, strlen(name)+1);
 	filesTable[index].size = size;
 	filesTable[index].stream = stream;
 	filesTable[index].place = place;
@@ -137,7 +137,7 @@ int basicFileReadChar(BasicFile file) {
 
 
 int basicFileWriteChar(char c, BasicFile file) {
-	if (!isValidFile(file) || basicFileIsFull(file)) {	//TODO this returns true when writeIndex == file->size && readIndex == 0-- but when that happens, the write hasn't actually been performed. So 1 byte is wasted
+	if (!isValidFile(file) || basicFileIsFull(file)) {
 		return EOF;
 	}
 	char *stream = (char *)file->stream;
@@ -153,6 +153,7 @@ int basicFileWriteChar(char c, BasicFile file) {
 }
 
 int basicFileIsFull(BasicFile file) {
+	//FIXME this returns true when writeIndex == file->size && readIndex == 0-- but when that happens, the write hasn't actually been performed. So 1 byte is wasted
 	return file->writeIndex == file->readIndex-1
 			|| (file->writeIndex >= file->size-1 && file->readIndex == 0);
 }
@@ -209,7 +210,7 @@ static int8_t isValidFile(BasicFile file) {
 	if (file == NULL) {
 		return 0;
 	}
-	if ( ((void *)file < (void *)filesTable) ||  ((void *)file >= ( ((void *)filesTable) + PAGE_SIZE)) ) {	//TODO this is not reliable, if files table becomes a different size this will fail
+	if ( ((void *)file < (void *)filesTable) ||  ((void *)file >= ( ((void *)filesTable) + PAGE_SIZE)) ) {	//FIXME this is not reliable, if files table becomes a different size this will fail
 		return 0;	//Out of table range
 	}
 	uint64_t entry = (uint64_t) ((void *)file - (void *)filesTable);
