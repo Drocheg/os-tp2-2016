@@ -327,6 +327,12 @@ static int64_t stdinEnqueueChar(char character) {
 	}
     if (character == '\n') {
         stdinHasData++;
+    } else {
+        if (stdinIsFull(0)) {
+            /* Enables buffer to be emptied */
+            stdinBuffer[stdinEnqIdx] = '\n';
+            stdinHasData++;
+        }
     }
     return 0;
 }
