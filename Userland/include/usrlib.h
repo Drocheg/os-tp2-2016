@@ -42,6 +42,8 @@ void soundFX(uint32_t freq);
 
 void sleep(uint64_t sleepTime);
 
+void sleepCroto(uint64_t miliseconds);
+
 void exit(int64_t result);
 
 void changeToScanCodes();
