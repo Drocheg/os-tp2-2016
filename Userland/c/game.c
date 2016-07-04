@@ -19,21 +19,25 @@
 #define SPACE_OBSTACLE 1
 #define HORIZONTAL_SIZE 17
 #define VERTICAL_SIZE 12
-#define GAME_TICK 50
+#define GAME_TICK 100
 #define JUMP_LAG 0
 #define OBSTACLE_LAG_MULTIPLIER 2
-#define NO_OBSTACLE_MULTIPLIER 3
-#define GAME_OVER_LAG 10000
+#define NO_OBSTACLE_MULTIPLIER 5
+#define GAME_OVER_LAG 4000
 #define JUMP_FX_1 21
 #define JUMP_FX_2 41
 #define JUMP_FX_3 82
 
+#define GAME_STATE_MENU 1
+#define GAME_STATE_PLAYING 0
 
+#define JUMP_MIN_FORCE 3
 
 
 
 /* Structs */
 typedef struct{
+	uint64_t gameState;
 	uint64_t state;
 	uint64_t falling;
 	int64_t jumpForce;
@@ -63,7 +67,7 @@ uint64_t isPlayerJumping(GameData gameData);
 void gameOver(GameData gameData);
 void playJumpFX(uint64_t seed);
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
-void initGame(GameData gameData);
+int64_t initGame(GameData gameData);
 // int64_t game_main(int argc, char* argv[]); //TODO check why in .h game_main
 
 
@@ -96,14 +100,14 @@ int64_t game_main(uint64_t argc, char* argv[]){
 	int64_t songNum = 2;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 
-	initGame(gameData);
+	return initGame(gameData);
 	
-	return 0;
 }
 
-void initGame(GameData gameData){
+int64_t initGame(GameData gameData){
 	clearScreen();
 	gameData->falling=0;
+	gameData->gameState = GAME_STATE_PLAYING;
 	gameData->state = STATE_GROUND;
 	gameData->jumpForce=4;
 	gameData->jumpStartTime=time();
@@ -129,7 +133,7 @@ void initGame(GameData gameData){
 	
 
 	playGame(gameData);
-	return;
+	return 0;
 }
 void playGame(GameData gameData){
 	//uint64_t loopTime=time();
@@ -154,7 +158,7 @@ void jump(GameData gameData){
 	gameData->jumpForce+=1;
 	if(gameData->state==STATE_GROUND){
 		gameData->falling=0;
-		gameData->jumpForce=2;
+		gameData->jumpForce=JUMP_MIN_FORCE;
 		gameData->state=STATE_JUMPING;
 		gameData->jumpStartTime=time();
 	}
@@ -162,6 +166,7 @@ void jump(GameData gameData){
 }
 
 void update(GameData gameData){
+
 	uint64_t updateTime=time(); //Make all updates with the same time.
 	//Character Update
 	if(gameData->state==STATE_JUMPING){
@@ -273,6 +278,36 @@ void update(GameData gameData){
 
 
 	gameData->lastUpdateTime=updateTime;
+
+
+
+	//MenuMode
+	if(gameData->gameState==GAME_STATE_MENU){
+
+		uint64_t jumpStartTimeDiff = time()-gameData->jumpStartTime;
+		uint64_t lastObstacleUpdateDiff = time()-gameData->lastObstacleUpdate;
+
+		
+		clearScreen();
+		print("\n\n\n\n\n                   Menu\n\n      Press a number to change songs\n            Press 'e' to exit\n");
+		int64_t msg=0;
+		while(gameData->gameState==GAME_STATE_MENU && gameData->isGameOver!=1){
+			MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
+			if(msg==2) gameData->gameState=GAME_STATE_PLAYING;
+			if(msg>3){
+				msg-=4;
+				MQsend(gameData->mqFDMusicSend, (char *)&msg, sizeof(int64_t));
+			}
+			if(msg==3) gameOver(gameData);
+			
+		}
+		gameData->jumpStartTime=time()-jumpStartTimeDiff;
+		gameData->lastUpdateTime=time();
+		gameData->lastObstacleUpdate=time()-lastObstacleUpdateDiff;
+		clearScreen();
+	}
+
+
 	return;
 }
 
@@ -289,6 +324,7 @@ uint64_t isPlayerJumping(GameData gameData){
 		MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
 		
 		if(msg==1) isJumping=1;
+		if(msg==2) gameData->gameState=GAME_STATE_MENU;
 	}
 	
 	return isJumping;
@@ -301,7 +337,7 @@ void gameOver(GameData gameData){
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	clearScreen(); 
 	print("\n\n\n Game Over \n");
-	sleep_sys(3400);
+	sleep_sys(GAME_OVER_LAG);
 	songNum = -1;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	int64_t msgClose=0;
@@ -330,9 +366,8 @@ void playJumpFX(uint64_t seed){
 		default:
 			jumpFX=JUMP_FX_3;
 			break;
-
 	}
-	//TODO soundFX parallel process..?
+	//TODO soundFX parallel process
 	//soundFX(jumpFX);
 }
 
