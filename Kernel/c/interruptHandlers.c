@@ -153,10 +153,15 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = operateFile(getCurrentPCBIndex(), p1, IS_EMPTY, 0) == 0;
 			*((int8_t *)p2) = (int8_t)result;
 			break;
-
+		/* *********
+		*	Mutexes
+		* *********/
+		case MUTEX_LOCK:
+			mutex_lock((uint8_t *)p1);
+			break;
 		/* Others */
-		case CHANGE_KBD_MODE:
-			changeMode((KeyboardMode) p1);
+		case MUTEX_UNLOCK:
+			mutex_unlock((uint8_t *)p1);
 			break;
 			
 		/* *********

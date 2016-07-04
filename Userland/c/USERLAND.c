@@ -7,7 +7,10 @@
 #include <songplayer.h>
 #include <piano.h>
 #include <fileDescriptors.h>
+#include <mq.h>
+#include <file-common.h>
 #include <game.h>
+#include <mutex.h>
 
 extern char bss;
 extern char endOfBinary;
@@ -39,10 +42,13 @@ void getTime();
 void playMainSong();
 void playSongTwo();
 void bangBang();
+void sleepForTwoSeconds();
+void testMQ();
 
 
 
 void game();
+void imgTest();
 
 
 static command commands[] = {
@@ -59,11 +65,13 @@ static command commands[] = {
 	{"scroll", scroll, "Scrolls an extra line"},
 	{"surpriseme", rainbow, "Surprise surprise..."},
 	{"time", getTime, "Get ms since system boot"},
-	{"game", game, "Play Game"},
+	{"sleep", sleepForTwoSeconds, "Sleep for about 2 seconds"},
+	{"mq", testMQ, "Test MQs"},
+	{"img", imgTest, "Paints an image stored at 0x500000"},
 	{"1", bangBang, "Re-run your last valid command"},
+	{"game", game, "Play Game"},
 	{"ps", ps, "Print ps"},
 	{"ipcs", ipcs, "Print ipcs"}
-
 };
 
 uint64_t printProcessA();
@@ -79,17 +87,13 @@ int32_t init_d(int argc, char* argv[]) {
 		return -1;
 	}
 
-//	char* argvA[] = {"process A"};
-//	char* argvB[] = {"process B"};
+	clearScreen();
+	char* argvA[] = {"process A"};
+	char* argvB[] = {"process B"};
 //	char* argvC[] = {"process C"};
-	
-//	createProcess(0, "process A", printProcessA, 1, argvA);
-//	createProcess(0, "process B", printProcessB, 1, argvB);
-
-
-	
 	char* argvTerminal[] = {"terminal"};
-
+	createProcess(0, "process B", printProcessB, 1, argvB);
+	createProcess(0, "process A", printProcessA, 1, argvA);
 	createProcess(0, "Terminal", userland_main, 1, argvTerminal);
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 	while(1);
@@ -97,30 +101,49 @@ int32_t init_d(int argc, char* argv[]) {
 
 }
 
-
+uint8_t MUTEX = 0;
 
 uint64_t printProcessA() {
-
+	//Write, blockingly, every ~10 sec. If we somehow manage to fill 8KiB, this will block until there's room
+	int64_t mqFD = MQopen("test", F_WRITE | F_NOBLOCK);
 	uint64_t aux = 0;
 	while (1) {
-		if ( (aux % 500000) == 0) {
-			print("A ");
-		}
-		
 		aux++;
-		
+		while(!MQisFull(mqFD)) {
+			MQsend(mqFD, "12345678901234567890", 20);
+		}
+		// print("MQ full, A taking a break");
+		sleep(10000);
 	}
 	return 0;
 }
 
 uint64_t printProcessB() {
-
+	//Read non blockignyl ALL the time, if nothing could be read print '.' otherwise print what was read
+	int64_t mqFD = MQopen("test", F_READ | F_NOBLOCK);
+	// print("B opened MQ");
+	char buff[17] = {0};
 	uint64_t aux = 0;
-	while ((uint64_t)-1) {
-		if ( (aux % 50000000) == 0) {
-			print("B ");
-		}
+	
+	while (1) {
 		aux++;
+		if(MQisEmpty(mqFD)) {
+			// print("\nMQ empty, B taking a break\n");
+			sleep(1000);
+		}
+		int64_t bytesRead = MQreceive(mqFD, buff, 16);
+		if(bytesRead > 0) {
+			// print("\nB <- '");
+			buff[bytesRead] = 0;
+			// print(buff);
+			// print("' - ");
+			// printNum(bytesRead);
+			// print("\n");
+		}
+		else {
+			// print(".");
+		}
+		sleep(2000);
 	}
 	return 0;
 }
@@ -131,15 +154,12 @@ uint64_t printProcessC() {
 	return 0;
 }
 
+
 int32_t userland_main(int argc, char* argv[]) {
-
-	//clearScreen();
-	
-
 	char buffer[100];
 	printVer();
 	print("\nTo see available commands, type help\n");
-
+	
 	//Process input. No use of  "scanf" or anything of the sort because input is treated especially
 	while(!isExit) {
 		uint8_t index = 0;
@@ -295,5 +315,38 @@ void bangBang() {
 		print("\n");
 		runCommand(lastCommand);
 	}
+}
 
+
+void sleepForTwoSeconds() {
+	print("Sleeping...");
+	sleep(2000);
+	print("woke up\n");
+}
+
+void testMQ() {
+	static uint8_t fd = 0;
+	if(fd == 0) {
+		fd = MQopen("test2", F_WRITE /*| F_NOBLOCK*/);
+		print("MQ opened with FD ");
+		printNum(fd);
+		print("\n");
+	}
+	// print("Sending message...sent ");
+	// printNum(MQsend(fd, "1234567890", 10));
+	// print(" bytes.\nClosing MQ returned ");
+	// int8_t closeResult = MQclose(fd);
+	// printNum(closeResult);
+	// if(closeResult >= 0) {
+	// 	print(" (success)\n");
+	// 	fd = 0;
+	// }
+	// else {
+	// 	print(" (error)\n");
+	// }
+}
+void imgTest() {
+	clearScreen();
+	Image *img = (Image *) 0x500000;
+	paintImg(img, 100, 100);
 }
