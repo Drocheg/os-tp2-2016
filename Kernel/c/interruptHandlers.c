@@ -21,6 +21,7 @@
 #include <mutex.h>
 
 static void timerTick();
+static volatile uint8_t createProcessMutex = 0;
 
 
 int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) {
@@ -65,11 +66,11 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			result = 1;
 			break;
 		case CREATE_PROCESS: {
-			_cli();
+			mutex_lock(&createProcessMutex);
 			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
 			result = addProcess(getCurrentPID(), params->name, params->entryPoint, params->argc, params->argv);
 			*((int64_t *) p2) = (int64_t) result; 
-			_sti();
+			mutex_unlock(&createProcessMutex);
 		}
 			break;
 		case TIME:
