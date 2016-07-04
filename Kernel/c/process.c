@@ -119,8 +119,6 @@ static void *mallocRecursive(void **current, uint64_t size) {
 }
 
 static uint64_t recursiveGetProcessMemoryAmount(void * currentPage){
-	ncPrint("\n");
-	ncPrintHex(currentPage);
 	if(currentPage==NULL) return 0;
 	return 1 + recursiveGetProcessMemoryAmount( *((void **) currentPage));
 }
@@ -210,7 +208,6 @@ uint64_t getCurrentPID() {
 }
 
 uint64_t getProcessPID(uint64_t PCBIndex) {
-
 	struct pcbEntry_s *process = NULL;
 	if (pcb == NULL || PCBIndex < 0 || PCBIndex > maxProcesses) {
 		return -1;
@@ -289,8 +286,6 @@ uint64_t getProcessMemoryAmount(uint64_t PCBIndex) {
 	}
 	process = &(pcb[PCBIndex]);
 	uint64_t numPages = 1 + recursiveGetProcessMemoryAmount(process->heapPage);
-	ncPrintDec(numPages);
-	ncPrint("  ");
 	return PAGE_SIZE * numPages;
 }
 

@@ -10,6 +10,7 @@
 #include <keyboard.h>
 #include <scheduler.h>
 #include <libasm.h>
+#include <kernel-lib.h>
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 0x10 /* See Process.c */
@@ -25,7 +26,7 @@ typedef uint64_t (*CheckWakeActions)(Node);
 typedef uint64_t (*CheckWakeIOActions)();
 
 
-static char * staticChar[3] = {"R","S","F"};
+static char staticChar[3] = {'R','S','F'};
 
 /* Structs */
 struct node_t {
@@ -447,32 +448,43 @@ static uint64_t waitForOutput(uint64_t PCBIndex, uint64_t fd, char *buffer, uint
 
 void printPS() {
 	int i = 0;
+	ncPrint("\n------ Processes ------");
+	ncPrint("\nPID                 name                            state    memory(B)           stack page          stack top         \n");
+	char buff[21] = {0};
 	while(i < MAX_PROCESSES) {
-		if(usedNodes[i] == 1){
+		if(usedNodes[i] == 1) {
 			Node newNode = (Node) (memoryPage + (i * sizeof(*newNode)));
-			
-			ncPrint(" PID:");
 			uint64_t newPCBIndex = 	newNode->PCBIndex;
-			ncPrintDec(getProcessPID(newPCBIndex));
-			ncPrint(" Name: ");
+			//PID
+			intToStr(getProcessPID(newPCBIndex), buff);
+			ncPrint(buff);
+			pad(20 - strlen(buff));
+			//Name
 			ncPrint(getProcessName(newPCBIndex));
-			ncPrint(" State:");
-			uint64_t newState = 	newNode->state;
-			ncPrint(staticChar[newNode->state]);
-			ncPrint(" Memory: ");
-			ncPrintDec(getProcessMemoryAmount(newPCBIndex));
-			ncPrint(" Next PBCindex: ");
-			ncPrintDec(newNode->next->PCBIndex);
-			ncPrint("StackPAge");
+			pad(32 - strlen(getProcessName(newPCBIndex)));
+			//State
+			uint64_t newState = newNode->state;
+			ncPrintChar(staticChar[newNode->state]);
+			pad(9 - 1);
+			//Memory
+			intToStr(getProcessMemoryAmount(newPCBIndex), buff);
+			ncPrint(buff);
+			pad(20 - strlen(buff));
+				// //Next PCB index
+				// ncPrint(" Next PCB index: ");
+				// ncPrintDec(newNode->next->PCBIndex);
+			// Stack page
 			ncPrintHex(getProcessStackPage(newPCBIndex));
-			ncPrint("StackTop");
+			pad(12);
+			// Stack top
 			ncPrintHex(getProcessStack(newPCBIndex));
 			
 		//	newNode->next = newNode; /* Helps when last is NULL */
-			ncPrint("\n\n");
+			ncPrint("\n");
 		}
 		i++;
-	}	
+	}
+	ncPrint("\n\n");
 }
 
 

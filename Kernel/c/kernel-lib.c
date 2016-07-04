@@ -29,3 +29,9 @@ void sys_sound(uint32_t freq, uint32_t time) {
 	playSound(freq);
 }
 
+void pad(uint64_t spaces) {
+	while(spaces > 0) {
+		ncPrintChar(' ');
+		spaces--;
+	}
+}

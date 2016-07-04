@@ -55,11 +55,6 @@ static int8_t markAccess(uint64_t tableIndex, uint64_t pid, uint32_t accessFlags
 */
 static int8_t destroyMQ(uint64_t index);
 
-/**
-* Prints the specified number of spaces. Used for aligning printMQs() output.
-*/
-static void pad(uint64_t spaces);
-
 
 /* **********************************************
 *			FileManager implementations
@@ -374,11 +369,4 @@ static int64_t findFreeSlot() {
 		}
 	}
 	return -1;
-}
-
-static void pad(uint64_t spaces) {
-	while(spaces > 0) {
-		ncPrintChar(' ');
-		spaces--;
-	}
 }
