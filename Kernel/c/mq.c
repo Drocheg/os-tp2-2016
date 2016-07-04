@@ -21,7 +21,7 @@ typedef struct {
 
 static MessageQueue mqs[MAX_MQS] = {NULL};		//Initialize with NULL
 static uint64_t numMQs = 0;
-static uint8_t openMutex = 0,
+static volatile uint8_t openMutex = 0,
 				closeMutex = 0,
 				uniqNameMutex = 0;
 static uint32_t nextUniqueID = 0;
