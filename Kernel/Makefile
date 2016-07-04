@@ -3,10 +3,10 @@ include ../Tools.inc
 
 
 KERNEL= kernel.bin
-SOURCES= c/idt.c c/KERNEL.c c/kernel-lib.c c/modules.c c/video-text.c c/video-graphics.c c/interruptHandlers.c c/keyboard.c c/moduleLoader.c c/speaker.c c/memory.c c/time.c c/interrupts.c c/process.c c/scheduler.c c/file.c
-OBJECTS= c/idt.o c/KERNEL.o c/kernel-lib.o c/modules.o c/video-text.o c/video-graphics.o c/interruptHandlers.o c/keyboard.o c/moduleLoader.o c/speaker.o c/memory.o c/time.o c/interrupts.o c/process.o c/scheduler.o c/file.o
-SOURCES_ASM= asm/interrupts.asm asm/libasm.asm
-OBJECTS_ASM= asm/interrupts.o asm/libasm.o
+SOURCES= c/idt.c c/KERNEL.c c/kernel-lib.c c/modules.c c/video-text.c c/video-graphics.c c/interruptHandlers.c c/keyboard.c c/moduleLoader.c c/speaker.c c/memory.c c/time.c c/interrupts.c c/process.c c/scheduler.c c/file.c c/lock.c
+OBJECTS= c/idt.o c/KERNEL.o c/kernel-lib.o c/modules.o c/video-text.o c/video-graphics.o c/interruptHandlers.o c/keyboard.o c/moduleLoader.o c/speaker.o c/memory.o c/time.o c/interrupts.o c/process.o c/scheduler.o c/file.o c/lock.o
+SOURCES_ASM= asm/interrupts.asm asm/libasm.asm asm/lock.asm
+OBJECTS_ASM= asm/interrupts.o asm/libasm.o asm/lock.o
 SOURCES_COMMON = ../Common/c/scanCodes.c ../Common/c/stdlib.c ../Common/c/video-common.c
 OBJECTS_COMMON = ../Common/c/scanCodes.o ../Common/c/stdlib.o ../Common/c/video-common.o
 
