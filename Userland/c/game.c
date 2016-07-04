@@ -64,7 +64,7 @@ void gameOver(GameData gameData);
 void playJumpFX(uint64_t seed);
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
 void initGame(GameData gameData);
-// int64_t game_main(int argc, char* argv[]);
+// int64_t game_main(int argc, char* argv[]); //TODO check why in .h game_main
 
 
 
@@ -74,7 +74,6 @@ void initGame(GameData gameData);
 void game_start(int argc, char* argv[]){
 	int64_t result = game_main(argc, argv);
 	exit(result);
-	while(1); //TODO borrar el while(1);
 }
 
 
@@ -240,7 +239,7 @@ void update(GameData gameData){
 			}
 			
 		}
-		gameData->lastObstacleUpdate=updateTime; //TODO trabajar por bloques desde inicio
+		gameData->lastObstacleUpdate=updateTime;
 	}
 
 	for(int j=0; j<VERTICAL_SIZE; j++){

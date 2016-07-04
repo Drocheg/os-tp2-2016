@@ -66,7 +66,6 @@ typedef enum {TTY = 0, RAW} KeyboardMode;
 
 struct createProcessParams_s {
 
-	uint64_t parentPid; //TODO sacar.
 	char *name;
 	void *entryPoint;
 	uint64_t argc;

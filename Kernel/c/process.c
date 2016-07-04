@@ -104,8 +104,8 @@ static void *mallocRecursive(void **current, uint64_t size) {
 		if (current == NULL) {
 			return NULL;
 		}
-		*((uint64_t *) *current) = (uint64_t) NULL; //Next = null;							/* TODO: Check this */
-		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	/* TODO: Check this */ 
+		*((uint64_t *) *current) = (uint64_t) NULL; //Next = null;							
+		*((uint64_t *) (*current + sizeof(void *))) = sizeof(void *) + sizeof(uint64_t); 	 
 	}
 
 	currentSize = ((uint64_t *) (*current + sizeof(void *)));
@@ -454,7 +454,6 @@ uint64_t terminateProcess() {
 		return -1;
 	}
 	yield();
-	ncPrint("I'm here bitch\n");
 
 	return 0;
 }
