@@ -100,45 +100,22 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 	//print("                   I shall now play you the song of my people\n");
 	char * songDataAux = songData;
 	int32_t m = n;
-// <<<<<<< HEAD
-	while(n > 0) {
-		if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
-		freq = *((uint32_t *)songData);
-		songData = songData+4;
-		timeR = (*((uint32_t *)songData));  
-		songData = songData+4;
-	  	_int80(SPEAKER, freq, 0, 0);
-	  	n--;
-	  	sleep_sys(timeR);
-	  	// print("Time now: ");
-	  	// printNum(time());
-	  	// print(" Time to Sleep: ");
-	  	// printNum(timeR);
-	  	// print("\n");
-	  	// sleep_sys(timeR);
+	while(1){
+		while(n > 0) {
+			if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
+			freq = *((uint32_t *)songData);
+			songData = songData+4;
+			timeR = (*((uint32_t *)songData));  
+			songData = songData+4;
+		  	_int80(SPEAKER, freq, 0, 0);
+		  	n--;
+		  	sleep_sys(timeR);
+		  
+		}
+		n=m;
+		songData = songDataAux ;
+		_int80(SPEAKER, 0, 0, 0);	
 	}
-	n=m;
-	songData = songDataAux ;
-	_int80(SPEAKER, 0, 0, 0);	
-
 	return 0;
-// =======
-// 	//while(1){
-// 		while(n > 0) {
-// 			if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
-// 			freq = *((uint32_t *)songData);
-// 			songData = songData+4;
-// 			timeR = (*((uint32_t *)songData));  
-// 			songData = songData+4;
-// 		  	_int80(SPEAKER, freq, 0, 0);
-// 		  	n--;
-		  	
-// 		  	sleep(timeR);
-// 		}
-// 		n=m;
-// 		songData = songDataAux ;
-// 		_int80(SPEAKER, 0, 0, 0);	
-// 	//}
-	
-// >>>>>>> e69ff7e252d72c8338cffcdaa1110111b65afbb4
+
 }
