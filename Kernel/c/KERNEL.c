@@ -106,8 +106,8 @@ int kernel_main(int argc, char *argv[]) {
 
 	_sti();		/* Turns on interruptions (will call scheduler' next process function, to start running processes) */
 	_halt();	/* Waits till the timer tick interruption comes */
-	_cli();
-	finishKernel();
+	_cli();		/* After dequeuing init_d, execution will resume this point */
+	finishKernel();	
 	/* Shouldn't reach this point */
 	_cli();
 	_halt();
