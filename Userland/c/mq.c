@@ -14,6 +14,12 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 	return result;
 }
 
+int8_t MQuniq(char *dest) {
+	int8_t result;
+	_int80(MQ_UNIQUE_NAME, (uint64_t) dest, (uint64_t)&result, 0);
+	return result;
+}
+
 int8_t MQclose(uint64_t descriptor) {
 	int8_t result;
 	_int80(MQ_CLOSE, descriptor, (uint64_t)&result, 0);

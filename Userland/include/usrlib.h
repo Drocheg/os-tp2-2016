@@ -8,17 +8,8 @@
 
 
 
-// void fread(uint8_t fd, char *buff, uint64_t maxBytes);
-
-// void fwrite(uint8_t fd, char *buff, uint64_t maxBytes);
-
-// void putchar(char c);
-
-// char getchar();
-
 uint8_t getScanCode();
 
-// void scroll();
 
 void ps_sys();
 
@@ -26,7 +17,8 @@ void ipcs_sys();
 
 void clearScreen();
 
-// void reboot();
+
+
 
 void print(const char *str);
 

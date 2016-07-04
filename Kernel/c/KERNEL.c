@@ -100,29 +100,23 @@ int kernel_main(int argc, char *argv[]) {
 	ncPrint("Starting init.d\n");
 	addProcess(0, "init.d", runCodeModule, 1, args);
 
+	ncPrint("finishKernel is at: ");
+	ncPrintHex(finishKernel);
+	ncPrint("\n");
+
 	_sti();		/* Turns on interruptions (will call scheduler' next process function, to start running processes) */
 	_halt();	/* Waits till the timer tick interruption comes */
-	
+	_cli();
+	finishKernel();
 	/* Shouldn't reach this point */
 	_cli();
 	_halt();
 	return 0;
-
-	// ncPrint("Jumping to user space...NOW!\n");
-	// ret = runCodeModule();
-	
-	// ncClear();
-	// ncPrint("User space returned with exit code ");
-	// ncPrintDec(ret);
-	// ncPrint(".\nPreparing to shut down...");
-
-	// ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
-	// _cli();
-	// _halt();
-	// return 0;
 }
 
 static void finishKernel() {
+
+	ncPrint("\n\n\nHere bitch\n");
 
 	ncClear();
 	ncPrint("Preparing to shut down...");

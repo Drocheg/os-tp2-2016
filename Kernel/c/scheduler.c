@@ -9,7 +9,7 @@
 #include <video.h>
 #include <keyboard.h>
 #include <scheduler.h>
-
+#include <libasm.h>
 
 #ifndef MAX_PROCESSES
 #define MAX_PROCESSES 0x10 /* See Process.c */
@@ -56,10 +56,10 @@ static uint8_t usedNodes[MAX_PROCESSES];						/* Holds a list of the nodes, mark
 static Node last = NULL;										/* Points to the last node in the cirular queue */
 static void *memoryPage = NULL;									/* Stores a memory page for the circular queue */
 static IOActions ioActions[2] = {waitForInput, waitForOutput};	/* Stores a pointer to actions to be taken on IO request */
+static uint64_t processesQuantity = 0;
 
 
-
-
+void *returnToKernelRSP = 0;
 
 
 /*********************/
@@ -101,15 +101,6 @@ void stopScheduler() {
 }
 
 
-/*
- * Adds a process into the queue
- * Returns 0 on success, or -1 otherwise
- */
-// <<<<<<< HEAD
-// uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
-
-// 	if (enqueueProcess(parentPid, name, entryPoint, argc, argv)) {
-// =======
 int64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]) {
 	int64_t pid = enqueueProcess(parentPid, name, entryPoint, argc, argv);
 	if (pid < 0) {
@@ -172,8 +163,9 @@ int64_t waitpid(uint64_t pid) {
  */
 void *nextProcess(void *currentRSP) {
 	Node current = NULL;
-	if (checkScheduler()) {	
-		return getKernelStack();
+	if (checkScheduler()) {
+		_cli();
+		return returnToKernelRSP;
 	}
 	current = last->next;
 	
@@ -181,6 +173,7 @@ void *nextProcess(void *currentRSP) {
 		setProcessStack(current->PCBIndex, currentRSP);
 	} else {	
 		firstIteration = 0;
+		returnToKernelRSP = currentRSP;
 	}
 	last = current;		 				/* Change to next process */
 	return nextProcessRecursive();
@@ -272,6 +265,7 @@ static int64_t enqueueProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH],
 	last = newNode;
 	newNode->next = aux->next;
 	aux->next = newNode;
+	processesQuantity++;
 	return getProcessPID(PCBIndex);
 
 }
@@ -285,7 +279,6 @@ static uint64_t dequeueProcess() {
 	Node current = NULL;
 	
 	if (last == NULL) {
-
 		return -1; /* No process to dequeue */
 	}
 
@@ -297,7 +290,7 @@ static uint64_t dequeueProcess() {
 		last->next = last->next->next;
 	}
 	destroyProcess(current->PCBIndex);
-	
+	processesQuantity--;
 	return 0;
 }
 
@@ -322,31 +315,18 @@ static int getFreeNode() {
 }
 
 
-/* static int64_t contador=0; TODO: Deprecate this */
-
 static void *nextProcessRecursive() {
 
 	Node current = last->next;
-
-	//for(int i=0; i<100000000;i++);
-	
-	// ncPrintHex(current->state);
-	// while(1);
-
-	// if (current->state == RUNNING || current->state == SLEPT) {
-	// 	return getProcessStack(current->PCBIndex);
-	// }
 	if (current->state == FINISHED) {
 		dequeueProcess();
+		if (last == NULL) {
+			return returnToKernelRSP;
+
+		}
 		return nextProcessRecursive();
 	}
-	// if (current->state == SLEPT) {
-	// 	last = last->next;
-	// 	return nextProcessRecursive();
-	// }
 	return getProcessStack(current->PCBIndex);
-	// return NULL;
-		
 }
 
 

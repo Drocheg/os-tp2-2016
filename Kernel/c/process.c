@@ -326,7 +326,7 @@ int64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint32_t flags)
  * Adds a file to the process' files table.
  * Returns the file's descriptor on sucess, or -1 otherwise.
  */
-uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t flags) {
+int64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t flags) {
 
 	struct pcbEntry_s *process = NULL;
 	struct fileDescriptorMapEntry_s *entries;
@@ -458,6 +458,9 @@ uint64_t terminateProcess() {
 	if (finishProcess()) {
 		return -1;
 	}
+	yield();
+	ncPrint("I'm here bitch\n");
+
 	return 0;
 }
 

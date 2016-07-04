@@ -14,6 +14,15 @@
 int64_t MQopen(const char* name, uint32_t accessFlags);
 
 /**
+* Stores a unique MQ name in the specified destination buffer. The name can be used to
+* create a new MQ.
+*
+* @param dest Where to store the name. WARNING: Make sure dest is of size MAX_NAME+1.
+* @return 0 if a name was successfully stored, -1 on error.
+*/
+int8_t MQuniq(char *dest);
+
+/**
 * Closes the message queue with the given descriptor.
 * NOTE: The queue itself will not be erased until all processes who have MQopen()ed it call MQclose() on it.
 *

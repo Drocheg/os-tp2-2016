@@ -334,7 +334,7 @@ static int64_t stdinDequeueChar() {
 
 	char c = 0;
 	if (stdinBufferIsEmpty(0)) {
-		return -1; /* Same position of index can be achieved is full or if is empty */
+		return -1;
 	}
 	c = stdinBuffer[stdinDeqIdx++];
     stdinBufferSize--;

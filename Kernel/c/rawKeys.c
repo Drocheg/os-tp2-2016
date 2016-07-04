@@ -92,7 +92,7 @@ static int64_t rawDequeueKey() {
 
 	int64_t result = 0;
 	if (isEmpty()) {
-		return -1; /* Same position of index can be achieved is full or if is empty */
+		return -1; 
 	}
 	result = rawBuffer[rawDeqIdx++];
     rawBufferSize--;

@@ -288,7 +288,7 @@ void gameOver(GameData gameData){
 	int64_t songNum = 3;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	clearScreen(); 
-	print("\n\n\n Game Over ");
+	print("\n\n\n Game Over \n");
 	sleep_sys(3400);
 	songNum = -1;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));

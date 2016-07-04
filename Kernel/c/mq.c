@@ -8,6 +8,7 @@
 #include <fileManager.h>
 #include <stdlib.h>
 #include <video.h>
+#include <mutex.h>
 
 #define MAX_MQS 256
 
@@ -20,6 +21,10 @@ typedef struct {
 
 static MessageQueue mqs[MAX_MQS] = {NULL};		//Initialize with NULL
 static uint64_t numMQs = 0;
+static volatile uint8_t openMutex = 0,
+				closeMutex = 0,
+				uniqNameMutex = 0;
+static uint32_t nextUniqueID = 0;
 
 /**
 * @return The index of the message queue with the specified name, or -1 if not found.
@@ -63,14 +68,17 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 	if(name == NULL || ((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0)) {
 		return -1;
 	}
+	mutex_lock(&openMutex);
 	int64_t tableIndex = indexOfMQ(name);
 	//Nonexistant MQ, create
 	if(tableIndex == -1) {
 		tableIndex = findFreeSlot();
 		if(tableIndex == -1) {
+			mutex_unlock(&openMutex);
 			return -1;
 		}
 		if(newMQ(name, tableIndex, accessFlags) == -1) {
+			mutex_unlock(&openMutex);
 			return -1;
 		}
 	}
@@ -78,20 +86,67 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 	else {
 		//Only 1 process can have the MQ open for reading/writing at the same time
 		if(markAccess(tableIndex, getCurrentPID(), accessFlags) == -1) {
+			mutex_unlock(&openMutex);
 			return -1;
 		}
 	}
 	//MQ valid, register it in the current process' PCB
 	int64_t MQdescriptor = addFile(getCurrentPCBIndex(), tableIndex, MESSAGE_QUEUE, accessFlags);
 	if(MQdescriptor == -1) {
+		MQclose(tableIndex);
+		mutex_unlock(&openMutex);
 		return -1;
 	}
 	mqs[tableIndex].links++;
+	mutex_unlock(&openMutex);
 	return (int64_t) MQdescriptor;
 }
 
+int8_t MQuniq(char *dest) {
+	mutex_lock(&uniqNameMutex);
+	char buff[MAX_NAME+1] = {'/', 'm', 'q', '/', 'u', 0};	//Prefix these MQs with "/mq/u"
+	uint32_t startingID = nextUniqueID;
+	//Append the next unique ID to the "/mq/u" prefix and check if a MQ with that name exists
+	while(indexOfMQ(intToStr((uint64_t)++nextUniqueID, buff+5)) != -1) {
+		if(nextUniqueID == startingID) {	//Overflowed and came back around with no matches
+			mutex_unlock(&uniqNameMutex);
+			return -1;
+		}
+	}
+	memcpy(dest, buff, strlen(buff)+1);
+	mutex_unlock(&uniqNameMutex);
+	return 0;
+}
+
+/**
+* Opens a message queue with a unique name, with the specified access parameters.
+*
+* @return A file descriptor for the calling process to reference the opened MQ,
+* or -1 on error (error could mean no available unique name).
+*/
+int64_t MQopenUniq(uint32_t accessFlags) {
+	if((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0) {
+		return -1;
+	}
+	mutex_lock(&uniqNameMutex);
+	char buff[MAX_NAME+1] = {'/', 'm', 'q', '/', 'u', 0};	//Prefix these MQs with "/mq/u"
+	uint32_t startingID = nextUniqueID;
+	//Append the next unique ID to the "/mq/u" prefix and check if a MQ with that name exists
+	while(indexOfMQ(intToStr((uint64_t)++nextUniqueID, buff+5)) != -1) {
+		if(nextUniqueID == startingID) {	//Overflowed and came back around with no matches
+			mutex_unlock(&uniqNameMutex);
+			return -1;
+		}
+	}
+	int64_t fd = MQopen(buff, accessFlags);
+	mutex_unlock(&uniqNameMutex);
+	return fd;
+}
+
 int8_t MQclose(uint64_t tableIndex) {
+	mutex_lock(&closeMutex);
 	if(mqs[tableIndex].file == NULL) {
+		mutex_unlock(&closeMutex);
 		return -1;
 	}
 	uint64_t pid = getCurrentPID();
@@ -102,15 +157,19 @@ int8_t MQclose(uint64_t tableIndex) {
 		mqs[tableIndex].writePID = -1;
 	}
 	else {
+		mutex_unlock(&closeMutex);
 		return -1;
 	}
-	
-	mqs[tableIndex].links--;
+	if(mqs[tableIndex].links > 0) {
+		mqs[tableIndex].links--;
+	}
 	if(mqs[tableIndex].links == 0) {		//No more links, destroy
 		int8_t destroyResult = destroyMQ(tableIndex);
+		mutex_unlock(&closeMutex);
 		return destroyResult == 0 ? -1 : destroyResult;
 	}
 	else {
+		mutex_unlock(&closeMutex);
 		return 0;
 	}
 }
@@ -261,9 +320,12 @@ void printMQs(void) {
 *				Static functions
 * **********************************************/
 static int64_t indexOfMQ(const char* name) {
-	for(uint64_t i = 0; i <  MAX_MQS; i++) {
-		if(mqs[i].file != NULL && streql(getBasicFileName(mqs[i].file), name)) {
-			return i;
+	for(uint64_t i = 0, checkedMQs = 0; checkedMQs < numMQs && i < MAX_MQS; i++) {
+		if(mqs[i].file != NULL) {
+			if(streql(getBasicFileName(mqs[i].file), name)) {
+				return i;
+			}
+			checkedMQs++;
 		}
 	}
 	return -1;

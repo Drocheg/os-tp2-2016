@@ -52,7 +52,11 @@ typedef enum {TTY = 0, RAW} KeyboardMode;
 #define MQ_RECEIVE 773
 #define MQ_IS_FULL 774
 #define MQ_IS_EMPTY 775
+#define MQ_UNIQUE_NAME 776
 
+//Mutexes
+#define MUTEX_LOCK 760
+#define MUTEX_UNLOCK 761
 
 //Others
 #define CHANGE_KBD_MODE 900

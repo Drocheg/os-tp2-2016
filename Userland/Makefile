@@ -4,10 +4,9 @@ include ../Tools.inc
 MODULE=userland.bin
 ASMSOURCES= asm/interrupts.asm
 
-SOURCES= c/USERLAND.c c/piano.c c/inputReceiver.c c/game.c c/mq.c c/songplayer.c c/usrlib.c c/terminal.c c/math.c c/stdio.c c/time.c c/unistd.c ../Common/c/scanCodes.c ../Common/c/stdlib.c 
+SOURCES= c/USERLAND.c c/piano.c c/inputReceiver.c c/game.c c/mq.c c/mutex.c c/songplayer.c c/usrlib.c c/terminal.c c/math.c c/stdio.c c/time.c c/unistd.c ../Common/c/scanCodes.c ../Common/c/stdlib.c 
 ASMOBJECTS= asm/interrupts.o
-COBJECTS=c/USERLAND.o c/piano.o c/inputReceiver.o c/game.o c/mq.o c/songplayer.o c/usrlib.o c/terminal.o c/math.o c/stdio.o c/time.o c/unistd.o ../Common/c/scanCodes.o ../Common/c/stdlib.o
-
+COBJECTS=c/USERLAND.o c/piano.o c/inputReceiver.o c/game.o c/mq.o c/mutex.o c/songplayer.o c/usrlib.o c/terminal.o c/math.o c/stdio.o c/time.o c/unistd.o ../Common/c/scanCodes.o ../Common/c/stdlib.o
 
 all: $(USER) songmaker img
 

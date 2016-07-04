@@ -7,6 +7,10 @@
 #include <game.h>
 #include <file-common.h>
 #include <mq.h>
+#include <mutex.h>
+
+
+uint8_t MUTEX = 0;
 
 
 static int64_t stringToInt(char *str, int64_t *result); /* TODO move this */
