@@ -286,12 +286,13 @@ static void getTime_main() {
 }
 
 static void sleep_main(uint64_t argc, char *argv[]) {
-
-	uint64_t miliseconds = 0;
+	uint64_t miliseconds = 2000;
+	/*
 	if (argc < 2 || stringToInt(argv[1], (int64_t *) &miliseconds)) {
 		print("Usage: sleep <seconds>\n");
 	}
 	miliseconds *= 1000;
+	*/
 	sleep_sys(miliseconds);
 }
 

@@ -118,7 +118,6 @@ void exit(int64_t result){
 }
 
 void changeToScanCodes() {
-	printNum(RAW);
 	_int80(CHANGE_KBD_MODE, RAW, 0, 0);
 }
 
