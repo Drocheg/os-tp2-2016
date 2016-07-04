@@ -36,6 +36,9 @@ int64_t readLine(char *buffer, uint64_t buffSize){
 		buffer[i++] = c;
 	}
 	buffer[i] = 0; /* NULL-terminates the string */
+	if (c != '\n') {
+		while (getchar() != '\n'); /* Cleans stdin buffer */
+	}
 
 	return (i - 1);
 }

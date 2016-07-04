@@ -317,6 +317,8 @@ int8_t stderrClose(uint64_t index) {
 /* STDIN */
 static int64_t stdinEnqueueChar(char character) {
 
+    uint64_t aux = stdinEnqIdx;
+
 	if (stdinIsFull(0)) {
 		return -1;
 	}
@@ -329,8 +331,8 @@ static int64_t stdinEnqueueChar(char character) {
         stdinHasData++;
     } else {
         if (stdinIsFull(0)) {
-            /* Enables buffer to be emptied */
-            stdinBuffer[stdinEnqIdx] = '\n';
+            /* Enables buffer to be emptied, at the cost of losing the last character enqueued */
+            stdinBuffer[aux] = '\n';
             stdinHasData++;
         }
     }
