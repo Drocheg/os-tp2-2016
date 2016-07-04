@@ -31,35 +31,6 @@ uint64_t initializeInterruptStacks(void *finishKernel) {
 		return -1;
 	}
 	kernelStack = kernelStackPage + PAGE_SIZE - sizeof(uint64_t);
-	
-
-	/* NULL terminates the stack */
-	memset(kernelStack, 0, sizeof(uint64_t));	
-
-	/* Pushes SS register */
-	kernelStack -= sizeof(kernelSS);
-	memcpy(kernelStack, &kernelSS, sizeof(kernelSS));
-
-	/* Pushes RSP */
-	kernelStack -= sizeof(kernelRSP);
-	memcpy(kernelStack, &kernelRSP, sizeof(kernelRSP));
-
-	/* Pushes RFLAGS */
-	kernelStack -= sizeof(kernelRFLAGS);
-	memcpy(kernelStack, &kernelRFLAGS, sizeof(kernelRFLAGS));
-
-	/* Pushes CS */
-	kernelStack -= sizeof(kernelCS);
-	memcpy(kernelStack, &kernelCS, sizeof(kernelCS));
-
-	/* Pushes RIP (i.e: process main function direction or entry point) */
-	kernelStack -= sizeof(kernelRIP);
-	memcpy(kernelStack, &kernelRIP, sizeof(kernelRIP));
-
-	/* Pushes fake registers */
-	kernelStack -= 17 * sizeof(uint64_t);
-	memset(kernelStack, 0, 17 * sizeof(uint64_t));
-
 	return 0;
 }
 
