@@ -3,6 +3,10 @@
 
 #include <processCommon.h>
 
+typedef enum {TTY = 0, RAW} KeyboardMode;
+
+
+
 #define SYSREAD 1
 #define SYSWRITE 2
 #define SYSCLEAR 3
@@ -14,14 +18,21 @@
 #define REBOOT 9
 
 /* New Syscalls */
-#define MEMORY 10
+#define MALLOC 10
 #define TIME 11
 #define CREATE_PROCESS 12
-#define OPENDATAIMGMODULE 13
-#define EXIT 14
-#define MALLOC 15
-#define PS 16
-#define IPCS 17
+
+// Scheduler
+#define SLEEP 13
+#define WAITPID 14
+#define YIELD 15
+
+
+#define OPENDATAIMGMODULE 20
+#define EXIT 21
+#define PS 22
+#define IPCS 23
+
 
 //Video
 #define PAINT_PX 860			//Paint white pixel
@@ -29,6 +40,20 @@
 #define PAINT_REKT 862			//Paint REKTangle
 #define FILL_REKT 863			//Fill REKTangle
 #define PAINT_IMG 864			//Paint image
+
+//Message queues
+#define MQ_OPEN 770
+#define MQ_CLOSE 771
+#define MQ_SEND 772
+#define MQ_RECEIVE 773
+#define MQ_IS_FULL 774
+#define MQ_IS_EMPTY 775
+
+
+//Others
+#define CHANGE_KBD_MODE 900
+
+
 
 
 struct createProcessParams_s {

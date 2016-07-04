@@ -13,9 +13,9 @@
 #include <process.h>
 #include <interrupts.h>
 #include <scheduler.h>
-
-
-
+#include <mq.h>
+#include <process.h>
+#include <file.h>
 
 static void timerTick();
 
@@ -28,10 +28,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 	//different return values.
 	switch(syscallID) {
 		case SYSREAD:
-			result = sys_read((uint8_t)p1, (char *)p2, p3);
+			//result = sys_read((uint8_t)p1, (char *)p2, p3);
+			result = read(p1, (char *) p2, p3);
 			break;
 		case SYSWRITE:
-			result = sys_write((uint8_t)p1, (char *)p2, p3);
+			// result = sys_write((uint8_t)p1, (char *)p2, p3);
+			result = write(p1, (char *) p2, p3);
 			break;
 		case SYSCLEAR:
 			ncClear();
@@ -61,24 +63,27 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			outb(0x64, 0xFE);		//http://wiki.osdev.org/%228042%22_PS/2_Controller#CPU_Reset
 			result = 1;
 			break;
-		case MEMORY:
-			pageManager((Action)p1, (void **)p2);
-			break;
-
 		case CREATE_PROCESS: {
-			_cli();
-			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-			result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
-			*((uint64_t *) p2) = (uint64_t) result;
-			_sti();
-		}
-		break;
-
+				_cli();
+				struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
+				result = addProcess(params->parentPid, params->name, params->entryPoint, params->argc, params->argv);
+				*((uint64_t *) p2) = (uint64_t) result;
+				_sti();
+			}
+			break;
 		case TIME:
 			*((uint64_t *) p1) = time();
 			result = *((uint64_t *) p1);
 			break;
-
+		case SLEEP:
+			sleep(p1);
+			break;
+		case WAITPID:
+			*((int64_t *) p2) = waitpid(p1);
+			break;
+		case YIELD:
+			yield();
+			break;
 		case EXIT: //TODO hacer algo con el codigo de error en p1.
 			
 			terminateProcess();
@@ -88,9 +93,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 				if ( (aux % 500000) == 0) {
 					ncPrint("Dying... ");
 				}
-				
 				aux++;
-				
 			}
 			break;
 
@@ -99,14 +102,12 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			break;
 
 		case IPCS:
-			printIPCS();
+			printMQs();
 			break;
 
 		case MALLOC: //TODO descomentar esto
 			//*((uint64_t *) p1) = malloc(getCurrentPCBIndex(), (int64_t) p2);
-
 			break;
-
 		/* *********
 		*	Video
 		* *********/
@@ -126,8 +127,41 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 			paintImg((Image *)p1, p2, p3);
 			break;
 		/* *********
-		*	Default
+		*	 MQs
 		* *********/
+		case MQ_OPEN:
+			result = MQopen((char *)p1, (uint32_t)p2);
+			*((int64_t *)p3) = result;
+			break;
+		case MQ_RECEIVE:
+			result = read(p1, (char *)p2, 1);
+			*((int8_t *)p3) = (int8_t)result;
+			break;
+		case MQ_SEND:
+			result = write(p1, (char *)p2, 1);
+			*((int8_t *)p3) = (int8_t)result;
+			break;
+		case MQ_CLOSE:
+			result = operateFile(getCurrentPCBIndex(), p1, CLOSE, 0);
+			*((int8_t *)p2) = (int8_t)result;
+			break;
+		case MQ_IS_FULL:
+			result = operateFile(getCurrentPCBIndex(), p1, IS_FULL, 0) == 0;
+			*((int8_t *)p2) = (int8_t)result;
+			break;
+		case MQ_IS_EMPTY:
+			result = operateFile(getCurrentPCBIndex(), p1, IS_EMPTY, 0) == 0;
+			*((int8_t *)p2) = (int8_t)result;
+			break;
+
+		/* Others */
+		case CHANGE_KBD_MODE:
+			changeMode((KeyboardMode) p1);
+			break;
+			
+		/* *********
+		*	Default
+		* *********/	
 		default:
 			result = -1;
 			break;
@@ -143,30 +177,36 @@ uint64_t timerTickHandler(void *stack) {
 }
 
 
-
-
-void IRQHandler(uint8_t irq) {
-	uint64_t key;
-	switch(irq) {
-		//IRQ 0 no longer handled here, see timerTickHandler()
-		case 1:					//Keyboard
-			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
-			offerKey((uint8_t) key);
-			break;
-		default:
-			break;
-	}
-	outb(0x20, 0x20);			//EOI signal
+void keyboardHandler() {
+	attendKeyboard();
 }
 
 
-static void timerTick() {  	
-  	//if(!noSound())				//NOT an else, both cases might need to be run
-  	//{
-	//	decreaseTimer();
-	//}
-	//if(noSound())
-	//{
-	//	soundOff();
-	//}
-}
+
+// void IRQHandler(uint8_t irq) {
+// 	uint64_t key;
+// 	switch(irq) {
+// 		case 0:					//Timer tick
+// 			tick();
+			
+// 			break;
+// 		case 1:					//Keyboard
+// 			key = (uint64_t) inb(0x60);	//If we don't read from the keyboard buffer, it doesn't fire interrupts again!
+// 			offerKey((uint8_t) key);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	// outb(0x20, 0x20);			//EOI signal
+// }
+
+// static void timerTick() {  	
+//   	if(!noSound())				//NOT an else, both cases might need to be run
+//   	{
+// 		decreaseTimer();
+// 	}
+// 	if(noSound())
+// 	{
+// 		soundOff();
+// 	}
+// }

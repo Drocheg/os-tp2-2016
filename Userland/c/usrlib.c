@@ -5,6 +5,7 @@
 #include <fileDescriptors.h>
 #include <scanCodes.h>
 #include <video-common.h>
+#include <file-common.h>
 
 void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
@@ -15,12 +16,12 @@ void fwrite(uint8_t fd, char *buff, uint64_t maxBytes) {
 }
 
 void putchar(char c) {
-	_int80(SYSWRITE, STDOUT, (uint64_t)&c, 1);
+	_int80(SYSWRITE, STDOUT_, (uint64_t)&c, 1);
 }
 
 char getchar() {
 	char result;
-	_int80(SYSREAD, STDIN, (uint64_t)&result, 1);
+	_int80(SYSREAD, STDIN_, (uint64_t)&result, 1);
 	return result;
 }
 
@@ -32,9 +33,9 @@ void ipcs(){
 	_int80(IPCS, 0, 0, 0);
 }
 
-uint8_t getscancode() {
-	char result;
-	_int80(SYSREAD, STDIN_RAW, (uint64_t)&result, 1);
+uint8_t getScanCode() {
+	uint8_t result;
+	fread(RAW_KEYS, (uint64_t) &result, 1);
 	return result;
 }
 
@@ -51,12 +52,16 @@ void reboot() {
 }
 
 void print(const char *str) {
-	_int80(SYSWRITE, STDOUT, (uint64_t)str, strlen(str));
+	_int80(SYSWRITE, STDOUT_, (uint64_t)str, strlen(str));
 }
 
-void printNum(uint64_t num) {
-	char buff[20];
-	intToStr(num, buff);
+void printNum(int64_t num) {
+	char buff[21];
+	int negative = num < 0;
+	if(negative) {
+		buff[0] = '-';
+	}
+	intToStr(num, negative ? buff+1 : buff);
 	print(buff);
 }
 
@@ -91,6 +96,16 @@ void paintPx(uint64_t x, uint64_t y) {
 	paintColorPx(x, y, WHITE);
 }
 
+int64_t waitpid(uint64_t pid) {
+	int64_t result = 0;
+	_int80(WAITPID, pid, (uint64_t) &result, 0);
+	return result;
+}
+
+void yield() {
+	_int80(YIELD, 0, 0, 0);
+}
+
 void paintColorPx(uint64_t x, uint64_t y, uint32_t color) {
 	_int80(PAINT_PX_COLOR, x, y, color);
 }
@@ -107,10 +122,8 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 	_int80(PAINT_IMG, (uint64_t) img, x, y);
 }
 
-void sleep(uint64_t sleepTime){
-	uint64_t startTime = time();
-	while(time()<startTime+sleepTime);
-	return;
+void sleep(uint64_t miliseconds) {
+	_int80(SLEEP, miliseconds, 0, 0);
 }
 
 void soundFX(uint32_t freq){
@@ -122,6 +135,15 @@ void soundFX(uint32_t freq){
 void exit(int64_t result){
 	_int80(EXIT, result,0,0);
 }
+
+void changeToScanCodes() {
+	_int80(CHANGE_KBD_MODE, RAW, 0, 0);
+}
+
+void changeToKeys() {
+	_int80(CHANGE_KBD_MODE, TTY, 0, 0);
+}
+
 
 /*
 void printf(const char *format, vargs *args) {

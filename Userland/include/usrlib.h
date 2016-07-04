@@ -14,7 +14,7 @@ void putchar(char c);
 
 char getchar();
 
-uint8_t getscancode();
+uint8_t getScanCode();
 
 void scroll();
 
@@ -28,7 +28,7 @@ void reboot();
 
 void print(const char *str);
 
-void printNum(uint64_t num);
+void printNum(int64_t num);
 
 void printf(const char *format, vargs *args);
 
@@ -41,6 +41,12 @@ void soundFX(uint32_t freq);
 void sleep(uint64_t sleepTime);
 
 void exit(int64_t result);
+
+void changeToScanCodes();
+
+void changeToKeys();
+
+
 
 void * malloc(uint64_t size);
 
@@ -72,6 +78,5 @@ void fillRect(REKTangle *rekt);
 
 //Paints the specified image with its top-left corner in the specified coordinates
 void paintImg(Image *img, uint64_t x, uint64_t y);
-
 
 #endif

@@ -2,13 +2,15 @@
 #define SCHEDULER_H
 
 #include <stdint.h>
-
+#include <processCommon.h>
+#include <process.h>
 
 /*
  * Sets up the scheduler 
  * Must call initializePageStack!!
+ * Returns 0 on sucess, or -1 otherwise
  */
-void initializeScheduler();
+uint64_t initializeScheduler();
 
 /*
  * Starts the scheduler
@@ -27,10 +29,44 @@ void stopScheduler();
 uint64_t addProcess(uint64_t parentPid, char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 
 /*
- * Updates the process queue, changing to the nexr process
- * Returns the next process' stack, or NULL if no process is scheduled
+ * Makes the scheduler be in charge of an input/output operation of the current process
+ * This function will read/write <maxBytes> from/into the file mapped in the process' file table by <fileDescriptor>,
+ * into/from <buffer>.
+ * It's a blocking function, so it will return when maxBytes are achieved
+ * Returns read/written bytes, or -1 if any error ocurred
  */
-void *nextProcess();
+int64_t fileOperation(uint64_t fileDescriptor, char *buffer, uint64_t maxBytes, IOOperation ioOperation, uint64_t blocking);
+
+/*
+ * Stops execution of the running process for <miliseconds> miliseconds.
+ * Returns 0 on success (made a <miliseconds> long pause), or -1 otherwise.
+ */
+uint64_t sleep(uint64_t miliseconds);
+
+/*
+ * Stops execution of the running process till process with <pid> PID finishes its execution
+ * Returns <pid> when the process to be waited finishes, 
+ * or -1 if process didn't exist, scheduler wasn't initialized/running, or caller pid is <pid>
+ */
+int64_t waitpid(uint64_t pid);
+
+/*
+ * Updates the process queue, changing to the next process
+ * Returns the next process' stack, 
+ * or NULL if scheduler is not running or if no process is scheduled
+ */
+void *nextProcess(void *currentRSP);
+
+/*
+ * Makes the scheduler stop current process' execution, and resume next process
+ */
+void yield();
+
+/*
+ * Returns the current process' PCB index,
+ * or -1 if no process sscheduled, or schduler not initialzed
+ */
+uint64_t getCurrentPCBIndex();
 
 /*
  * Finishes the current process
@@ -40,6 +76,8 @@ uint64_t finishProcess();
 
 
 void printPS();
+
+
 
 
 

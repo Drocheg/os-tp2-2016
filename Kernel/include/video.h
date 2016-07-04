@@ -32,16 +32,16 @@ void ncBackspace();
 void ncClear();
 
 //Prints the specified value in decimal notation.
-void ncPrintDec(uint64_t value);
+void ncPrintDec(int64_t value);
 
 //Prints the specified value in hexadecimal notation.
-void ncPrintHex(uint64_t value);
+void ncPrintHex(int64_t value);
 
 //Prints the specified value in binary notation.
-void ncPrintBin(uint64_t value);
+void ncPrintBin(int64_t value);
 
 //Prints the specified value in the specified base.
-void ncPrintBase(uint64_t value, uint32_t base);
+void ncPrintBase(int64_t value, uint32_t base);
 
 //Scrolls the screen, moving all text lines one line up.
 void ncScroll();
