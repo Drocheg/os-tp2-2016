@@ -17,12 +17,12 @@
 #define STATE_AIR 2
 #define SPACE_EMPTY 0
 #define SPACE_OBSTACLE 1
-#define HORIZONTAL_SIZE 10
-#define VERTICAL_SIZE 10
-#define GAME_TICK 200
-#define JUMP_LAG 400
+#define HORIZONTAL_SIZE 17
+#define VERTICAL_SIZE 12
+#define GAME_TICK 50
+#define JUMP_LAG 0
 #define OBSTACLE_LAG_MULTIPLIER 2
-#define NO_OBSTACLE_MULTIPLIER 5
+#define NO_OBSTACLE_MULTIPLIER 3
 #define GAME_OVER_LAG 10000
 #define JUMP_FX_1 21
 #define JUMP_FX_2 41
@@ -35,6 +35,7 @@
 /* Structs */
 typedef struct{
 	uint64_t state;
+	uint64_t falling;
 	int64_t jumpForce;
 	uint64_t jumpStartTime;
 	uint64_t lastObstacleUpdate;
@@ -92,11 +93,13 @@ int64_t game_main(uint64_t argc, char* argv[]){
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 
 	initGame(gameData);
+	changeToKeys();
 	return 0;
 }
 
 void initGame(GameData gameData){
 	clearScreen();
+	gameData->falling=0;
 	gameData->state = STATE_GROUND;
 	gameData->jumpForce=4;
 	gameData->jumpStartTime=time();
@@ -136,13 +139,13 @@ void playGame(GameData gameData){
 }
 
 void jump(GameData gameData){
-	if(gameData->state==STATE_AIR) return;
+	if(gameData->falling) return;
 	if(gameData->jumpForce>=VERTICAL_SIZE-3) return;
 	
 	gameData->jumpForce+=1;
 	if(gameData->state==STATE_GROUND){
-		
-		gameData->jumpForce=4;
+		gameData->falling=0;
+		gameData->jumpForce=2;
 		gameData->state=STATE_JUMPING;
 		gameData->jumpStartTime=time();
 	}
@@ -179,13 +182,13 @@ void update(GameData gameData){
 					
 					gameData->posY=1;
 				}else{
-					
+					gameData->falling=1;
 					gameData->posY=1+2*gameData->jumpForce-gameTicksFromJump; //the max height from jump - fall (1+jumpForce<gameTicksFromJump-jumpForce)
 				}
 			}
 			if(gameData->posY>VERTICAL_SIZE-3) gameData->posY=VERTICAL_SIZE-2;
 			if(gameData->posY<=1){
-			
+				gameData->falling=0;
 				gameData->posY=1;
 				gameData->state=STATE_GROUND;	
 				gameData->jumpForce=0;
@@ -318,7 +321,7 @@ void playJumpFX(uint64_t seed){
 			break;
 
 	}
-
-	soundFX(jumpFX);
+	//TODO soundFX parallel process..?
+	//soundFX(jumpFX);
 }
 

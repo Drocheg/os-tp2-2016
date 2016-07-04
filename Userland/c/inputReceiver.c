@@ -29,6 +29,7 @@ void inputReceiver_start(int argc, char* argv[]){
 
 
 int64_t inputReceiver_main(int argc, char* argv[]){
+	changeToScanCodes();
 	int64_t mqFDSend;
 	int64_t mqFDRead;
 	mqFDSend = MQopen( argv[0], F_WRITE /*| F_NOBLOCK*/);
@@ -37,14 +38,15 @@ int64_t inputReceiver_main(int argc, char* argv[]){
 
 	int64_t input;
 	while(checkEnd(mqFDRead)){
-		//input=getScanCode();
-		input=((time()/13)*7919)%2;
-		//processInput(&input);
+		input=getScanCode();
+		//input=((time()/13)*7919)%2;
+		processInput(&input);
 		if(validInput(input)) sendInput(input, mqFDSend);
 		yield();
 	}
 	MQclose(mqFDSend);
 	MQclose(mqFDRead);
+	changeToKeys();
 	return 0;
 }
 

@@ -21,7 +21,6 @@ int32_t init_d(int argc, char* argv[]) {
 	}
 
 	clearScreen();
-
 	char *terminalArgv[] = {"terminal 2.0"};
 	terminalPid = createProcess("terminal 2.0", terminal, 1, terminalArgv);
 	if (terminalPid < 0) {

@@ -14,23 +14,6 @@
 #include <unistd.h>
 
 
-// void fread(uint8_t fd, char *buff, uint64_t maxBytes) {
-// 	_int80(SYSREAD, fd, (uint64_t)buff, maxBytes);
-// }
-
-// void fwrite(uint8_t fd, char *buff, uint64_t maxBytes) {
-// 	_int80(SYSWRITE, fd, (uint64_t)buff, maxBytes);
-// }
-
-// void putchar(char c) {
-// 	_int80(SYSWRITE, STDOUT_, (uint64_t)&c, 1);
-// }
-
-// char getchar() {
-// 	char result;
-// 	_int80(SYSREAD, STDIN_, (uint64_t)&result, 1);
-// 	return result;
-// }
 
 void ps_sys(){
 	_int80(PS, 0, 0, 0);
@@ -82,11 +65,6 @@ int64_t createProcess(char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t arg
 	return result;
 }
 
-// uint64_t time() {
-// 	uint64_t result;
-// 	_int80(TIME, (uint64_t)&result, 0, 0);
-// 	return result;
-// }
 
 void * malloc(uint64_t size){
 	void * result;
@@ -124,11 +102,6 @@ void paintImg(Image *img, uint64_t x, uint64_t y) {
 	_int80(PAINT_IMG, (uint64_t) img, x, y);
 }
 
-// void sleep(uint64_t miliseconds) {
-// 	_int80(SLEEP, miliseconds, 0, 0);
-// 	//sleepCroto(miliseconds);
-// }
-
 void sleepCroto(uint64_t miliseconds){
 	uint64_t loopTime=time();
 	while(time()<loopTime+miliseconds);
@@ -136,6 +109,7 @@ void sleepCroto(uint64_t miliseconds){
 
 void soundFX(uint32_t freq){
 	_int80(SPEAKER, freq, 1, 0);
+
 	sleep_sys(50);
 	_int80(SPEAKER, 0, 1, 0);
 }
