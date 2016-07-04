@@ -71,11 +71,14 @@ void processInput(int64_t * input){
 		case '\e':
 			*input=2;
 			break;
+		case 'e':
+			*input=3;
+			break;
 		case '1':
 		case '2':
 		case '3':
 		//case '4': Esta no.
-			*input=2+decodedInput-'0';
+			*input=3+decodedInput-'0';
 			break;
 		default:*input=0;
 			break;
