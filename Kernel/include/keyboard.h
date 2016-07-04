@@ -2,17 +2,15 @@
 #define KEYBOARD_H
 
 #include <stdint.h>
+#include <syscalls.h>
 
-#define KEYBOARD_BUFF_SIZE 256
 
-uint8_t bufferIsEmpty();
 
-uint8_t bufferIsFull();
+void changeMode(KeyboardMode mode);
+void attendKeyboard();
+uint8_t isCapsLockOn();
+uint8_t isNumLockOn();
+uint8_t isShifted();
 
-uint8_t pollRawKey();
-
-uint8_t pollProcessedKey();
-
-uint8_t offerKey(uint8_t scanCode);
 
 #endif

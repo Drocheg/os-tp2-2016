@@ -1,6 +1,10 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
-void runTerminal();
+#include <stdint.h>
 
-#endif
+uint64_t terminalMain(uint64_t argc, char *argv[]);
+
+
+
+#endif /* TERMINAL_H */

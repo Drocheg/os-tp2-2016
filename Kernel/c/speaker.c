@@ -59,7 +59,6 @@ void playSound(uint32_t nFrequence) {
 	if(nFrequence){
 
 	    //Set the PIT to the desired frequency
-
 		Div = 1193180 / nFrequence;
 		outb(0x43, 0xb6);
 		outb(0x42, (uint8_t) (Div) );

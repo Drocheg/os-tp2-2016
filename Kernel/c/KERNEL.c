@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <kernel-lib.h>
+#include <stdlib.h>
 #include <moduleLoader.h>
 #include <video.h>
 #include <interrupts.h>
@@ -11,6 +12,8 @@
 #include <time.h>
 #include <process.h>
 #include <scheduler.h>
+#include <fileManager.h>
+#include <basicFile.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -28,21 +31,26 @@ void * initializeKernelBinary();
 static void finishKernel();
 
 int kernel_main(int argc, char *argv[]) {
-
 	int32_t ret = 0;
+	setGraphicMode();
+	ncPrint("Set graphic video mode\n");
+
 	ncClear();
 	ncPrint("Welcome to the kernel!\n");
 
-	/* Sets up IDT */
 	ncPrint("Setting up IDT...");
 	setInterrupt(0x20, (uint64_t)&int20Receiver);
 	setInterrupt(0x21, (uint64_t)&int21Receiver);
 	setInterrupt(0x80, (uint64_t)&int80Receiver);
+	setInterrupt(0x81, (uint64_t)&int81Receiver);
+
 	ncPrint("Done.\n");
 
-	/* Sets PIT frequency to 500 Hz (one interruption every 2 ms) */
+	/* Sets PIT frequency to 1000 Hz (one interruption every 1 ms.) */
 	ncPrint("Increasing PIT frequency...");
-	setPITfrequency(500);	/* Any higher and PC speaker stops responding */
+
+	setPITfrequency(200);	/* Any higher and PC speaker stops responding */
+
 	ncPrint("Done.\n");
 
 	/* Initializes memory management */
@@ -50,9 +58,9 @@ int kernel_main(int argc, char *argv[]) {
 	initializePageStack();
 	ncPrint("Done.\n");
 
-	/* Initializes File System */
-	ncPrint("Initilzing File System...");
-	initializeFileSystem();
+	/* Initializes File Manager */
+	ncPrint("Initilzing File Manager...");
+	initializeFileManager();
 	ncPrint("Done\n");
 
 	/* Initializes PCB */
@@ -84,43 +92,37 @@ int kernel_main(int argc, char *argv[]) {
 	//masterPICmask(0xFF);	//No interrupts
 	ncPrint("Done.\n");
 
+	// _sti();
+	// while(1);
 
 	/* Add init.d process to the scheduler */
 	char *args[] = {"init.d"};
+	ncPrint("Starting init.d\n");
 	addProcess(0, "init.d", runCodeModule, 1, args);
 
-	ncPrint("Starting init.d\n");
+	ncPrint("finishKernel is at: ");
+	ncPrintHex(finishKernel);
+	ncPrint("\n");
+
 	_sti();		/* Turns on interruptions (will call scheduler' next process function, to start running processes) */
 	_halt();	/* Waits till the timer tick interruption comes */
-	
+	_cli();		/* After dequeuing init_d, execution will resume this point */
+	finishKernel();	
 	/* Shouldn't reach this point */
 	_cli();
 	_halt();
 	return 0;
-
-	// ncPrint("Jumping to user space...NOW!\n");
-	// ret = runCodeModule();
-	
-	// ncClear();
-	// ncPrint("User space returned with exit code ");
-	// ncPrintDec(ret);
-	// ncPrint(".\nPreparing to shut down...");
-
-	// ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
-	// _cli();
-	// _halt();
-	// return 0;
 }
 
 static void finishKernel() {
+
+	ncPrint("\n\n\nHere bitch\n");
 
 	ncClear();
 	ncPrint("Preparing to shut down...");
 	ncPrint("\n\n\n\n\n\n\n\n\n\n                    IT IS NOW SAFE TO TURN OFF YOUR COMPUTER");
 	_cli();
 	_halt();
-	return 0;
-
 }
 
 void clearBSS(void * bssAddress, uint64_t bssSize) {
@@ -138,12 +140,11 @@ void * getStackBase() {
 void * initializeKernelBinary() {
 	void * moduleAddresses[] = {
 		CODE_MODULE_ADDR,
-		DATA_MODULE_ADDR
+		DATA_MODULE_ADDR,
+		DATA_MODULE_IMG_ADDR
 	};
 	loadModules(&endOfKernelBinary, moduleAddresses);
 	clearBSS(&bss, &endOfKernel - &bss);
 	ncPrint("Kernel binary initialized.");
 	return getStackBase();
 }
-
-

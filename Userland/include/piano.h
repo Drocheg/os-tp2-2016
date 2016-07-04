@@ -1,6 +1,8 @@
 #ifndef PIANO_H
 #define PIANO_H
 
-void piano();
+#include <stdint.h>
+
+int64_t piano_main();
 
 #endif
