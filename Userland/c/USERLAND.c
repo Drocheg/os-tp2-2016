@@ -77,6 +77,9 @@ uint64_t printProcessA();
 uint64_t printProcessB();
 uint64_t printProcessC();
 uint64_t printProcessD();
+uint64_t printProcessSleep();
+uint64_t printProcessSleepCroto();
+
 int32_t userland_main(int argc, char* argv[]);
 
 int32_t init_d(int argc, char* argv[]) {
@@ -91,18 +94,22 @@ int32_t init_d(int argc, char* argv[]) {
 	// clearScreen();
 	char* argvA[] = {"process A"};
 	char* argvB[] = {"process B"};
+	char* argvSleep[] = {"printProcessSleep"};
+	char* argvSleepCroto[] = {"printProcessSleepCroto"};
 	char* argvC[] = {"process C"};
 	char* argvD[] = {"process D"};
 	char* argvTerminal[] = {"terminal"};
-	createProcess("process B", printProcessB, 1, argvB);
-	createProcess("process A", printProcessA, 1, argvA);
+	//createProcess("process B", printProcessB, 1, argvB);
+	//createProcess("process A", printProcessA, 1, argvA);
+//	createProcess("printProcessSleep", printProcessSleep, 1, argvSleep);
+//	createProcess("printProcessSleepCroto", printProcessSleepCroto, 1, argvSleepCroto);
 	
 	createProcess("Terminal", userland_main, 1, argvTerminal);
 	
 	//	createProcess(0, "process C", printProcessC, 1, argvC);
 
-	char* argvInputReceiver[] = {"MQReceive", "MQSend"};
-	//createProcess("InputReceiver", inputReceiver_start, 1, argvInputReceiver);
+	//char* argvInputReceiver[] = {"MQReceive", "MQSend"};
+	//createProcess("InputReceiver", inputReceiver_start, 2, argvInputReceiver);
 	
 	
 //	createProcess("TestMallocSend", printProcessC, 1, argvC);
@@ -204,6 +211,30 @@ uint64_t printProcessD() {
 	
 	exit(0);
 	return 0;
+}
+
+uint64_t printProcessSleep() {
+	print("I'm Sleep: ");
+	while(1){
+		printNum(time());
+		print("ZZZ\n");
+		sleep(1000);
+	}
+	exit(0);
+	return 0;
+}
+
+uint64_t printProcessSleepCroto() {
+	print("I'm SleepCroto");
+	while(1){
+		printNum(time());
+		print("Croto");
+		print("\n");
+		sleepCroto(1000);
+	}
+	exit(0);
+	return 0;
+
 }
 
 int32_t userland_main(int argc, char* argv[]) {
@@ -336,7 +367,7 @@ void getTime() {
 void playMainSong(){
 	int64_t mqFD = MQopen("MQReceive", F_WRITE /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQSend", "MQReceive"};
-	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
+	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
 	int64_t songNum = 2;
 	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
 	sleep(10000);
@@ -352,7 +383,7 @@ void playMainSong(){
 void playSongTwo(){ //TODO hacer que playSong ande sin esos sleep y sin el loop. Hacer un end song? Tener un solo songPlayer?
 	int64_t mqFD = MQopen("MQReceive2", F_WRITE /*| F_NOBLOCK*/);
 	char* argvSongPlayer[] = {"MQSend2", "MQReceive2"};
-	printNum(createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer));
+	createProcess( "SongPlayer", playSong_start, 2, argvSongPlayer);
 	int64_t songNum = 2;
 	MQsend(mqFD, (char *)&songNum, sizeof(int64_t));
 	sleep(10000);

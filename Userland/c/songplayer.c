@@ -93,26 +93,31 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 	
 	songData = songData+4;						//Skip bytes for n
 	uint16_t freq; //Porque 16???
-	uint32_t time;
+	uint32_t timeR;
 	
 	//clearScreen();
 	//print("                   I shall now play you the song of my people\n");
 	char * songDataAux = songData;
 	int32_t m = n;
-	while(1){
+	//while(1){
 		while(n > 0) {
 			if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
 			freq = *((uint32_t *)songData);
 			songData = songData+4;
-			time = (*((uint32_t *)songData));  
+			timeR = (*((uint32_t *)songData));  
 			songData = songData+4;
 		  	_int80(SPEAKER, freq, 0, 0);
 		  	n--;
-		  	sleep(time);
+		  	print("Time now: ");
+		  	printNum(time());
+		  	print(" Time to Sleep: ");
+		  	printNum(timeR);
+		  	print("\n");
+		  	sleep(timeR);
 		}
 		n=m;
 		songData = songDataAux ;
 		_int80(SPEAKER, 0, 0, 0);	
-	}
+	//}
 	
 }
