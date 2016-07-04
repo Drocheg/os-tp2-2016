@@ -67,7 +67,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case CREATE_PROCESS: {
 			_cli();
 			struct createProcessParams_s *params = (struct createProcessParams_s *)p1;
-			result = addProcess(-1, params->name, params->entryPoint, params->argc, params->argv);//TODO getCurrentPid
+			result = addProcess(getCurrentPID(), params->name, params->entryPoint, params->argc, params->argv);
 			*((int64_t *) p2) = (int64_t) result; 
 			_sti();
 		}

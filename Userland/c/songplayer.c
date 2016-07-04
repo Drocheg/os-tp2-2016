@@ -42,7 +42,6 @@ int64_t playSong_main(int argc, char* argv[]);
 void playSong_start(int argc, char* argv[]){
 	int64_t result = playSong_main(argc, argv);
 	exit(result);
-	while(1); //TODO borrar el while(1);
 }
 
 

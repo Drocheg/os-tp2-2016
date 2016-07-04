@@ -28,7 +28,6 @@ void offerNote(uint8_t note, uint8_t octave, uint32_t time);
 void piano_start(int argc, char* argv[]){
 	int64_t result = piano_main(argc, argv);
 	exit(result);
-	while(1); //TODO borrar el while(1);
 }
 
 

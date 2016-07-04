@@ -12,6 +12,5 @@
  *if received a song number, the song will change to that song.
  *
 */
-void playSong_start();//TODO usar msgQ
-
+void playSong_start();
 #endif
