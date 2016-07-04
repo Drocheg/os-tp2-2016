@@ -115,7 +115,7 @@ int32_t init_d(int argc, char* argv[]) {
 //	createProcess("TestMallocSend", printProcessC, 1, argvC);
 //	createProcess("TestMallocReceive", printProcessD, 1, argvD);
 
-	while(1);
+	while(1) yield();
 	return 0;
 
 }

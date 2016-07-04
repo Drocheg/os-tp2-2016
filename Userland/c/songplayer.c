@@ -108,11 +108,7 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 			songData = songData+4;
 		  	_int80(SPEAKER, freq, 0, 0);
 		  	n--;
-		  	print("Time now: ");
-		  	printNum(time());
-		  	print(" Time to Sleep: ");
-		  	printNum(timeR);
-		  	print("\n");
+		  	
 		  	sleep(timeR);
 		}
 		n=m;

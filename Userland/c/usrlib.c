@@ -139,8 +139,8 @@ void sleepCroto(uint64_t miliseconds){
 
 void soundFX(uint32_t freq){
 	_int80(SPEAKER, freq, 1, 0);
-	sleep(50);
-	_int80(SPEAKER, 0, 1, 0);
+	//sleep(50); Pierde mucho tiempo?
+	//_int80(SPEAKER, 0, 1, 0);
 }
 
 void exit(int64_t result){

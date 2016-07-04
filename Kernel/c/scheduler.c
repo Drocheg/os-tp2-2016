@@ -397,7 +397,7 @@ static uint64_t waitForTime(uint64_t miliseconds) {
 
 	Node current = (Node) NULL;
 	uint64_t ticksAtStart = ticks();
-	uint64_t sleepFor = (uint64_t) ((miliseconds/1000) * getPITfrequency());
+	uint64_t sleepFor = (uint64_t) ((miliseconds * getPITfrequency())/1000);
 	uint64_t elapsed = 0;
 	
 	if (checkScheduler()) {
