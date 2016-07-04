@@ -8,7 +8,7 @@
 
 
 /*
-    Credit where credit is due: 90% of the code below is from Flacu, retrieved from
+    Credit where credit is due: All of the VBE/BGA code is from Flacu, retrieved from
     https://bitbucket.org/Flacugf/tpe-arqui/src/cc7f0554eaaf5809d88c69348596cc147e131fc2/TPE/Kernel/video.c?at=master&fileviewer=file-view-default
 */
 #define VBE_DISPI_INDEX_ID 0
