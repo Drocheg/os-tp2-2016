@@ -28,5 +28,6 @@ img:
 clean:
 	rm -rf c/*.o asm/*.o *.o *.bin
 	cd Songmaker; make clean
+	cd img; make clean
 
 .PHONY: all clean songmaker img
