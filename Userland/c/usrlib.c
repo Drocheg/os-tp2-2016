@@ -60,8 +60,9 @@ void printNum(int64_t num) {
 	int negative = num < 0;
 	if(negative) {
 		buff[0] = '-';
+		num *= -1;
 	}
-	intToStr(num, negative ? buff+1 : buff);
+	intToStr((uint64_t) num, negative ? buff+1 : buff);
 	print(buff);
 }
 

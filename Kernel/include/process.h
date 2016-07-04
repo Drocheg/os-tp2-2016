@@ -72,7 +72,7 @@ int64_t setFileFlags(uint64_t PCBIndex, uint64_t fileDescriptor, uint32_t flags)
  * Adds a file to the process' files table.
  * Returns the file's descriptor on sucess, or -1 otherwise.
  */
-uint64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t flags);
+int64_t addFile(uint64_t PCBIndex, uint32_t index, FileType fileType, uint32_t flags);
 
 /*
  * Removes a file from the process' files table.

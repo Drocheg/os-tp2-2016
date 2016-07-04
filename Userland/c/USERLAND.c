@@ -325,25 +325,29 @@ void sleepForTwoSeconds() {
 }
 
 void testMQ() {
-	static uint8_t fd = 0;
-	if(fd == 0) {
-		fd = MQopen("test2", F_WRITE /*| F_NOBLOCK*/);
-		print("MQ opened with FD ");
-		printNum(fd);
-		print("\n");
-	}
-	// print("Sending message...sent ");
-	// printNum(MQsend(fd, "1234567890", 10));
-	// print(" bytes.\nClosing MQ returned ");
-	// int8_t closeResult = MQclose(fd);
-	// printNum(closeResult);
-	// if(closeResult >= 0) {
-	// 	print(" (success)\n");
-	// 	fd = 0;
+	int64_t uniqFD = MQopenUniq(/*"test2", */F_WRITE /*| F_NOBLOCK*/);
+	print("Unique MQ opened with FD ");
+	printNum(uniqFD);
+	print(uniqFD == -1 ? " (failed)\n" : "\n");
+	// static uint8_t fd = 0;
+	// if(fd == 0) {
+	// 	fd = MQopen("test2", F_WRITE | /*F_NOBLOCK*/);
+	// 	print("MQ opened with FD ");
+	// 	printNum(fd);
+	// 	print("\n");
 	// }
-	// else {
-	// 	print(" (error)\n");
-	// }
+		// print("Sending message...sent ");
+		// printNum(MQsend(fd, "1234567890", 10));
+		// print(" bytes.\nClosing MQ returned ");
+		// int8_t closeResult = MQclose(fd);
+		// printNum(closeResult);
+		// if(closeResult >= 0) {
+		// 	print(" (success)\n");
+		// 	fd = 0;
+		// }
+		// else {
+		// 	print(" (error)\n");
+		// }
 }
 void imgTest() {
 	clearScreen();

@@ -8,9 +8,18 @@
 /**
 * Opens a message queue with the specified name, with the specified access parameters.
 *
-* @return A file descriptor for the calling process to reference the opened MQ.
+* @return A file descriptor for the calling process to reference the opened MQ,
+* or -1 on error.
 */
 int64_t MQopen(const char* name, uint32_t accessFlags);
+
+/**
+* Opens a message queue with a unique name, with the specified access parameters.
+*
+* @return A file descriptor for the calling process to reference the opened MQ,
+* or -1 on error (error could mean no available unique name).
+*/
+int64_t MQopenUniq(uint32_t accessFlags);
 
 /**
 * Reads a single character from the specified message queue, storing it in dest.

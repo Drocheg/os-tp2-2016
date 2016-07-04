@@ -13,6 +13,10 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 	return result;
 }
 
+int64_t MQopenUniq(uint32_t accessFlags) {
+	MQopen(NULL, accessFlags);
+}
+
 int8_t MQclose(uint64_t descriptor) {
 	int8_t result;
 	_int80(MQ_CLOSE, descriptor, (uint64_t)&result, 0);
