@@ -71,6 +71,12 @@ void processInput(int64_t * input){
 		case '\e':
 			*input=2;
 			break;
+		case '1':
+		case '2':
+		case '3':
+		//case '4': Esta no.
+			*input=2+decodedInput-'0';
+			break;
 		default:*input=0;
 			break;
 	}
@@ -79,7 +85,7 @@ void processInput(int64_t * input){
 }
 
 int8_t validInput(int64_t inputProcessed){
-	return inputProcessed==1; //0 era true o false? Se puede resumir esto. 
+	return inputProcessed!=0; //0 era true o false? Se puede resumir esto. 
 }
 
 void sendInput(int64_t inputProcessed, int64_t mqFDSend){

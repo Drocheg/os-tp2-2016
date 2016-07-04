@@ -28,12 +28,16 @@
 #define JUMP_FX_2 41
 #define JUMP_FX_3 82
 
+#define GAME_STATE_MENU 1
+#define GAME_STATE_PLAYING 0
+
 
 
 
 
 /* Structs */
 typedef struct{
+	uint64_t gameState;
 	uint64_t state;
 	uint64_t falling;
 	int64_t jumpForce;
@@ -104,6 +108,7 @@ int64_t game_main(uint64_t argc, char* argv[]){
 void initGame(GameData gameData){
 	clearScreen();
 	gameData->falling=0;
+	gameData->gameState = GAME_STATE_PLAYING;
 	gameData->state = STATE_GROUND;
 	gameData->jumpForce=4;
 	gameData->jumpStartTime=time();
@@ -162,6 +167,7 @@ void jump(GameData gameData){
 }
 
 void update(GameData gameData){
+
 	uint64_t updateTime=time(); //Make all updates with the same time.
 	//Character Update
 	if(gameData->state==STATE_JUMPING){
@@ -273,6 +279,36 @@ void update(GameData gameData){
 
 
 	gameData->lastUpdateTime=updateTime;
+
+
+
+	//MenuMode
+	if(gameData->gameState==GAME_STATE_MENU){
+
+		uint64_t jumpStartTimeDiff = time()-gameData->jumpStartTime;
+		uint64_t lastObstacleUpdateDiff = time()-gameData->lastObstacleUpdate;
+
+		
+		clearScreen();
+		print("\n\n\n\n\n                            Menu\n\n         Press a number to change songs\n");
+		int64_t msg=0;
+		while(gameData->gameState==GAME_STATE_MENU){
+			MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
+			if(msg==2) gameData->gameState=GAME_STATE_PLAYING;
+			if(msg>2){
+				msg-=3;
+				MQsend(gameData->mqFDMusicSend, (char *)&msg, sizeof(int64_t));
+			}
+			printNum(msg);
+			print("\n");
+		}
+		gameData->jumpStartTime=time()-jumpStartTimeDiff;
+		gameData->lastUpdateTime=time();
+		gameData->lastObstacleUpdate=time()-lastObstacleUpdateDiff;
+		clearScreen();
+	}
+
+
 	return;
 }
 
@@ -289,6 +325,7 @@ uint64_t isPlayerJumping(GameData gameData){
 		MQreceive(gameData->mqFDInputReceiverRead, (char *)&msg, sizeof(int64_t));
 		
 		if(msg==1) isJumping=1;
+		if(msg==2) gameData->gameState=GAME_STATE_MENU;
 	}
 	
 	return isJumping;
