@@ -4,6 +4,9 @@
 #include <scanCodes.h>
 #include <syscalls.h>
 #include <interrupts.h>
+#include <libasm.h>
+#include <stdio.h>
+#include <unistd.h>
 
 
 static int notes[][8] = {
@@ -21,7 +24,6 @@ static int notes[][8] = {
 	{31,62,23,245,494,988,1975,3951}};
 
 void offerNote(uint8_t note, uint8_t octave, uint32_t time);
-int64_t piano_main(int argc, char* argv[]);
 
 void piano_start(int argc, char* argv[]){
 	int64_t result = piano_main(argc, argv);
@@ -35,11 +37,12 @@ Funcion que entra en el "estado" piano. Reproduce sonidos precargados en una mat
 que son 3 octavas enteras, al apretar ciertas teclas.
 Espera hasta que se toque la tecla de codigo 'e' (Esc). 
 */
-int64_t piano_main(int argc, char* argv[]) {
+int64_t piano_main() {
 	clearScreen();
 	print("                                 PIANO v1.0\n");
 	print("                              Press ESC to exit");
 	putchar('\n');
+	changeToScanCodes();
 	while(1){
 		int number = getScanCode();
 		if(decodeScanCode(number) == '\e') {	//Exit with escape
@@ -57,11 +60,13 @@ int64_t piano_main(int argc, char* argv[]) {
 
 	}
 	clearScreen();
+	changeToKeys();
+	return 0;
 }
 
 void offerNote(uint8_t note, uint8_t octave, uint32_t time){
   	uint32_t nFrequence = notes[note][octave];
   	_int80(SPEAKER, nFrequence, 0, 0);
-  	sleep(40);
+  	sleep_sys(40);
   	_int80(SPEAKER, 0, 0, 0);
 }

@@ -8,31 +8,29 @@
 
 
 
-void fread(uint8_t fd, char *buff, uint64_t maxBytes);
+// void fread(uint8_t fd, char *buff, uint64_t maxBytes);
 
-void fwrite(uint8_t fd, char *buff, uint64_t maxBytes);
+// void fwrite(uint8_t fd, char *buff, uint64_t maxBytes);
 
-void putchar(char c);
+// void putchar(char c);
 
-char getchar();
+// char getchar();
 
 uint8_t getScanCode();
 
-void scroll();
+// void scroll();
 
-void ps();
+void ps_sys();
 
-void ipcs();
+void ipcs_sys();
 
 void clearScreen();
 
-void reboot();
+// void reboot();
 
 void print(const char *str);
 
 void printNum(int64_t num);
-
-void printf(const char *format, vargs *args);
 
 int64_t createProcess(char name[MAX_NAME_LENGTH], void *entryPoint, uint64_t argc, char *argv[]);
 
@@ -40,7 +38,7 @@ uint64_t time();
 
 void soundFX(uint32_t freq);
 
-void sleep(uint64_t sleepTime);
+// void sleep(uint64_t sleepTime);
 
 void sleepCroto(uint64_t miliseconds);
 
@@ -50,7 +48,7 @@ void changeToScanCodes();
 
 void changeToKeys();
 
-
+void yield();
 
 void * malloc(uint64_t size);
 
@@ -82,5 +80,12 @@ void fillRect(REKTangle *rekt);
 
 //Paints the specified image with its top-left corner in the specified coordinates
 void paintImg(Image *img, uint64_t x, uint64_t y);
+
+
+int64_t waitpid(uint64_t pid);
+
+void stdoutFFlush();
+
+void stderrFFlush();
 
 #endif

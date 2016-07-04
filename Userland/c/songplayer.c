@@ -5,6 +5,8 @@
 #include <interrupts.h>
 #include <mq.h>
 #include <file-common.h>
+#include <unistd.h>
+#include <libasm.h>
 /*
 FORMATO del modulo:
 (32 bits) cantidad de canciones
@@ -69,7 +71,7 @@ int64_t playSong_main(int argc, char* argv[]){
 int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 
 	char *songData;
-	_int80(OPENDATAMODULE, &songData, 0, 0);
+	_int80(OPENDATAMODULE, (uint64_t) &songData, 0, 0);
 	
 	int32_t songMaxNum = (int32_t) *songData;
 	songData = songData+4;
@@ -92,32 +94,31 @@ int8_t playSong(int32_t songNum, SongPlayerData songPlayerData){
 	int32_t n = (int32_t) *songData;
 	
 	songData = songData+4;						//Skip bytes for n
-	uint16_t freq; //Porque 16???
+	uint16_t freq;
 	uint32_t timeR;
 	
 	//clearScreen();
 	//print("                   I shall now play you the song of my people\n");
 	char * songDataAux = songData;
 	int32_t m = n;
-	//while(1){
-		while(n > 0) {
-			if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
-			freq = *((uint32_t *)songData);
-			songData = songData+4;
-			timeR = (*((uint32_t *)songData));  
-			songData = songData+4;
-		  	_int80(SPEAKER, freq, 0, 0);
-		  	n--;
-		  	print("Time now: ");
-		  	printNum(time());
-		  	print(" Time to Sleep: ");
-		  	printNum(timeR);
-		  	print("\n");
-		  	sleep(timeR);
-		}
-		n=m;
-		songData = songDataAux ;
-		_int80(SPEAKER, 0, 0, 0);	
-	//}
-	
+	while(n > 0) {
+		if(!MQisEmpty(songPlayerData->mqFDRead)) return 0;
+		freq = *((uint32_t *)songData);
+		songData = songData+4;
+		timeR = (*((uint32_t *)songData));  
+		songData = songData+4;
+	  	_int80(SPEAKER, freq, 0, 0);
+	  	n--;
+	  	// print("Time now: ");
+	  	// printNum(time());
+	  	// print(" Time to Sleep: ");
+	  	// printNum(timeR);
+	  	// print("\n");
+	  	// sleep_sys(timeR);
+	}
+	n=m;
+	songData = songDataAux ;
+	_int80(SPEAKER, 0, 0, 0);	
+
+	return 0;
 }

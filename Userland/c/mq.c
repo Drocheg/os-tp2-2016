@@ -6,6 +6,7 @@
 #include <syscalls.h>
 #include <stddef.h>
 #include <usrlib.h>
+#include <libasm.h>
 
 int64_t MQopen(const char* name, uint32_t accessFlags) {
 	int64_t result;

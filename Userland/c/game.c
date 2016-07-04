@@ -8,6 +8,8 @@
 #include <inputReceiver.h>
 #include <mq.h>
 #include <file-common.h>
+#include <libasm.h>
+#include <unistd.h>
 
 
 #define STATE_GROUND 0
@@ -61,7 +63,7 @@ void gameOver(GameData gameData);
 void playJumpFX(uint64_t seed);
 void paintFullRect(int64_t i,int64_t j,uint64_t width,uint64_t height,uint32_t color);
 void initGame(GameData gameData);
-int64_t game_main(int argc, char* argv[]);
+// int64_t game_main(int argc, char* argv[]);
 
 
 
@@ -75,7 +77,7 @@ void game_start(int argc, char* argv[]){
 }
 
 
-int64_t game_main(int argc, char* argv[]){
+int64_t game_main(uint64_t argc, char* argv[]){
 
 
 	//gameData_t gameData1;
@@ -237,7 +239,7 @@ void update(GameData gameData){
 				if(j==gameData->posY-1){
 				
 					Image * dinosaurio;
-					_int80(OPENDATAIMGMODULE, &dinosaurio, 0, 0);
+					_int80(OPENDATAIMGMODULE, (uint64_t) &dinosaurio, 0, 0);
 					paintImg(dinosaurio, 0, (VERTICAL_SIZE-(gameData->posY-1)-3)*50);
 				
 				}
@@ -287,7 +289,7 @@ void gameOver(GameData gameData){
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	clearScreen(); 
 	print("\n\n\n Game Over ");
-	sleep(3400);
+	sleep_sys(3400);
 	songNum = -1;
 	MQsend(gameData->mqFDMusicSend, (char *)&songNum, sizeof(int64_t));
 	
