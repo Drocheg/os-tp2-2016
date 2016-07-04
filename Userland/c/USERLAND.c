@@ -325,8 +325,12 @@ void sleepForTwoSeconds() {
 }
 
 void testMQ() {
-	int64_t uniqFD = MQopenUniq(/*"test2", */F_WRITE /*| F_NOBLOCK*/);
-	print("Unique MQ opened with FD ");
+	char uniqName[MAX_NAME+1] = {0};
+	int8_t uniqResult = MQuniq(uniqName);
+	print("Opened MQ with unique name \"");
+	print(uniqName);
+	int64_t uniqFD = MQopen(uniqName, F_WRITE /*| F_NOBLOCK*/);
+	print("\" with FD ");
 	printNum(uniqFD);
 	print(uniqFD == -1 ? " (failed)\n" : "\n");
 	// static uint8_t fd = 0;

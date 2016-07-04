@@ -130,12 +130,7 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		*	 MQs
 		* *********/
 		case MQ_OPEN:
-			if((char *)p1 == NULL) {
-				result = MQopenUniq((uint32_t)p2);
-			}
-			else {
-				result = MQopen((char *)p1, (uint32_t)p2);
-			}
+			result = MQopen((char *)p1, (uint32_t)p2);
 			*((int64_t *)p3) = result;
 			break;
 		case MQ_RECEIVE:
@@ -157,6 +152,10 @@ int64_t int80Handler(uint64_t syscallID, uint64_t p1, uint64_t p2, uint64_t p3) 
 		case MQ_IS_EMPTY:
 			result = operateFile(getCurrentPCBIndex(), p1, IS_EMPTY, 0) == 0;
 			*((int8_t *)p2) = (int8_t)result;
+			break;
+		case MQ_UNIQUE_NAME:
+			result = MQuniq((char *)p1);
+			*((int8_t *)p2) = result;
 			break;
 		/* *********
 		*	Mutexes

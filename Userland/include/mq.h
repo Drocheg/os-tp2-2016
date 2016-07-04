@@ -14,12 +14,13 @@
 int64_t MQopen(const char* name, uint32_t accessFlags);
 
 /**
-* Opens a message queue with a unique name, with the specified access parameters.
+* Stores a unique MQ name in the specified destination buffer. The name can be used to
+* create a new MQ.
 *
-* @return A file descriptor for the calling process to reference the opened MQ,
-* or -1 on error (error could mean no available unique name).
+* @param dest Where to store the name. WARNING: Make sure dest is of size MAX_NAME+1.
+* @return 0 if a name was successfully stored, -1 on error.
 */
-int64_t MQopenUniq(uint32_t accessFlags);
+int8_t MQuniq(char *dest);
 
 /**
 * Closes the message queue with the given descriptor.
