@@ -49,7 +49,7 @@ int64_t MQreceive(uint64_t descriptor, char *buff, size_t buffLen) {
 	for(result = 0; result < buffLen; result++) {
 		int64_t recvResult = MQreceiveChar(descriptor, buff+result);
 		if(recvResult == 0) {
-			//No bytes received - e.g. readubg with F_NOBLOCK and file is empty
+			//No bytes received - e.g. reading with F_NOBLOCK and file is empty
 			return result;
 		}
 		else if(recvResult == -1) {

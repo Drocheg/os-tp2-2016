@@ -7,10 +7,6 @@
 #include <game.h>
 #include <file-common.h>
 #include <mq.h>
-#include <mutex.h>
-
-
-uint8_t MUTEX = 0;
 
 
 static int64_t stringToInt(char *str, int64_t *result); /* TODO move this */
@@ -104,14 +100,11 @@ static int64_t countCommands() {
 }
 
 static int64_t matchCommand(char *command) {
-
-	int64_t i = 0;
 	uint64_t commandsCount = countCommands();
-	while (i < commandsCount) {
-		if (!strcmp(command, (commandsList[i]).name)) {
+	for(int64_t i = 0; i < commandsCount; i++) {
+		if (streql(command, (commandsList[i]).name)) {
 			return i;
 		}
-		i++;
 	}
 	return -1;
 }
@@ -145,7 +138,9 @@ uint64_t terminalMain(uint64_t argc, char *argv[]) {
 			char *ar[] = {"Hola"};
 			runCommand(index, 1, ar);
 		} else {
-			print("No such command\n");
+			print("'");
+			print(command);
+			print("' is not a valid command\n");
 		}
 
 	}
@@ -302,16 +297,27 @@ static void sleep_main(uint64_t argc, char *argv[]) {
 
 
 static void testMQ_main() {
-
-	// char uniqName[MAX_NAME + 1] = {0};
-	// int8_t uniqResult = MQuniq(uniqName);
-	// print("Opened MQ with unique name \"");
-	// print(uniqName);
-	// int64_t uniqFD = MQopen(uniqName, F_WRITE /*| F_NOBLOCK*/);
-	// print("\" with FD ");
-	// printNum(uniqFD);
-	// print(uniqFD == -1 ? " (failed)\n" : "\n");
-
+	char uniqName[MAX_NAME + 1] = {0};
+	if(MQuniq(uniqName) == -1) {
+		print("\nCouldn't open a unique MQ\n");
+		return;
+	}
+	uint64_t fd = MQopen(uniqName, F_WRITE | F_NOBLOCK);
+	if(fd == -1) {
+		print("\nCouldn't open MQ ");
+		print(uniqName);
+		print("\n");
+		return;
+	}
+	int64_t i;
+	for(i = 0; i < time() % 420; i++) {
+		MQsend(fd, "GET REKT M8 U F0KING W0T?!?!1!!1?!?!", 37);
+	}
+	print("Wrote \"GET REKT M8 U F0KING W0T?!?!1!!1?!?!\" ");
+	printNum(i);
+	print(" times in ");
+	print(uniqName);
+	print("\n");
 }
 
 static void ps_main() {

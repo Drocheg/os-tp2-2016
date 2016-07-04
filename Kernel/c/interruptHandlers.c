@@ -18,6 +18,7 @@
 #include <process.h>
 #include <file.h>
 #include <tty.h>
+#include <mutex.h>
 
 static void timerTick();
 

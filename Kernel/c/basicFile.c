@@ -22,7 +22,7 @@ struct basicFile_s {
 static uint64_t maxFiles = PAGE_SIZE / sizeof(struct basicFile_s); /* Should be...idk I didn't wanna do the math */
 // static void *filesTablePage;
 static struct basicFile_s *filesTable = NULL; 		//"Table" (array) which keeps track of open files
-static uint64_t numFiles = 0;				//Number of open files
+static uint64_t numFiles = 0;						//Number of open files
 
 
 
@@ -103,6 +103,7 @@ BasicFile createBasicFile(const char* name, void *stream, uint64_t size, Place p
 	filesTable[index].place = place;
 	filesTable[index].writeIndex = 0;
 	filesTable[index].readIndex = 0;
+	numFiles++;
 	return &filesTable[index];
 }
 
@@ -173,6 +174,7 @@ int destroyBasicFile(BasicFile file) {
 		pageManager(PUSH_PAGE, &(file->stream));
 	}
 	memset(&filesTable[index], 0, sizeof(struct basicFile_s));
+	numFiles--;
 	return 0;
 }
 
@@ -218,9 +220,12 @@ static int8_t isValidFile(BasicFile file) {
 }
 
 static int64_t indexOfFile(BasicFile file) {
-	for(uint64_t i = 0; i < maxFiles; i++) {
-		if(streql(file->name, filesTable[i].name)) {
-			return (int64_t) i;
+	for(uint64_t i = 0, checkedFiles = 0; checkedFiles < numFiles && i < maxFiles; i++) {
+		if(filesTable[i].name != NULL) {
+			if(streql(file->name, filesTable[i].name)) {
+				return (int64_t) i;
+			}
+			checkedFiles++;
 		}
 	}
 	return -1;

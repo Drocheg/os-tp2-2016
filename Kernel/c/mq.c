@@ -104,43 +104,19 @@ int64_t MQopen(const char* name, uint32_t accessFlags) {
 
 int8_t MQuniq(char *dest) {
 	mutex_lock(&uniqNameMutex);
-	char buff[MAX_NAME+1] = {'/', 'm', 'q', '/', 'u', 0};	//Prefix these MQs with "/mq/u"
+	char name[MAX_NAME+1] = {'/', 'm', 'q', '/', 'u', 0};	//Prefix these MQs with "/mq/u"
 	uint32_t startingID = nextUniqueID;
 	//Append the next unique ID to the "/mq/u" prefix and check if a MQ with that name exists
-	while(indexOfMQ(intToStr((uint64_t)++nextUniqueID, buff+5)) != -1) {
+	do {
+		intToStr((uint64_t)++nextUniqueID, name+5);
 		if(nextUniqueID == startingID) {	//Overflowed and came back around with no matches
 			mutex_unlock(&uniqNameMutex);
 			return -1;
 		}
-	}
-	memcpy(dest, buff, strlen(buff)+1);
+	} while(indexOfMQ(name) != -1);
+	memcpy(dest, name, strlen(name)+1);
 	mutex_unlock(&uniqNameMutex);
 	return 0;
-}
-
-/**
-* Opens a message queue with a unique name, with the specified access parameters.
-*
-* @return A file descriptor for the calling process to reference the opened MQ,
-* or -1 on error (error could mean no available unique name).
-*/
-int64_t MQopenUniq(uint32_t accessFlags) {
-	if((accessFlags & F_READ) == 0 && (accessFlags & F_WRITE) == 0) {
-		return -1;
-	}
-	mutex_lock(&uniqNameMutex);
-	char buff[MAX_NAME+1] = {'/', 'm', 'q', '/', 'u', 0};	//Prefix these MQs with "/mq/u"
-	uint32_t startingID = nextUniqueID;
-	//Append the next unique ID to the "/mq/u" prefix and check if a MQ with that name exists
-	while(indexOfMQ(intToStr((uint64_t)++nextUniqueID, buff+5)) != -1) {
-		if(nextUniqueID == startingID) {	//Overflowed and came back around with no matches
-			mutex_unlock(&uniqNameMutex);
-			return -1;
-		}
-	}
-	int64_t fd = MQopen(buff, accessFlags);
-	mutex_unlock(&uniqNameMutex);
-	return fd;
 }
 
 int8_t MQclose(uint64_t tableIndex) {

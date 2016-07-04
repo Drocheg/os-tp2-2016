@@ -29,10 +29,12 @@ int32_t init_d(int argc, char* argv[]) {
 	waitpid(terminalPid);
 	print("Finished\n");
 	exit(0);
+	return -1;	//Shouldn't get to here
 }
 
 
 static uint64_t terminal(uint64_t argc, char* argv[]) {
 	terminalMain(argc, argv);
 	exit(0);
+	return -1;	//Shouldn't get to here
 }
